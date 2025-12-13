@@ -57,6 +57,9 @@ jobs:
     name: Deploy Frontend
     needs: build-and-test
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     environment:
       name: production
     

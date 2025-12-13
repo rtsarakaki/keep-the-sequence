@@ -55,6 +55,9 @@ jobs:
     name: Deploy Backend
     needs: build-and-test
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     environment:
       name: production
       url: https://console.aws.amazon.com/
