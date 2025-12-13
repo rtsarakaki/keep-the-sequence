@@ -2,6 +2,12 @@
 
 Sistema de jogo cooperativo online baseado no jogo de cartas "The Game" com suporte a 2-5 jogadores, comunicação em tempo real via WebSocket, persistência de estado para reconexão e processamento assíncrono de eventos.
 
+## Status
+
+✅ Infraestrutura AWS configurada
+✅ GitHub Actions workflows configurados
+✅ CI/CD pipeline ativo
+
 ## Arquitetura
 
 - **Backend**: Node.js/TypeScript com AWS Lambda, API Gateway WebSocket, DynamoDB, SQS
