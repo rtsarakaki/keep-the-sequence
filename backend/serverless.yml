@@ -1,0 +1,158 @@
+service: the-game-backend
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: ${env:AWS_REGION, 'us-east-1'}
+  stage: ${opt:stage, 'dev'}
+  environment:
+    AWS_REGION: ${self:provider.region}
+    GAMES_TABLE: ${self:custom.gamesTable}
+    CONNECTIONS_TABLE: ${self:custom.connectionsTable}
+    GAME_EVENTS_TABLE: ${self:custom.gameEventsTable}
+    GAME_EVENTS_QUEUE: ${self:custom.gameEventsQueue}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:TransactWriteItems
+          Resource:
+            - arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.gamesTable}
+            - arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.connectionsTable}
+            - arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.gameEventsTable}
+        - Effect: Allow
+          Action:
+            - sqs:SendMessage
+            - sqs:ReceiveMessage
+            - sqs:DeleteMessage
+            - sqs:GetQueueAttributes
+          Resource:
+            - arn:aws:sqs:${self:provider.region}:*:${self:custom.gameEventsQueue}
+        - Effect: Allow
+          Action:
+            - execute-api:ManageConnections
+          Resource:
+            - arn:aws:execute-api:${self:provider.region}:*:*/@connections/*
+
+custom:
+  gamesTable: ${self:service}-games-${self:provider.stage}
+  connectionsTable: ${self:service}-connections-${self:provider.stage}
+  gameEventsTable: ${self:service}-game-events-${self:provider.stage}
+  gameEventsQueue: ${self:service}-game-events-${self:provider.stage}
+
+functions:
+  onConnect:
+    handler: dist/handlers/websocket/onConnect.handler
+    events:
+      - websocket:
+          route: $connect
+    timeout: 10
+
+  onDisconnect:
+    handler: dist/handlers/websocket/onDisconnect.handler
+    events:
+      - websocket:
+          route: $disconnect
+    timeout: 10
+
+  gameHandler:
+    handler: dist/handlers/websocket/gameHandler.handler
+    events:
+      - websocket:
+          route: $default
+    timeout: 30
+
+  syncHandler:
+    handler: dist/handlers/sync/syncHandler.handler
+    events:
+      - websocket:
+          route: sync
+    timeout: 10
+
+  sqsConsumer:
+    handler: dist/handlers/sqs/sqsConsumer.handler
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - GameEventsQueue
+              - Arn
+          batchSize: 10
+    timeout: 30
+
+resources:
+  Resources:
+    GamesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.gamesTable}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: gameId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: gameId
+            KeyType: HASH
+        TimeToLiveSpecification:
+          Enabled: true
+          AttributeName: ttl
+
+    ConnectionsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.connectionsTable}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: connectionId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: connectionId
+            KeyType: HASH
+
+    GameEventsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.gameEventsTable}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: gameId
+            AttributeType: S
+          - AttributeName: timestamp
+            AttributeType: N
+        KeySchema:
+          - AttributeName: gameId
+            KeyType: HASH
+          - AttributeName: timestamp
+            KeyType: RANGE
+
+    GameEventsQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:custom.gameEventsQueue}
+        MessageRetentionPeriod: 1209600
+        VisibilityTimeout: 30
+        RedrivePolicy:
+          deadLetterTargetArn:
+            Fn::GetAtt:
+              - GameEventsDLQ
+              - Arn
+          maxReceiveCount: 3
+
+    GameEventsDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:custom.gameEventsQueue}-dlq
+        MessageRetentionPeriod: 1209600
+
+plugins:
+  - serverless-plugin-typescript
+

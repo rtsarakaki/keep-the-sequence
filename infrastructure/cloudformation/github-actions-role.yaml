@@ -1,0 +1,85 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'IAM Role for GitHub Actions OIDC - The Game'
+
+Parameters:
+  GitHubRepository:
+    Type: String
+    Description: GitHub repository in format owner/repo-name (e.g., usuario/keep-the-sequence)
+    AllowedPattern: '^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$'
+    ConstraintDescription: Must be in format owner/repo-name
+  
+  AllowedBranches:
+    Type: CommaDelimitedList
+    Description: (Optional) Allowed branches. Leave empty to allow all branches. Example: main,develop
+    Default: ''
+
+Conditions:
+  HasAllowedBranches: !Not [!Equals [!Join ['', !Ref AllowedBranches], '']]
+
+Resources:
+  GitHubOIDCProvider:
+    Type: AWS::IAM::OIDCIdentityProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList:
+        - sts.amazonaws.com
+      ThumbprintList:
+        - 6938fd4d98bab03faadb97b34396831e3780aea1
+        - 1c58a3a8518e8759bf075b76b750d4f2df264fcd
+
+  GitHubActionsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: github-actions-deploy-role
+      Description: Role for GitHub Actions to deploy The Game infrastructure
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !GetAtt GitHubOIDCProvider.Arn
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              !If
+                - HasAllowedBranches
+                - StringLike:
+                    token.actions.githubusercontent.com:sub:
+                      !Split
+                        - ','
+                        - !Join
+                            - ','
+                            - !Map
+                                - !Ref AllowedBranches
+                                - Branch
+                                - !Join
+                                    - ''
+                                    - - 'repo:'
+                                      - !Ref GitHubRepository
+                                      - ':ref:refs/heads/'
+                                      - !Ref Branch
+                - StringLike:
+                    token.actions.githubusercontent.com:sub: !Join
+                      - ''
+                      - - 'repo:'
+                        - !Ref GitHubRepository
+                        - ':*'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+        - arn:aws:iam::aws:policy/AmazonSQSFullAccess
+        - arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator
+        - arn:aws:iam::aws:policy/AWSLambda_FullAccess
+        - arn:aws:iam::aws:policy/IAMFullAccess
+        - arn:aws:iam::aws:policy/CloudFormationFullAccess
+      MaxSessionDuration: 3600
+
+Outputs:
+  RoleArn:
+    Description: ARN of the IAM Role for GitHub Actions
+    Value: !GetAtt GitHubActionsRole.Arn
+    Export:
+      Name: GitHubActionsRoleArn
+  
+  GitHubRepository:
+    Description: GitHub repository that can assume this role
+    Value: !Ref GitHubRepository
+

@@ -1,0 +1,98 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      approve:
+        description: 'Approve deployment'
+        required: true
+        type: boolean
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Lint
+        working-directory: ./backend
+        run: npm run lint
+
+      - name: Type check
+        working-directory: ./backend
+        run: npm run type-check
+
+      - name: Run tests
+        working-directory: ./backend
+        run: npm test
+
+      - name: Build
+        working-directory: ./backend
+        run: npm run build
+
+      - name: Notify deployment ready
+        run: |
+          echo "✅ Build and tests passed. Ready for deployment approval."
+          echo "Please review the changes and approve the deployment."
+
+  deploy:
+    name: Deploy Backend
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://console.aws.amazon.com/
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Build
+        working-directory: ./backend
+        run: npm run build
+
+      - name: Deploy to AWS Lambda
+        working-directory: ./backend
+        run: npx serverless deploy --stage prod
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+
+      - name: Health check
+        run: |
+          echo "✅ Deployment completed successfully"
+          echo "Run health checks here if needed"
+

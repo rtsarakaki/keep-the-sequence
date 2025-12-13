@@ -1,0 +1,52 @@
+name: Deploy Infrastructure
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      approve:
+        description: 'Approve deployment'
+        required: true
+        type: boolean
+
+jobs:
+  deploy:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://console.aws.amazon.com/
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: infrastructure/cdk/package-lock.json
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Install dependencies
+        working-directory: ./infrastructure/cdk
+        run: npm ci
+
+      - name: Build CDK
+        working-directory: ./infrastructure/cdk
+        run: npm run build
+
+      - name: Deploy CDK stack
+        working-directory: ./infrastructure/cdk
+        run: npm run deploy
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+

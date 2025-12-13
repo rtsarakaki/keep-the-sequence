@@ -1,0 +1,96 @@
+import { Card } from '../valueObjects/Card';
+import { Player } from './Player';
+import { GamePiles } from '../services/GameRules';
+
+export type GameStatus = 'waiting' | 'playing' | 'finished' | 'abandoned';
+
+export class Game {
+  readonly id: string;
+  readonly players: readonly Player[];
+  readonly piles: GamePiles;
+  readonly deck: readonly Card[];
+  readonly discardPile: readonly Card[];
+  readonly currentTurn: string | null;
+  readonly status: GameStatus;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
+  readonly ttl?: number;
+
+  constructor(data: {
+    id: string;
+    players: readonly Player[];
+    piles: GamePiles;
+    deck: readonly Card[];
+    discardPile: readonly Card[];
+    currentTurn: string | null;
+    status: GameStatus;
+    createdAt: Date;
+    updatedAt: Date;
+    ttl?: number;
+  }) {
+    this.id = data.id;
+    this.players = Object.freeze([...data.players]);
+    this.piles = Object.freeze({
+      ascending1: Object.freeze([...data.piles.ascending1]),
+      ascending2: Object.freeze([...data.piles.ascending2]),
+      descending1: Object.freeze([...data.piles.descending1]),
+      descending2: Object.freeze([...data.piles.descending2]),
+    });
+    this.deck = Object.freeze([...data.deck]);
+    this.discardPile = Object.freeze([...data.discardPile]);
+    this.currentTurn = data.currentTurn;
+    this.status = data.status;
+    this.createdAt = data.createdAt;
+    this.updatedAt = data.updatedAt;
+    this.ttl = data.ttl;
+    Object.freeze(this);
+  }
+
+  addCardToPile(pileId: keyof GamePiles, card: Card): Game {
+    const currentPile = this.piles[pileId] || [];
+    return new Game({
+      ...this,
+      piles: {
+        ...this.piles,
+        [pileId]: Object.freeze([...currentPile, card]),
+      },
+      updatedAt: new Date(),
+    });
+  }
+
+  updateTurn(nextPlayerId: string | null): Game {
+    return new Game({
+      ...this,
+      currentTurn: nextPlayerId,
+      updatedAt: new Date(),
+    });
+  }
+
+  updateStatus(status: GameStatus): Game {
+    return new Game({
+      ...this,
+      status,
+      updatedAt: new Date(),
+    });
+  }
+
+  addPlayer(player: Player): Game {
+    return new Game({
+      ...this,
+      players: Object.freeze([...this.players, player]),
+      updatedAt: new Date(),
+    });
+  }
+
+  updatePlayer(playerId: string, updater: (player: Player) => Player): Game {
+    const updatedPlayers = this.players.map((player) =>
+      player.id === playerId ? updater(player) : player
+    );
+    return new Game({
+      ...this,
+      players: Object.freeze(updatedPlayers),
+      updatedAt: new Date(),
+    });
+  }
+}
+
