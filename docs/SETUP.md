@@ -16,16 +16,32 @@ Este guia orienta você na configuração das credenciais AWS necessárias para 
 - ✅ **Recomendado pela AWS**: Prática recomendada para integrações CI/CD
 - ✅ **Infraestrutura como Código**: Role criada via CloudFormation, versionada no repositório
 
-## Passo 1: Criar Role IAM via CloudFormation (Console AWS)
+## Passo 1: Criar OIDC Provider (Console AWS)
 
-Esta é a única parte manual do processo. Você fará isso uma única vez no console AWS usando o template CloudFormation fornecido.
+Primeiro, você precisa criar o OIDC Provider para GitHub. Isso é feito uma única vez.
 
-### 1.1 Preparar o Template
+### 1.1 Criar Identity Provider
+
+1. Acesse o [AWS Console](https://console.aws.amazon.com/)
+2. Navegue até **IAM** → **Identity providers** → **Add provider**
+3. Configure o provider:
+   - **Provider type**: Selecione **OpenID Connect**
+   - **Provider URL**: `https://token.actions.githubusercontent.com`
+   - **Audience**: `sts.amazonaws.com`
+4. Clique em **Add provider**
+
+**Importante**: Anote o ARN do provider criado (será usado automaticamente pelo template).
+
+## Passo 2: Criar Role IAM via CloudFormation (Console AWS)
+
+Agora você criará a Role usando o template CloudFormation fornecido.
+
+### 2.1 Preparar o Template
 
 1. Abra o arquivo `infrastructure/cloudformation/github-actions-role.yaml` no seu editor
 2. Copie todo o conteúdo do arquivo (você precisará colar no console)
 
-### 1.2 Criar Stack no CloudFormation
+### 2.2 Criar Stack no CloudFormation
 
 1. Acesse o [AWS Console](https://console.aws.amazon.com/)
 2. Navegue até **CloudFormation** → **Stacks** → **Create stack** → **With new resources (standard)**
@@ -35,7 +51,7 @@ Esta é a única parte manual do processo. Você fará isso uma única vez no co
    - OU selecione **Template is ready** e cole o conteúdo do arquivo YAML na área de texto
 4. Clique em **Next**
 
-### 1.3 Configurar Parâmetros
+### 2.3 Configurar Parâmetros
 
 Na seção **Specify stack details**:
 
@@ -45,16 +61,16 @@ Na seção **Specify stack details**:
    
    **GitHubRepository** (obrigatório):
    - Informe seu repositório no formato: `usuario/repositorio`
-   - Exemplo: `usuario/keep-the-sequence`
+   - Exemplo: `rtsarakaki/keep-the-sequence`
    
-   **AllowedBranches** (opcional):
+   **AllowedBranch** (opcional):
    - Deixe vazio para permitir todas as branches
-   - OU informe branches separadas por vírgula: `main,develop`
+   - OU informe uma branch específica: `main`
    - Exemplo: `main` (apenas branch main)
 
 3. Clique em **Next**
 
-### 1.4 Configurar Opções (Opcional)
+### 2.4 Configurar Opções (Opcional)
 
 Na seção **Configure stack options**:
 
@@ -67,19 +83,19 @@ Na seção **Configure stack options**:
 
 2. Clique em **Next**
 
-### 1.5 Revisar e Criar
+### 2.5 Revisar e Criar
 
 1. Na seção **Review**, revise todas as configurações
 2. Marque a caixa **I acknowledge that AWS CloudFormation might create IAM resources**
 3. Clique em **Submit**
 
-### 1.6 Aguardar Criação
+### 2.6 Aguardar Criação
 
 1. O stack será criado (pode levar alguns minutos)
 2. Aguarde até que o status seja **CREATE_COMPLETE**
 3. Clique no stack para ver os detalhes
 
-### 1.7 Copiar o ARN da Role
+### 2.7 Copiar o ARN da Role
 
 1. Na aba **Outputs** do stack, você verá:
    - **RoleArn**: ARN da Role criada
@@ -87,7 +103,7 @@ Na seção **Configure stack options**:
 2. **Copie o valor de `RoleArn`** (formato: `arn:aws:iam::ACCOUNT_ID:role/github-actions-deploy-role`)
 3. Você precisará deste ARN para configurar o GitHub
 
-## Passo 2: Adicionar Secrets no GitHub
+## Passo 3: Adicionar Secrets no GitHub
 
 1. Acesse seu repositório no GitHub
 2. Vá em **Settings** → **Secrets and variables** → **Actions**
@@ -96,7 +112,7 @@ Na seção **Configure stack options**:
 
    **Secret 1:**
    - **Name**: `AWS_ROLE_ARN`
-   - **Secret**: [Cole o ARN da role que você copiou no Passo 1.7]
+   - **Secret**: [Cole o ARN da role que você copiou no Passo 2.7]
    
    Exemplo: `arn:aws:iam::123456789012:role/github-actions-deploy-role`
 
@@ -106,7 +122,7 @@ Na seção **Configure stack options**:
 
 5. Clique em **Add secret** para cada um
 
-## Passo 3: Verificar Configuração
+## Passo 4: Verificar Configuração
 
 Os workflows já estão configurados para usar OIDC. Eles usarão automaticamente:
 - `AWS_ROLE_ARN` do GitHub Secrets
