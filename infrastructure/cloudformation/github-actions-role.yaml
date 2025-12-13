@@ -46,25 +46,7 @@ Resources:
                           - !Ref GitHubRepository
                           - ':*'
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
-        - arn:aws:iam::aws:policy/AmazonSQSFullAccess
-        - arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator
-        - arn:aws:iam::aws:policy/AWSLambda_FullAccess
-        - arn:aws:iam::aws:policy/IAMFullAccess
-        - arn:aws:iam::aws:policy/AWSCloudFormationFullAccess
-        - arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess
-        - arn:aws:iam::aws:policy/AmazonS3FullAccess
-      Policies:
-        - PolicyName: CDKBootstrapAccess
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - ssm:GetParameter
-                  - ssm:GetParameters
-                Resource:
-                  - !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/cdk-bootstrap/*'
+        - arn:aws:iam::aws:policy/AdministratorAccess
       MaxSessionDuration: 3600
 
 Outputs:
