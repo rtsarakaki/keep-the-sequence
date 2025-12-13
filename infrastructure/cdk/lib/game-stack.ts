@@ -55,7 +55,7 @@ export class GameStack extends cdk.Stack {
       description: 'WebSocket API for The Game',
     });
 
-    const webSocketStage = new apigatewayv2.WebSocketStage(this, 'GameWebSocketStage', {
+    new apigatewayv2.WebSocketStage(this, 'GameWebSocketStage', {
       webSocketApi,
       stageName: 'prod',
       autoDeploy: true,
