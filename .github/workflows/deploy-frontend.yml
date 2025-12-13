@@ -1,10 +1,11 @@
 name: Deploy Frontend
 
+# Temporarily disabled - will be enabled after infrastructure workflow is working
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
+  # push:
+  #   branches:
+  #     - main
     inputs:
       approve:
         description: 'Approve deployment'
