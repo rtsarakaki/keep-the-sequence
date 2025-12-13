@@ -53,6 +53,7 @@ Resources:
         - arn:aws:iam::aws:policy/IAMFullAccess
         - arn:aws:iam::aws:policy/AWSCloudFormationFullAccess
         - arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
       Policies:
         - PolicyName: CDKBootstrapAccess
           PolicyDocument:

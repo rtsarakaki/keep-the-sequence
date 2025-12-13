@@ -45,9 +45,29 @@ jobs:
         working-directory: ./infrastructure/cdk
         run: npm run build
 
+      - name: Get AWS Account ID
+        id: account
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          echo "account_id=$ACCOUNT_ID" >> $GITHUB_OUTPUT
+
+      - name: Bootstrap CDK (if needed)
+        working-directory: ./infrastructure/cdk
+        run: |
+          # Check if bootstrap exists
+          if ! aws ssm get-parameter --name /cdk-bootstrap/hnb659fds/version --region ${{ secrets.AWS_REGION }} 2>/dev/null; then
+            echo "Bootstrap not found. Running bootstrap..."
+            npx cdk bootstrap aws://${{ steps.account.outputs.account_id }}/${{ secrets.AWS_REGION }} --require-approval never
+          else
+            echo "Bootstrap already exists. Skipping..."
+          fi
+        continue-on-error: true
+
       - name: Deploy CDK stack
         working-directory: ./infrastructure/cdk
         run: npm run deploy
         env:
           AWS_REGION: ${{ secrets.AWS_REGION }}
+          CDK_DEFAULT_ACCOUNT: ${{ steps.account.outputs.account_id }}
+          CDK_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
 
