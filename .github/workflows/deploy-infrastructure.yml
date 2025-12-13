@@ -54,14 +54,15 @@ jobs:
       - name: Bootstrap CDK (if needed)
         working-directory: ./infrastructure/cdk
         run: |
+          set -e
           # Check if bootstrap exists
-          if ! aws ssm get-parameter --name /cdk-bootstrap/hnb659fds/version --region ${{ secrets.AWS_REGION }} 2>/dev/null; then
-            echo "Bootstrap not found. Running bootstrap..."
-            npx cdk bootstrap aws://${{ steps.account.outputs.account_id }}/${{ secrets.AWS_REGION }} --require-approval never
+          if aws ssm get-parameter --name /cdk-bootstrap/hnb659fds/version --region ${{ secrets.AWS_REGION }} 2>/dev/null; then
+            echo "✅ Bootstrap already exists. Skipping..."
           else
-            echo "Bootstrap already exists. Skipping..."
+            echo "⚠️ Bootstrap not found. Running bootstrap..."
+            npx cdk bootstrap aws://${{ steps.account.outputs.account_id }}/${{ secrets.AWS_REGION }} --require-approval never
+            echo "✅ Bootstrap completed successfully"
           fi
-        continue-on-error: true
 
       - name: Deploy CDK stack
         working-directory: ./infrastructure/cdk
