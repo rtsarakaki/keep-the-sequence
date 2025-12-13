@@ -69,3 +69,4 @@ npm run dev
 ```
 
 # Test workflow
+# Test after SSM permissions
