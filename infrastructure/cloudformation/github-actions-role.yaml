@@ -51,7 +51,7 @@ Resources:
         - arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator
         - arn:aws:iam::aws:policy/AWSLambda_FullAccess
         - arn:aws:iam::aws:policy/IAMFullAccess
-        - arn:aws:iam::aws:policy/CloudFormationFullAccess
+        - arn:aws:iam::aws:policy/AWSCloudFormationFullAccess
       MaxSessionDuration: 3600
 
 Outputs:
