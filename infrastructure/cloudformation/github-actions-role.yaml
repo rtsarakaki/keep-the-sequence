@@ -7,7 +7,7 @@ Parameters:
     Description: 'GitHub repository in format owner/repo-name (e.g., usuario/keep-the-sequence)'
     AllowedPattern: '^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$'
     ConstraintDescription: 'Must be in format owner/repo-name'
-  
+
   AllowedBranch:
     Type: String
     Description: 'Optional - Specific branch to allow. Leave empty to allow all branches. Example: main'
@@ -60,7 +60,7 @@ Outputs:
     Value: !GetAtt GitHubActionsRole.Arn
     Export:
       Name: GitHubActionsRoleArn
-  
+
   GitHubRepository:
     Description: 'GitHub repository that can assume this role'
     Value: !Ref GitHubRepository
