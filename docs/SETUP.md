@@ -16,7 +16,11 @@ Este guia orienta você na configuração das credenciais AWS necessárias para 
 - ✅ **Recomendado pela AWS**: Prática recomendada para integrações CI/CD
 - ✅ **Infraestrutura como Código**: Role criada via CloudFormation, versionada no repositório
 
-## Passo 1: Criar OIDC Provider (Console AWS)
+## Passo 1: Criar OIDC Provider (Console AWS) - ⚠️ OBRIGATÓRIO
+
+⚠️ **CRÍTICO**: Este passo é **OBRIGATÓRIO** e deve ser feito **ANTES** de criar a Role via CloudFormation.
+
+Se você pular este passo, o workflow falhará com o erro: "No OpenIDConnect provider found in your account"
 
 Primeiro, você precisa criar o OIDC Provider para GitHub. Isso é feito uma única vez.
 
@@ -30,7 +34,9 @@ Primeiro, você precisa criar o OIDC Provider para GitHub. Isso é feito uma ún
    - **Audience**: `sts.amazonaws.com`
 4. Clique em **Add provider**
 
-**Importante**: Anote o ARN do provider criado (será usado automaticamente pelo template).
+**Verificação**: Após criar, você deve ver o provider listado em **Identity providers** com o URL `token.actions.githubusercontent.com`
+
+**Importante**: O template CloudFormation assume que este provider já existe. Se você ainda não criou, faça isso agora antes de continuar.
 
 ## Passo 2: Criar Role IAM via CloudFormation (Console AWS)
 
