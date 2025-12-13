@@ -6,13 +6,13 @@
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
-    "cdk": "cdk",
-    "deploy": "cdk deploy",
-    "deploy:all": "cdk deploy --all",
-    "deploy:role": "cdk deploy GitHubActionsRoleStack",
-    "deploy:game": "cdk deploy TheGameStack",
-    "synth": "cdk synth",
-    "diff": "cdk diff"
+    "cdk": "npx cdk",
+    "deploy": "npx cdk deploy",
+    "deploy:all": "npx cdk deploy --all",
+    "deploy:role": "npx cdk deploy GitHubActionsRoleStack",
+    "deploy:game": "npx cdk deploy TheGameStack",
+    "synth": "npx cdk synth",
+    "diff": "npx cdk diff"
   },
   "dependencies": {
     "aws-cdk-lib": "^2.100.0",
