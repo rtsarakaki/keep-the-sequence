@@ -70,3 +70,4 @@ npm run dev
 
 # Test workflow
 # Test after SSM permissions
+# Test after S3 permissions added
