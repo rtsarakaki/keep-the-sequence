@@ -20,6 +20,8 @@ Este guia orienta você na configuração das credenciais AWS necessárias para 
 
 ⚠️ **CRÍTICO**: Este passo é **OBRIGATÓRIO** e deve ser feito **ANTES** de criar a Role via CloudFormation.
 
+**Nota**: O OIDC Provider não pode ser criado via CloudFormation em todas as regiões AWS, por isso precisa ser criado manualmente no console.
+
 Se você pular este passo, o workflow falhará com o erro: "No OpenIDConnect provider found in your account"
 
 Primeiro, você precisa criar o OIDC Provider para GitHub. Isso é feito uma única vez.
