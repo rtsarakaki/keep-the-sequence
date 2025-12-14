@@ -18,11 +18,11 @@
   },
   "lint-staged": {
     "backend/**/*.ts": [
-      "bash -c 'cd backend && npm run lint -- --fix'",
+      "bash -c 'cd backend && npm run lint'",
       "bash -c 'cd backend && npm run type-check'"
     ],
     "frontend/**/*.{ts,tsx}": [
-      "bash -c 'cd frontend && npm run lint -- --fix'",
+      "bash -c 'cd frontend && npm run lint'",
       "bash -c 'cd frontend && npm run type-check'"
     ]
   },
