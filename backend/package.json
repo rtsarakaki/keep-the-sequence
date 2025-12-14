@@ -12,7 +12,8 @@
     "lint:fix": "eslint src --ext .ts --fix",
     "type-check": "tsc --noEmit",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "test:aws": "ts-node scripts/test-aws-access.ts"
+    "test:aws": "ts-node scripts/test-aws-access.ts",
+    "clear-tables": "ts-node scripts/clear-dynamodb-tables.ts"
   },
   "keywords": [
     "game",
