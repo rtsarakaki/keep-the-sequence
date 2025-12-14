@@ -23,10 +23,16 @@ O frontend precisa das seguintes variáveis de ambiente (todas devem começar co
 Após o deploy do backend via Serverless Framework:
 
 1. Acesse o [AWS Console](https://console.aws.amazon.com)
-2. Vá para **API Gateway** → **APIs**
-3. Encontre a API criada pelo Serverless Framework (nome será algo como `the-game-backend-prod`)
+2. Vá para **API Gateway** → **REST APIs**
+3. Encontre a API criada pelo Serverless Framework:
+   - **Nome**: `prod-the-game-backend` (ou similar)
+   - **Tipo**: REST API (HTTP)
 4. Vá em **Stages** → **prod**
 5. Copie a **Invoke URL** (exemplo: `https://abc123.execute-api.us-east-1.amazonaws.com/prod`)
+
+**⚠️ Importante**: Use a API **REST** (`prod-the-game-backend`), não a WebSocket API!
+
+**📖 Dúvida sobre qual API usar?** Consulte [`WHICH_API.md`](./WHICH_API.md)
 
 **Ou via AWS CLI:**
 ```bash
