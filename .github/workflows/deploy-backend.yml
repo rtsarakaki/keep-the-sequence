@@ -92,6 +92,8 @@ jobs:
         run: npx serverless deploy --stage prod
         env:
           AWS_REGION: ${{ secrets.AWS_REGION }}
+          WEBSOCKET_API_URL: ${{ secrets.WEBSOCKET_API_URL }}
+          ALLOWED_ORIGINS: ${{ secrets.ALLOWED_ORIGINS || '*' }}
         # This step will only execute if all previous steps (including tests) passed
 
       - name: Health check
