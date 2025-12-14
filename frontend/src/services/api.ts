@@ -142,6 +142,8 @@ export async function checkApiHealth(): Promise<{ configured: boolean; accessibl
       headers: {
         'Content-Type': 'application/json',
       },
+      // Add timeout to detect connection issues faster
+      signal: AbortSignal.timeout(10000), // 10 seconds timeout
     });
 
     let errorDetails: string | undefined;
@@ -161,12 +163,33 @@ export async function checkApiHealth(): Promise<{ configured: boolean; accessibl
       details: errorDetails,
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao conectar com a API';
+    let errorMessage = 'Erro desconhecido ao conectar com a API';
+    let errorDetails: string | undefined;
+    
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      // This usually means CORS or network issue
+      errorMessage = 'Falha ao conectar com a API. Possíveis causas:\n';
+      errorMessage += '1. CORS não configurado no backend\n';
+      errorMessage += '2. URL da API incorreta\n';
+      errorMessage += '3. Backend não está deployado ou não está acessível\n';
+      errorMessage += `\nURL testada: ${API_URL}/api/websocket-url`;
+      errorDetails = 'Failed to fetch - Verifique CORS e se o backend está acessível';
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+      errorDetails = error.message;
+      
+      // Check for timeout
+      if (error.name === 'AbortError' || error.message.includes('timeout')) {
+        errorMessage = 'Timeout ao conectar com a API (mais de 10 segundos)';
+        errorDetails = 'Timeout';
+      }
+    }
+
     return {
       configured: true,
       accessible: false,
       error: `Erro de conexão: ${errorMessage}`,
-      details: errorMessage,
+      details: errorDetails,
     };
   }
 }
