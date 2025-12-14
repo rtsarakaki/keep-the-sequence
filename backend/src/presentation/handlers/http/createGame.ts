@@ -8,9 +8,12 @@ import { CreateGameDTO } from '../../../application/dto/CreateGameDTO';
 export const handler = async (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResultV2> => {
+  // Get HTTP method from request context (API Gateway v2 format)
+  const httpMethod = event.requestContext?.http?.method || 'POST';
+  
   // Handle CORS preflight
-  if (event.requestContext.http.method === 'OPTIONS') {
-    const origin = event.headers.origin || event.headers.Origin || '*';
+  if (httpMethod === 'OPTIONS') {
+    const origin = event.headers?.origin || event.headers?.Origin || '*';
     return Promise.resolve({
       statusCode: 200,
       headers: {
@@ -23,7 +26,7 @@ export const handler = async (
     });
   }
 
-  const origin = event.headers.origin || event.headers.Origin || '';
+  const origin = event.headers?.origin || event.headers?.Origin || '';
 
   try {
     // Parse request body

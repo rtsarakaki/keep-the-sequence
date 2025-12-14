@@ -14,9 +14,12 @@ import { AuthService } from '../../../domain/services/AuthService';
 export const handler = (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResultV2> => {
+  // Get HTTP method from request context (API Gateway v2 format)
+  const httpMethod = event.requestContext?.http?.method || 'GET';
+  
   // Handle CORS preflight
-  if (event.requestContext.http.method === 'OPTIONS') {
-    const origin = event.headers.origin || event.headers.Origin || '*';
+  if (httpMethod === 'OPTIONS') {
+    const origin = event.headers?.origin || event.headers?.Origin || '*';
     return Promise.resolve({
       statusCode: 200,
       headers: {
@@ -47,8 +50,9 @@ export const handler = (
   const authService = new AuthService(allowedOrigins);
 
   // Extract parameters from query string or body
-  let gameId: string | undefined = event.queryStringParameters?.gameId;
-  let playerId: string | undefined = event.queryStringParameters?.playerId;
+  const queryParams = event.queryStringParameters || {};
+  let gameId: string | undefined = queryParams.gameId;
+  let playerId: string | undefined = queryParams.playerId;
   
   if (event.body) {
     try {
@@ -60,7 +64,7 @@ export const handler = (
     }
   }
   
-  const origin = event.headers.origin || event.headers.Origin || '';
+  const origin = event.headers?.origin || event.headers?.Origin || '';
 
   // Validate required parameters
   if (!gameId || !playerId) {
