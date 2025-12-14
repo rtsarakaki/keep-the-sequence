@@ -72,8 +72,9 @@ export class GameInitializer {
     
     const remainingDeck = deck.slice(deckIndex);
     
+    const frozenHands = Object.freeze(hands.map(hand => Object.freeze(hand)));
     return {
-      hands: Object.freeze(hands.map(hand => Object.freeze(hand))) as readonly (readonly Card[])[],
+      hands: frozenHands,
       remainingDeck: Object.freeze(remainingDeck),
     };
   }

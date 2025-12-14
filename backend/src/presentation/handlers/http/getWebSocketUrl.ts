@@ -11,13 +11,13 @@ import { AuthService } from '../../../domain/services/AuthService';
  * 
  * This prevents exposing the WebSocket URL directly and adds authentication.
  */
-export const handler = async (
+export const handler = (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResultV2> => {
   // Handle CORS preflight
   if (event.requestContext.http.method === 'OPTIONS') {
     const origin = event.headers.origin || event.headers.Origin || '*';
-    return {
+    return Promise.resolve({
       statusCode: 200,
       headers: {
         'Access-Control-Allow-Origin': origin,
@@ -26,7 +26,7 @@ export const handler = async (
         'Access-Control-Max-Age': '86400',
       },
       body: '',
-    };
+    });
   }
 
   // Get WebSocket URL from environment (set by CDK/Serverless)
@@ -47,10 +47,19 @@ export const handler = async (
   const authService = new AuthService(allowedOrigins);
 
   // Extract parameters from query string or body
-  const gameId = event.queryStringParameters?.gameId || 
-                 (event.body ? JSON.parse(event.body).gameId : undefined);
-  const playerId = event.queryStringParameters?.playerId || 
-                   (event.body ? JSON.parse(event.body).playerId : undefined);
+  let gameId: string | undefined = event.queryStringParameters?.gameId;
+  let playerId: string | undefined = event.queryStringParameters?.playerId;
+  
+  if (event.body) {
+    try {
+      const body = JSON.parse(event.body) as { gameId?: string; playerId?: string };
+      gameId = gameId || body.gameId;
+      playerId = playerId || body.playerId;
+    } catch {
+      // Invalid JSON, will be caught by validation below
+    }
+  }
+  
   const origin = event.headers.origin || event.headers.Origin || '';
 
   // Validate required parameters

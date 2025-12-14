@@ -38,7 +38,8 @@ export class AuthService {
     try {
       // Decode token (base64 JSON)
       const decoded = Buffer.from(token, 'base64').toString('utf-8');
-      const authToken: AuthToken = JSON.parse(decoded);
+      const parsed = JSON.parse(decoded) as unknown;
+      const authToken = parsed as AuthToken;
 
       // Check expiration
       if (authToken.expiresAt < Date.now()) {

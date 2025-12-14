@@ -1,9 +1,9 @@
 import { SQSEvent, SQSHandler } from 'aws-lambda';
 
-export const handler: SQSHandler = async (event: SQSEvent) => {
+export const handler: SQSHandler = (event: SQSEvent) => {
   for (const record of event.Records) {
     try {
-      const messageBody = JSON.parse(record.body);
+      const messageBody = JSON.parse(record.body) as unknown;
       
       // TODO: Process game event
       // - Save to gameEvents table
@@ -17,5 +17,6 @@ export const handler: SQSHandler = async (event: SQSEvent) => {
       throw error;
     }
   }
+  return Promise.resolve();
 };
 

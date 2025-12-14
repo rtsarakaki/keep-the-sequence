@@ -1,5 +1,4 @@
 import { APIGatewayProxyWebsocketHandlerV2 } from 'aws-lambda';
-import { IConnectionRepository } from '../../../domain/repositories/IConnectionRepository';
 import { AuthService } from '../../../domain/services/AuthService';
 
 /**
@@ -10,7 +9,7 @@ import { AuthService } from '../../../domain/services/AuthService';
  * 2. Origin header (if provided)
  * 3. Game and player existence
  */
-export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
+export const handler: APIGatewayProxyWebsocketHandlerV2 = (event) => {
   const connectionId = event.requestContext.connectionId;
   
   if (!connectionId) {
@@ -20,9 +19,10 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
   }
 
   // Extract token from query string
-  const token = event.queryStringParameters?.token;
+  const queryParams = event.queryStringParameters as Record<string, string | undefined> | undefined;
+  const token: string | undefined = queryParams?.token;
   
-  if (!token) {
+  if (!token || typeof token !== 'string') {
     return {
       statusCode: 401,
       body: JSON.stringify({ error: 'Missing authentication token' }),
@@ -34,7 +34,8 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
   const authService = new AuthService(allowedOrigins);
 
   // Extract origin from headers
-  const origin = event.headers.Origin || event.headers.origin;
+  const headers = event.headers as Record<string, string | undefined> | undefined;
+  const origin: string | undefined = headers?.Origin || headers?.origin;
 
   // Validate token
   const authResult = authService.validateToken(token, origin);
@@ -48,6 +49,8 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
     };
   }
 
+  // Extract gameId and playerId for future use
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { gameId, playerId } = authResult.token;
 
   // TODO: Inject repository via DI
@@ -68,8 +71,8 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
   //   lastActivity: new Date(),
   // });
 
-  return {
+  return Promise.resolve({
     statusCode: 200,
-  };
+  });
 };
 

@@ -112,14 +112,14 @@ export class DynamoGameRepository implements IGameRepository {
       throw new Error(`Invalid status: ${status}`);
     }
 
-    const createdAt = item.createdAt as number;
-    const updatedAt = item.updatedAt as number;
+    const createdAt = item.createdAt;
+    const updatedAt = item.updatedAt;
     if (typeof createdAt !== 'number' || typeof updatedAt !== 'number') {
       throw new Error('Invalid DynamoDB item: missing or invalid timestamps');
     }
 
     return new Game({
-      id: item.gameId as string,
+      id: item.gameId,
       players: mapPlayers(Array.isArray(item.players) ? item.players : []),
       piles: {
         ascending1: mapCards(Array.isArray(piles.ascending1) ? piles.ascending1 : []),

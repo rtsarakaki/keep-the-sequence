@@ -1,8 +1,9 @@
 import { APIGatewayProxyWebsocketHandlerV2 } from 'aws-lambda';
 
-export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
+export const handler: APIGatewayProxyWebsocketHandlerV2 = (event) => {
   const connectionId = event.requestContext.connectionId;
-  const gameId = event.queryStringParameters?.gameId;
+  const queryParams = event.queryStringParameters as Record<string, string | undefined> | undefined;
+  const gameId: string | undefined = queryParams?.gameId;
 
   if (!connectionId) {
     return {
@@ -25,8 +26,8 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
   // TODO: Send game state to connection
   // await webSocketService.sendToConnection(connectionId, game);
 
-  return {
+  return Promise.resolve({
     statusCode: 200,
-  };
+  });
 };
 

@@ -1,6 +1,6 @@
 import { APIGatewayProxyWebsocketHandlerV2 } from 'aws-lambda';
 
-export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
+export const handler: APIGatewayProxyWebsocketHandlerV2 = (event) => {
   const connectionId = event.requestContext.connectionId;
   
   if (!connectionId) {
@@ -15,8 +15,8 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
   // TODO: Delete connection
   // await connectionRepository.delete(connectionId);
 
-  return {
+  return Promise.resolve({
     statusCode: 200,
-  };
+  });
 };
 

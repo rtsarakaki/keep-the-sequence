@@ -102,17 +102,17 @@ export class DynamoConnectionRepository implements IConnectionRepository {
       throw new Error('Invalid DynamoDB item: missing or invalid playerId');
     }
 
-    const connectedAt = item.connectedAt as number;
-    const lastActivity = item.lastActivity as number;
+    const connectedAt = item.connectedAt;
+    const lastActivity = item.lastActivity;
 
     if (typeof connectedAt !== 'number' || typeof lastActivity !== 'number') {
       throw new Error('Invalid DynamoDB item: missing or invalid timestamps');
     }
 
     return {
-      connectionId: item.connectionId as string,
-      gameId: item.gameId as string,
-      playerId: item.playerId as string,
+      connectionId: item.connectionId,
+      gameId: item.gameId,
+      playerId: item.playerId,
       connectedAt: new Date(connectedAt),
       lastActivity: new Date(lastActivity),
     };
