@@ -36,18 +36,18 @@ Este documento explica a estratégia de CI/CD do projeto e como os diferentes wo
 - ✅ Build
 - ✅ Deploy para AWS Lambda
 
-### 3. **Deploy Frontend** (`deploy-frontend.yml`)
-**Status**: ✅ Ativo  
-**Propósito**: Validar frontend (Vercel faz deploy automaticamente)
+### 3. **Deploy Frontend** (Vercel)
+**Status**: ✅ Ativo (via integração GitHub)  
+**Propósito**: Deploy automático do frontend
 
 **Quando executa**:
-- Push em `main` (quando há mudanças em `frontend/**`)
-- Pull Requests
+- Push em `main` (detectado automaticamente pela Vercel)
+- Pull Requests (cria preview deployments)
 
 **O que faz**:
-- ✅ Lint + Type-check + Testes
-- ✅ Build
-- ⚠️ Vercel faz deploy automaticamente (não precisa deste workflow)
+- ✅ Build automático
+- ✅ Deploy para produção (main) ou preview (PRs)
+- ✅ Configurado via integração GitHub (sem workflow necessário)
 
 ## Pre-commit Hooks vs CI
 
