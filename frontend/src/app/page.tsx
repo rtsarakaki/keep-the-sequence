@@ -17,7 +17,6 @@ export default function Home() {
   const [gameId, setGameId] = useState('');
   const [playerName, setPlayerName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
-  const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [apiStatus, setApiStatus] = useState<{ checked: boolean; configured: boolean; accessible: boolean }>({
     checked: false,
@@ -174,9 +173,9 @@ export default function Home() {
             <button
               className={styles.button}
               onClick={handleJoinGame}
-              disabled={!gameId.trim() || !playerName.trim() || isJoining}
+              disabled={!gameId.trim() || !playerName.trim()}
             >
-              {isJoining ? 'Entrando...' : 'Entrar'}
+              Entrar
             </button>
           </div>
         </div>
