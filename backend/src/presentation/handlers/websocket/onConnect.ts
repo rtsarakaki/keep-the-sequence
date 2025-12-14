@@ -86,6 +86,13 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
       lastActivity: new Date(),
     });
 
+    // Send initial game state to the newly connected player
+    const webSocketService = container.getWebSocketService(event);
+    await webSocketService.sendToConnection(connectionId, {
+      type: 'gameState',
+      game: game,
+    });
+
     return Promise.resolve({
       statusCode: 200,
     });
