@@ -44,6 +44,27 @@ Consulte `docs/setup/SETUP.md` para instruções completas de configuração.
 
 ## Desenvolvimento
 
+### Estratégia de Branching
+
+Este projeto segue **Trunk-Based Development** com feature branches:
+
+- ✅ **`main`**: Branch principal, sempre deployável
+- ✅ **`feature/*`**: Branches curtas para features (merge via PR)
+- ✅ **CI automático**: Valida PRs antes do merge
+- ✅ **Deploy automático**: Cada merge em `main` dispara deploy
+
+**Fluxo recomendado**:
+1. Criar branch: `git checkout -b feature/nome-da-feature`
+2. Desenvolver e commitar (pre-commit hooks validam)
+3. Push e criar PR no GitHub
+4. CI valida automaticamente
+5. Após aprovação, merge para `main`
+6. Deploy automático acontece
+
+Consulte [`docs/development/BRANCHING_STRATEGY.md`](docs/development/BRANCHING_STRATEGY.md) para detalhes completos.
+
+### Setup Local
+
 ```bash
 # Backend
 cd backend
