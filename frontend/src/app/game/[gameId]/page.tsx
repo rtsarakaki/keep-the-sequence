@@ -89,8 +89,15 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
           await gameWs.connect(params.gameId, playerName, { useName: true });
         }
       } catch (err) {
-        // If playerId fails, try using playerName
-        if (playerId && playerName && err instanceof Error && err.message.includes('not found')) {
+        console.error('Erro ao conectar WebSocket:', err);
+        
+        // Check if error is about getting WebSocket URL (before connection)
+        if (err instanceof Error && err.message.includes('obter URL do WebSocket')) {
+          // This means the HTTP request to get the WebSocket URL failed
+          // Common causes: game not found, player not in game, API error
+          setError(`Erro ao obter URL do WebSocket: ${err.message}\n\nPossíveis causas:\n1. O jogo "${params.gameId}" não existe\n2. Você não faz parte deste jogo\n3. O playerId/nome está incorreto\n4. Problema de conexão com a API`);
+        } else if (playerId && playerName && err instanceof Error && err.message.includes('not found')) {
+          // If playerId fails, try using playerName
           console.log('Tentando reconectar usando nome do jogador...');
           try {
             await gameWs.connect(params.gameId, playerName, { useName: true });
@@ -99,7 +106,7 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
             setError(`Erro ao conectar: ${nameErr instanceof Error ? nameErr.message : 'Erro desconhecido'}\n\nVerifique:\n1. Se o jogo existe\n2. Se você faz parte do jogo\n3. Se o nome está correto`);
           }
         } else {
-          console.error('Erro ao conectar WebSocket:', err);
+          // WebSocket connection error (after getting URL)
           setError(`Erro ao conectar: ${err instanceof Error ? err.message : 'Erro desconhecido'}\n\nVerifique:\n1. Se o jogo existe\n2. Se você faz parte do jogo\n3. Se o playerId/nome está correto`);
         }
       }

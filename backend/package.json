@@ -13,7 +13,8 @@
     "type-check": "tsc --noEmit",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "test:aws": "ts-node scripts/test-aws-access.ts",
-    "clear-tables": "ts-node scripts/clear-dynamodb-tables.ts"
+    "clear-tables": "ts-node scripts/clear-dynamodb-tables.ts",
+    "check-game": "ts-node scripts/check-game.ts"
   },
   "keywords": [
     "game",

@@ -49,7 +49,17 @@ export class GameWebSocket {
       this.setStatus('connecting');
 
       // Get WebSocket URL with token
-      const { wsUrl } = await getWebSocketUrl(gameId, playerIdOrName, options);
+      let wsUrl: string;
+      try {
+        const result = await getWebSocketUrl(gameId, playerIdOrName, options);
+        wsUrl = result.wsUrl;
+      } catch (error) {
+        // Error getting WebSocket URL (before connecting)
+        const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao obter URL do WebSocket';
+        this.setStatus('error');
+        this.callbacks.onError?.(new Error(`Não foi possível obter URL do WebSocket: ${errorMessage}`));
+        throw error;
+      }
 
       // Connect to WebSocket
       this.ws = new WebSocket(wsUrl);
