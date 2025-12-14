@@ -2,115 +2,88 @@
 
 Este guia explica como configurar a conexão WebSocket do frontend (Vercel) com o API Gateway WebSocket (AWS).
 
-## Autenticação do WebSocket
+## ⚠️ IMPORTANTE: Arquitetura de Segurança
 
-### Status Atual: Sem Autenticação (Público)
+**A URL do WebSocket NÃO é mais exposta diretamente!**
 
-Atualmente, o **API Gateway WebSocket não requer autenticação**. Qualquer cliente pode conectar-se diretamente.
+Em vez de usar `NEXT_PUBLIC_WS_URL`, agora usamos um endpoint HTTP intermediário que:
+- Valida autenticação antes de retornar a URL
+- Gera token temporário para conexão
+- Protege contra abuso e exposição de URLs
 
-**Como funciona:**
-- Frontend conecta via `wss://` (WebSocket Secure)
-- API Gateway aceita a conexão
-- Handler `onConnect` valida e registra a conexão
-- Não há tokens ou credenciais necessárias
-
-### Por que não precisa de autenticação?
-
-1. **WebSocket é stateless na conexão**: A autenticação acontece no handler `onConnect`
-2. **Validação no backend**: O handler valida `gameId` e `playerId` via query string
-3. **Segurança por design**: Apenas quem conhece o `gameId` pode entrar no jogo
+Veja `SECURITY_ARCHITECTURE.md` para detalhes completos.
 
 ## Configuração Necessária na Vercel
 
-### Variável de Ambiente: `NEXT_PUBLIC_WS_URL`
+### Variável de Ambiente: `NEXT_PUBLIC_API_URL`
 
-Você precisa configurar a URL do WebSocket API Gateway na Vercel:
+Você precisa configurar a URL do **REST API Gateway** (não o WebSocket diretamente):
 
-1. **Obter a URL do WebSocket**:
-   - Após deploy da infraestrutura, o CDK retorna o output `WebSocketApiUrl`
-   - Formato: `wss://abc123.execute-api.us-east-1.amazonaws.com/prod`
-   - Você pode ver no AWS Console → API Gateway → WebSocket APIs
+1. **Obter a URL do REST API**:
+   - Após deploy do backend, o Serverless Framework cria um REST API Gateway
+   - Formato: `https://abc123.execute-api.us-east-1.amazonaws.com/prod`
+   - Você pode ver no AWS Console → API Gateway → REST APIs
 
 2. **Configurar na Vercel**:
    - Acesse seu projeto na Vercel
    - Vá em **Settings** → **Environment Variables**
    - Adicione:
-     - **Name**: `NEXT_PUBLIC_WS_URL`
-     - **Value**: `wss://abc123.execute-api.us-east-1.amazonaws.com/prod`
-     - **Environment**: Production, Preview, Development (ou só Production)
+     - **Name**: `NEXT_PUBLIC_API_URL`
+     - **Value**: `https://abc123.execute-api.us-east-1.amazonaws.com/prod`
+     - **Environment**: Production, Preview, Development
 
-**Importante**: Variáveis que começam com `NEXT_PUBLIC_` são expostas ao cliente (browser). Isso é necessário porque o WebSocket precisa conectar do browser.
+**Importante**: Esta é a URL do REST API, não do WebSocket. O WebSocket URL será obtido dinamicamente via endpoint `/api/websocket-url`.
 
 ## Como o Frontend Conecta
 
 ```typescript
-// Exemplo de conexão WebSocket no frontend
-const wsUrl = process.env.NEXT_PUBLIC_WS_URL;
+// 1. Obter URL do WebSocket com token autenticado
+const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 const gameId = 'game-123';
 const playerId = 'player-1';
 
-// Conectar com gameId e playerId na query string
-const ws = new WebSocket(
-  `${wsUrl}?gameId=${gameId}&playerId=${playerId}`
+const response = await fetch(
+  `${apiUrl}/api/websocket-url?gameId=${gameId}&playerId=${playerId}`,
+  {
+    headers: {
+      'Origin': window.location.origin, // Importante para validação CORS
+    },
+  }
 );
+
+const { wsUrl } = await response.json();
+
+// 2. Conectar ao WebSocket usando a URL retornada (já contém token)
+const ws = new WebSocket(wsUrl);
 ```
 
 ## Segurança
 
-### Camadas de Segurança
+### Camadas de Segurança Implementadas
 
-1. **Query String Validation** (no `onConnect` handler):
-   - Valida `gameId` e `playerId`
-   - Verifica se o jogo existe
-   - Verifica se o jogador tem permissão
+1. **Endpoint HTTP Intermediário** (`/api/websocket-url`):
+   - Valida `gameId` e `playerId` antes de retornar URL
+   - Gera token temporário (válido 30 minutos)
+   - Valida origem (Origin header) para prevenir CSRF
 
-2. **Validação de Ações** (no `gameHandler`):
+2. **Token Authentication** (no `onConnect` handler):
+   - Token contém `gameId`, `playerId`, `origin`, `expiresAt`
+   - Validação de expiração
+   - Validação de origem
+   - Token é obrigatório para conectar
+
+3. **Rate Limiting**:
+   - WebSocket Stage: 100 req/s por conexão, burst 200
+   - Endpoint HTTP: Rate limiting via API Gateway (configurável)
+
+4. **Validação de Ações** (no `gameHandler`):
    - Cada ação valida se o jogador pode executá-la
    - Não pode jogar carta de outro jogador
    - Não pode executar ações fora do seu turno
 
-3. **Rate Limiting** (API Gateway):
-   - Limita conexões por IP
-   - Protege contra abuso
+### Arquitetura de Segurança
 
-### Se Quiser Adicionar Autenticação (Opcional)
-
-Se quiser adicionar autenticação mais robusta no futuro:
-
-**Opção 1: API Key (Simples)**
-```typescript
-// No frontend
-const ws = new WebSocket(
-  `${wsUrl}?gameId=${gameId}&playerId=${playerId}&apiKey=${apiKey}`
-);
-
-// No handler onConnect
-const apiKey = event.queryStringParameters?.apiKey;
-if (!isValidApiKey(apiKey)) {
-  return { statusCode: 401 };
-}
-```
-
-**Opção 2: JWT Token (Recomendado para produção)**
-```typescript
-// No frontend
-const token = await getAuthToken();
-const ws = new WebSocket(
-  `${wsUrl}?gameId=${gameId}&playerId=${playerId}&token=${token}`
-);
-
-// No handler onConnect
-const token = event.queryStringParameters?.token;
-const decoded = await verifyJWT(token);
-if (!decoded) {
-  return { statusCode: 401 };
-}
-```
-
-**Opção 3: AWS Cognito (Mais robusto)**
-- Integrar com AWS Cognito
-- Usar Authorization header
-- Validar no API Gateway antes de chamar Lambda
+Veja `SECURITY_ARCHITECTURE.md` para detalhes completos da implementação.
 
 ## Checklist de Configuração
 
@@ -120,14 +93,14 @@ if (!decoded) {
 - [ ] URL do WebSocket anotada
 
 ### 2. Configurar Vercel
-- [ ] Variável `NEXT_PUBLIC_WS_URL` configurada
-- [ ] Valor: URL do WebSocket API Gateway
+- [ ] Variável `NEXT_PUBLIC_API_URL` configurada
+- [ ] Valor: URL do REST API Gateway (não WebSocket)
 - [ ] Ambiente: Production (e Preview se necessário)
 
 ### 3. Implementar Frontend
+- [ ] Criar função para obter WebSocket URL via `/api/websocket-url`
 - [ ] Criar WebSocket client
-- [ ] Conectar usando `NEXT_PUBLIC_WS_URL`
-- [ ] Passar `gameId` e `playerId` na query string
+- [ ] Conectar usando URL retornada (já contém token)
 
 ### 4. Testar Conexão
 - [ ] Abrir aplicação na Vercel
@@ -138,15 +111,36 @@ if (!decoded) {
 
 ```typescript
 // frontend/src/services/websocket.ts
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL;
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-export function connectToGame(gameId: string, playerId: string) {
-  if (!WS_URL) {
-    throw new Error('NEXT_PUBLIC_WS_URL not configured');
+async function getWebSocketUrl(gameId: string, playerId: string): Promise<string> {
+  if (!API_URL) {
+    throw new Error('NEXT_PUBLIC_API_URL not configured');
   }
 
-  const url = `${WS_URL}?gameId=${gameId}&playerId=${playerId}`;
-  const ws = new WebSocket(url);
+  const response = await fetch(
+    `${API_URL}/api/websocket-url?gameId=${gameId}&playerId=${playerId}`,
+    {
+      headers: {
+        'Origin': window.location.origin,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to get WebSocket URL: ${response.statusText}`);
+  }
+
+  const { wsUrl } = await response.json();
+  return wsUrl;
+}
+
+export async function connectToGame(gameId: string, playerId: string) {
+  // 1. Obter URL do WebSocket com token
+  const wsUrl = await getWebSocketUrl(gameId, playerId);
+  
+  // 2. Conectar ao WebSocket
+  const ws = new WebSocket(wsUrl);
 
   ws.onopen = () => {
     console.log('Connected to game');
@@ -161,17 +155,22 @@ export function connectToGame(gameId: string, playerId: string) {
     console.error('WebSocket error:', error);
   };
 
+  ws.onclose = () => {
+    console.log('WebSocket disconnected');
+    // Opcional: Reconectar automaticamente
+  };
+
   return ws;
 }
 ```
 
 ## Troubleshooting
 
-### Erro: "NEXT_PUBLIC_WS_URL is not defined"
+### Erro: "NEXT_PUBLIC_API_URL is not defined"
 
 **Solução**: Configure a variável de ambiente na Vercel:
 1. Settings → Environment Variables
-2. Adicione `NEXT_PUBLIC_WS_URL`
+2. Adicione `NEXT_PUBLIC_API_URL` (URL do REST API, não WebSocket)
 3. Faça redeploy
 
 ### Erro: "WebSocket connection failed"
@@ -197,10 +196,12 @@ export function connectToGame(gameId: string, playerId: string) {
 ## Próximos Passos
 
 1. ✅ Deploy da infraestrutura (já feito)
-2. ⏳ Obter URL do WebSocket do output do CDK
-3. ⏳ Configurar `NEXT_PUBLIC_WS_URL` na Vercel
-4. ⏳ Implementar WebSocket client no frontend
-5. ⏳ Testar conexão end-to-end
+2. ✅ Deploy do backend (cria REST API Gateway)
+3. ⏳ Obter URL do REST API Gateway (não WebSocket)
+4. ⏳ Configurar `NEXT_PUBLIC_API_URL` na Vercel
+5. ⏳ Implementar função `getWebSocketUrl` no frontend
+6. ⏳ Implementar WebSocket client no frontend
+7. ⏳ Testar conexão end-to-end
 
 ## Referências
 

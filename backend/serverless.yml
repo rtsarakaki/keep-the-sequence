@@ -13,6 +13,8 @@ provider:
     CONNECTIONS_TABLE: ${self:custom.connectionsTable}
     GAME_EVENTS_TABLE: ${self:custom.gameEventsTable}
     GAME_EVENTS_QUEUE: ${self:custom.gameEventsQueue}
+    WEBSOCKET_API_URL: ${self:custom.websocketApiUrl}
+    ALLOWED_ORIGINS: ${self:custom.allowedOrigins}
   iam:
     role:
       statements:
@@ -48,14 +50,31 @@ custom:
   connectionsTable: ${self:service}-connections-${self:provider.stage}
   gameEventsTable: ${self:service}-game-events-${self:provider.stage}
   gameEventsQueue: ${self:service}-game-events-${self:provider.stage}
+  websocketApiUrl: ${env:WEBSOCKET_API_URL, ''}
+  allowedOrigins: ${env:ALLOWED_ORIGINS, '*'}
 
 functions:
+  getWebSocketUrl:
+    handler: dist/handlers/http/getWebSocketUrl.handler
+    events:
+      - http:
+          path: /api/websocket-url
+          method: get
+          cors: true
+      - http:
+          path: /api/websocket-url
+          method: post
+          cors: true
+    timeout: 10
+
   onConnect:
     handler: dist/handlers/websocket/onConnect.handler
     events:
       - websocket:
           route: $connect
     timeout: 10
+    environment:
+      ALLOWED_ORIGINS: ${self:custom.allowedOrigins}
 
   onDisconnect:
     handler: dist/handlers/websocket/onDisconnect.handler

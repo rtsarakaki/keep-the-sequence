@@ -2,6 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
+import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import { Construct } from 'constructs';
 
 export class GameStack extends cdk.Stack {
@@ -55,11 +56,20 @@ export class GameStack extends cdk.Stack {
       description: 'WebSocket API for The Game',
     });
 
-    new apigatewayv2.WebSocketStage(this, 'GameWebSocketStage', {
+    // WebSocket Stage with rate limiting
+    const webSocketStage = new apigatewayv2.WebSocketStage(this, 'GameWebSocketStage', {
       webSocketApi,
       stageName: 'prod',
       autoDeploy: true,
+      throttle: {
+        rateLimit: 100, // Requests per second per connection
+        burstLimit: 200, // Burst limit
+      },
     });
+
+    // Add rate limiting at API level (per IP)
+    // Note: API Gateway WebSocket doesn't support per-IP rate limiting natively
+    // We'll handle this in the Lambda handlers with DynamoDB tracking
 
     // Outputs
     new cdk.CfnOutput(this, 'GamesTableName', {
@@ -86,6 +96,10 @@ export class GameStack extends cdk.Stack {
       value: webSocketApi.apiEndpoint,
       exportName: 'WebSocketApiUrl',
     });
+
+    // REST API Gateway for HTTP endpoints (e.g., getWebSocketUrl)
+    // Note: This will be created by Serverless Framework, but we output the WebSocket URL
+    // The REST API will be created automatically when deploying Lambda functions
   }
 }
 
