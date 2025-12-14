@@ -95,7 +95,8 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
         if (err instanceof Error && err.message.includes('obter URL do WebSocket')) {
           // This means the HTTP request to get the WebSocket URL failed
           // Common causes: game not found, player not in game, API error
-          setError(`Erro ao obter URL do WebSocket: ${err.message}\n\nPossíveis causas:\n1. O jogo "${params.gameId}" não existe\n2. Você não faz parte deste jogo\n3. O playerId/nome está incorreto\n4. Problema de conexão com a API`);
+          const debugInfo = `\n\nInformações para diagnóstico:\nGame ID: ${params.gameId}\nPlayer ID: ${playerId || 'N/A'}\nPlayer Nome: ${playerName || 'N/A'}`;
+          setError(`Erro ao obter URL do WebSocket: ${err.message}\n\nPossíveis causas:\n1. O jogo "${params.gameId}" não existe\n2. Você não faz parte deste jogo\n3. O playerId/nome está incorreto\n4. Problema de conexão com a API${debugInfo}`);
         } else if (playerId && playerName && err instanceof Error && err.message.includes('not found')) {
           // If playerId fails, try using playerName
           console.log('Tentando reconectar usando nome do jogador...');

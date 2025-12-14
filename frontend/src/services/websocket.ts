@@ -87,10 +87,16 @@ export class GameWebSocket {
       };
 
       this.ws.onclose = (event) => {
+        // Get stored gameId and playerIdOrName for error messages
+        const storedGameId = (this as { _currentGameId?: string })._currentGameId || gameId;
+        const storedPlayerIdOrName = (this as { _currentPlayerIdOrName?: string })._currentPlayerIdOrName || playerIdOrName;
+        
         console.log('WebSocket desconectado:', {
           code: event.code,
           reason: event.reason,
           wasClean: event.wasClean,
+          gameId: storedGameId,
+          playerIdOrName: storedPlayerIdOrName,
         });
         this.setStatus('disconnected');
 
@@ -102,6 +108,9 @@ export class GameWebSocket {
           // 1000: Normal closure
           // 1006: Abnormal closure (connection lost)
           // 4001-4004: Custom error codes from API Gateway
+          
+          // Include gameId and playerId in error message for debugging
+          const debugInfo = `\n\nInformações para diagnóstico:\nGame ID: ${storedGameId}\nPlayer ID/Nome: ${storedPlayerIdOrName}`;
           
           if (event.code === 1006) {
             // Connection closed unexpectedly - could be:
@@ -118,6 +127,7 @@ export class GameWebSocket {
             if (event.reason) {
               errorMessage += `\nDetalhes: ${event.reason}`;
             }
+            errorMessage += debugInfo;
           } else if (event.code >= 4001 && event.code <= 4004) {
             // API Gateway custom error codes
             let reasonText = event.reason || 'Erro desconhecido';
@@ -135,6 +145,7 @@ export class GameWebSocket {
             } else {
               errorMessage = `Erro do servidor (código ${event.code}): ${reasonText}`;
             }
+            errorMessage += debugInfo;
           } else if (event.reason) {
             try {
               const reasonData = JSON.parse(event.reason);
@@ -142,8 +153,10 @@ export class GameWebSocket {
             } catch {
               errorMessage = event.reason;
             }
+            errorMessage += debugInfo;
           } else {
             errorMessage = `Conexão fechada (código: ${event.code}). Verifique se o jogo existe e você faz parte dele.`;
+            errorMessage += debugInfo;
           }
           
           this.callbacks.onError?.(new Error(errorMessage));
