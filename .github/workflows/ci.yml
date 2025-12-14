@@ -1,15 +1,16 @@
 name: CI
 
-# Temporarily disabled - will be enabled after infrastructure workflow is working
+# CI workflow validates code quality before merge
+# Complements pre-commit hooks and deploy workflows
 on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+      - 'feature/**'
   workflow_dispatch:
-  # pull_request:
-  #   branches:
-  #     - main
-  # push:
-  #   branches:
-  #     - main
-  #     - 'feature/**'
 
 jobs:
   backend-ci:
