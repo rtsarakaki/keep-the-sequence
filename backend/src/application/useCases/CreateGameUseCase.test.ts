@@ -20,6 +20,7 @@ describe('CreateGameUseCase', () => {
         playerName: 'Player 1',
       };
 
+      mockGameRepository.findById = jest.fn().mockResolvedValue(null); // No existing game with this ID
       mockGameRepository.save = jest.fn().mockResolvedValue(undefined);
 
       const result = await createGameUseCase.execute(dto);
@@ -28,6 +29,8 @@ describe('CreateGameUseCase', () => {
       if (result.isSuccess) {
         expect(result.value).toBeDefined();
         expect(result.value.id).toBeDefined();
+        expect(result.value.id).toHaveLength(6); // Short 6-character ID
+        expect(result.value.id).toMatch(/^[0-9A-Z]{6}$/); // Alphanumeric
         expect(result.value.players).toHaveLength(1);
         expect(result.value.players[0].name).toBe('Player 1');
         expect(result.value.status).toBe('waiting');
@@ -127,6 +130,7 @@ describe('CreateGameUseCase', () => {
         playerName: 'Player 1',
       };
 
+      mockGameRepository.findById = jest.fn().mockResolvedValue(null); // No existing games
       mockGameRepository.save = jest.fn().mockResolvedValue(undefined);
 
       const result1 = await createGameUseCase.execute(dto);
@@ -136,6 +140,8 @@ describe('CreateGameUseCase', () => {
       expect(result2.isSuccess).toBe(true);
       if (result1.isSuccess && result2.isSuccess) {
         expect(result1.value.id).not.toBe(result2.value.id);
+        expect(result1.value.id).toHaveLength(6);
+        expect(result2.value.id).toHaveLength(6);
       }
     });
   });

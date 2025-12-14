@@ -3,6 +3,7 @@ import { CreateGameDTO } from '../dto/CreateGameDTO';
 import { Game } from '../../domain/entities/Game';
 import { Player } from '../../domain/entities/Player';
 import { GameInitializer } from '../../domain/services/GameInitializer';
+import { GameIdGenerator } from '../../domain/services/GameIdGenerator';
 import { Result, success, failure } from './Result';
 import { randomUUID } from 'crypto';
 
@@ -16,8 +17,8 @@ export class CreateGameUseCase {
 
   async execute(dto: CreateGameDTO): Promise<Result<Game>> {
     try {
-      // Generate game ID
-      const gameId = randomUUID();
+      // Generate unique short game ID (6 characters)
+      const gameId = await GameIdGenerator.generateUniqueId(this.gameRepository);
 
       // Generate player ID if not provided
       const playerId = dto.playerId || randomUUID();
