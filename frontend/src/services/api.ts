@@ -124,6 +124,65 @@ export async function createGame(playerName: string, playerId?: string): Promise
 }
 
 /**
+ * Join an existing game
+ */
+export async function joinGame(
+  gameId: string,
+  playerName: string,
+  playerId?: string
+): Promise<{ gameId: string; playerId: string; game: unknown }> {
+  try {
+    const apiUrl = getApiUrl();
+    const response = await fetch(`${apiUrl}/api/games/join`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      mode: 'cors',
+      credentials: 'omit',
+      body: JSON.stringify({
+        gameId,
+        playerName,
+        playerId,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorMessage = `Erro ao entrar na partida (Status ${response.status})`;
+      let errorDetails: string | undefined;
+      
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData.error || errorData.message || errorMessage;
+        errorDetails = errorData.error || errorData.message;
+      } catch {
+        errorDetails = errorText || `Status ${response.status}: ${response.statusText}`;
+        errorMessage = `${errorMessage}: ${errorDetails}`;
+      }
+
+      const fullError = errorDetails ? `${errorMessage}\n\nDetalhes: ${errorDetails}` : errorMessage;
+      throw new Error(fullError);
+    }
+
+    const data = await response.json();
+    
+    if (!data.gameId || !data.playerId) {
+      throw new Error('Resposta inválida: gameId ou playerId não encontrados');
+    }
+
+    return data;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('API URL não configurada')) {
+      throw error; // Re-throw configuration errors as-is
+    }
+    
+    const message = error instanceof Error ? error.message : 'Erro desconhecido ao entrar na partida';
+    throw new Error(`Não foi possível entrar na partida: ${message}`);
+  }
+}
+
+/**
  * Check if API is configured and accessible
  */
 export async function checkApiHealth(): Promise<{ configured: boolean; accessible: boolean; error?: string; details?: string }> {

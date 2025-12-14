@@ -82,6 +82,15 @@ functions:
           cors: true
     timeout: 10
 
+  joinGame:
+    handler: src/presentation/handlers/http/joinGame.handler
+    events:
+      - http:
+          path: /api/games/join
+          method: post
+          cors: true
+    timeout: 10
+
   onConnect:
     handler: src/presentation/handlers/websocket/onConnect.handler
     events:

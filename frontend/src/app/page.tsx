@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createGame, checkApiHealth } from '@/services/api';
+import { createGame, joinGame, checkApiHealth } from '@/services/api';
 import styles from './page.module.css';
 
 // Simple UUID generator for browser (crypto.randomUUID is not available in all browsers)
@@ -62,7 +62,7 @@ export default function Home() {
     }
   };
 
-  const handleJoinGame = () => {
+  const handleJoinGame = async () => {
     if (!gameId.trim()) {
       setError('Por favor, insira um ID de jogo válido');
       return;
@@ -76,13 +76,21 @@ export default function Home() {
     // Generate player ID
     const playerId = generateUUID();
 
-    // Store player info in sessionStorage for the game page
-    sessionStorage.setItem('playerId', playerId);
-    sessionStorage.setItem('playerName', playerName.trim());
-    sessionStorage.setItem('gameId', gameId.trim());
+    try {
+      // Join game via HTTP endpoint
+      const result = await joinGame(gameId.trim(), playerName.trim(), playerId);
 
-    // Redirect to game page (will connect via WebSocket there)
-    window.location.href = `/game/${gameId.trim()}?playerId=${playerId}`;
+      // Store player info in sessionStorage for the game page
+      sessionStorage.setItem('playerId', result.playerId);
+      sessionStorage.setItem('playerName', playerName.trim());
+      sessionStorage.setItem('gameId', result.gameId);
+
+      // Redirect to game page (will connect via WebSocket there)
+      window.location.href = `/game/${result.gameId}?playerId=${result.playerId}`;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao entrar na partida';
+      setError(errorMessage);
+    }
   };
 
   return (
