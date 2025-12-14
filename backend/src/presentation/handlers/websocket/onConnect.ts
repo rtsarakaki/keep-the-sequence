@@ -113,21 +113,61 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
       ttl: Math.floor(now.getTime() / 1000) + (24 * 60 * 60), // 24 hours
     });
 
-    // Send initial game state to the newly connected player
+    // Return 200 immediately to establish connection
+    // API Gateway will close connection with code 1006 if we don't return 200 quickly
+    console.log(`Connection established successfully: ${connectionId} for game ${gameId}, player ${playerId}`);
+    
+    // Send initial game state asynchronously (don't await - connection is already established)
+    // Serialize Game entity properly (convert Date objects to ISO strings)
     const webSocketService = container.getWebSocketService(event);
-    await webSocketService.sendToConnection(connectionId, {
+    webSocketService.sendToConnection(connectionId, {
       type: 'gameState',
-      game: game,
+      game: {
+        id: game.id,
+        players: game.players.map(p => ({
+          id: p.id,
+          name: p.name,
+          hand: p.hand.map(c => ({ value: c.value, suit: c.suit })),
+          isConnected: p.isConnected,
+        })),
+        piles: {
+          ascending1: game.piles.ascending1.map(c => ({ value: c.value, suit: c.suit })),
+          ascending2: game.piles.ascending2.map(c => ({ value: c.value, suit: c.suit })),
+          descending1: game.piles.descending1.map(c => ({ value: c.value, suit: c.suit })),
+          descending2: game.piles.descending2.map(c => ({ value: c.value, suit: c.suit })),
+        },
+        deck: game.deck.map(c => ({ value: c.value, suit: c.suit })),
+        discardPile: game.discardPile.map(c => ({ value: c.value, suit: c.suit })),
+        currentTurn: game.currentTurn,
+        status: game.status,
+        createdAt: game.createdAt.toISOString(),
+        updatedAt: game.updatedAt.toISOString(),
+      },
+    }).catch((sendError) => {
+      // Log error but don't fail the connection - player can request sync later
+      console.error(`Failed to send initial game state to ${connectionId}:`, sendError);
     });
 
     return Promise.resolve({
       statusCode: 200,
     });
   } catch (error) {
-    console.error('Error in onConnect handler:', error);
+    console.error('Error in onConnect handler:', error, {
+      connectionId,
+      gameId: authResult.token?.gameId,
+      playerId: authResult.token?.playerId,
+      errorMessage: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+    });
+    
+    // Return 403 instead of 500 to provide better error message
+    // API Gateway will close the connection with code 1006 if we return non-200
     return Promise.resolve({
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Internal server error' }),
+      statusCode: 403,
+      body: JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'Internal server error',
+        code: 'CONNECTION_FAILED',
+      }),
     });
   }
 };
