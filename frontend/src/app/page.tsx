@@ -18,21 +18,10 @@ export default function Home() {
   const [playerName, setPlayerName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [apiStatus, setApiStatus] = useState<{ checked: boolean; configured: boolean; accessible: boolean }>({
-    checked: false,
-    configured: false,
-    accessible: false,
-  });
 
   // Check API status on mount
   useEffect(() => {
     checkApiHealth().then((status) => {
-      setApiStatus({
-        checked: true,
-        configured: status.configured,
-        accessible: status.accessible,
-      });
-      
       if (!status.configured) {
         setError(
           '⚠️ API não configurada: Por favor, configure NEXT_PUBLIC_API_URL nas variáveis de ambiente da Vercel.'
