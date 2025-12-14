@@ -48,11 +48,23 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
     const gameWs = new GameWebSocket({
       onMessage: (message) => {
         console.log('Mensagem recebida:', message);
+        console.log('Tipo da mensagem:', message.type);
+        console.log('Conteúdo completo:', JSON.stringify(message, null, 2));
+        
         if (message.type === 'gameState' || message.type === 'gameUpdated') {
-          setGameState(message.game as GameState);
-          setError(null); // Clear any previous errors
+          console.log('Atualizando estado do jogo:', message.game);
+          try {
+            setGameState(message.game as GameState);
+            setError(null); // Clear any previous errors
+            console.log('Estado do jogo atualizado com sucesso');
+          } catch (err) {
+            console.error('Erro ao atualizar estado do jogo:', err);
+            setError(`Erro ao processar estado do jogo: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
+          }
         } else if (message.type === 'error') {
-          setError(message.error);
+          setError((message as { type: 'error'; error: string }).error);
+        } else {
+          console.warn('Tipo de mensagem desconhecido:', (message as { type?: string }).type);
         }
       },
       onStatusChange: (status) => {
