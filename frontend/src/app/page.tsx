@@ -1,29 +1,97 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createGame, checkApiHealth } from '@/services/api';
 import styles from './page.module.css';
+
+// Simple UUID generator for browser (crypto.randomUUID is not available in all browsers)
+function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
 
 export default function Home() {
   const [gameId, setGameId] = useState('');
+  const [playerName, setPlayerName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [isJoining, setIsJoining] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [apiStatus, setApiStatus] = useState<{ checked: boolean; configured: boolean; accessible: boolean }>({
+    checked: false,
+    configured: false,
+    accessible: false,
+  });
+
+  // Check API status on mount
+  useEffect(() => {
+    checkApiHealth().then((status) => {
+      setApiStatus({
+        checked: true,
+        configured: status.configured,
+        accessible: status.accessible,
+      });
+      
+      if (!status.configured) {
+        setError(
+          '⚠️ API não configurada: Por favor, configure NEXT_PUBLIC_API_URL nas variáveis de ambiente da Vercel.'
+        );
+      } else if (!status.accessible) {
+        setError(`⚠️ API não acessível: ${status.error || 'Erro desconhecido'}`);
+      }
+    });
+  }, []);
 
   const handleCreateGame = async () => {
+    if (!playerName.trim()) {
+      setError('Por favor, informe seu nome');
+      return;
+    }
+
     setIsCreating(true);
-    // TODO: Implementar criação de jogo
-    console.log('Creating game...');
-    setTimeout(() => {
+    setError(null);
+
+    try {
+      // Create game via HTTP endpoint
+      const result = await createGame(playerName.trim());
+
+      // Store player info in sessionStorage for the game page
+      sessionStorage.setItem('playerId', result.playerId);
+      sessionStorage.setItem('playerName', playerName.trim());
+      sessionStorage.setItem('gameId', result.gameId);
+
+      // Redirect to game page
+      window.location.href = `/game/${result.gameId}?playerId=${result.playerId}`;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao criar partida';
+      setError(errorMessage);
       setIsCreating(false);
-      // TODO: Redirecionar para o jogo criado
-    }, 1000);
+    }
   };
 
   const handleJoinGame = () => {
     if (!gameId.trim()) {
-      alert('Por favor, insira um ID de jogo válido');
+      setError('Por favor, insira um ID de jogo válido');
       return;
     }
-    // TODO: Implementar join game
-    window.location.href = `/game/${gameId}`;
+
+    if (!playerName.trim()) {
+      setError('Por favor, informe seu nome');
+      return;
+    }
+
+    // Generate player ID
+    const playerId = generateUUID();
+
+    // Store player info in sessionStorage for the game page
+    sessionStorage.setItem('playerId', playerId);
+    sessionStorage.setItem('playerName', playerName.trim());
+    sessionStorage.setItem('gameId', gameId.trim());
+
+    // Redirect to game page (will connect via WebSocket there)
+    window.location.href = `/game/${gameId.trim()}?playerId=${playerId}`;
   };
 
   return (
@@ -40,16 +108,41 @@ export default function Home() {
         </p>
       </div>
 
+      {error && (
+        <div style={{
+          padding: '1rem',
+          margin: '1rem auto',
+          maxWidth: '600px',
+          backgroundColor: '#fee',
+          border: '1px solid #fcc',
+          borderRadius: '8px',
+          color: '#c33',
+        }}>
+          {error}
+        </div>
+      )}
+
       <div className={styles.actions}>
         <div className={styles.card}>
           <h2 className={styles.cardTitle}>Criar Partida</h2>
           <p className={styles.cardDescription}>
             Inicie uma nova partida e convide seus amigos
           </p>
+          <div style={{ marginBottom: '1rem' }}>
+            <input
+              type="text"
+              placeholder="Seu nome"
+              value={playerName}
+              onChange={(e) => setPlayerName(e.target.value)}
+              className={styles.input}
+              style={{ width: '100%', marginBottom: '0.5rem' }}
+              onKeyPress={(e) => e.key === 'Enter' && !isCreating && handleCreateGame()}
+            />
+          </div>
           <button
             className={styles.button}
             onClick={handleCreateGame}
-            disabled={isCreating}
+            disabled={isCreating || !playerName.trim()}
           >
             {isCreating ? 'Criando...' : 'Criar Partida'}
           </button>
@@ -63,18 +156,27 @@ export default function Home() {
           <div className={styles.joinForm}>
             <input
               type="text"
+              placeholder="Seu nome"
+              value={playerName}
+              onChange={(e) => setPlayerName(e.target.value)}
+              className={styles.input}
+              style={{ marginBottom: '0.5rem' }}
+            />
+            <input
+              type="text"
               placeholder="ID da partida"
               value={gameId}
               onChange={(e) => setGameId(e.target.value)}
               className={styles.input}
+              style={{ marginBottom: '0.5rem' }}
               onKeyPress={(e) => e.key === 'Enter' && handleJoinGame()}
             />
             <button
               className={styles.button}
               onClick={handleJoinGame}
-              disabled={!gameId.trim()}
+              disabled={!gameId.trim() || !playerName.trim() || isJoining}
             >
-              Entrar
+              {isJoining ? 'Entrando...' : 'Entrar'}
             </button>
           </div>
         </div>

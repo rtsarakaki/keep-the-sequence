@@ -73,6 +73,15 @@ functions:
           cors: true
     timeout: 10
 
+  createGame:
+    handler: src/presentation/handlers/http/createGame.handler
+    events:
+      - http:
+          path: /api/games
+          method: post
+          cors: true
+    timeout: 10
+
   onConnect:
     handler: src/presentation/handlers/websocket/onConnect.handler
     events:
