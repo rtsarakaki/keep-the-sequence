@@ -8,7 +8,6 @@ provider:
   region: ${env:AWS_REGION, 'us-east-1'}
   stage: ${opt:stage, 'dev'}
   environment:
-    AWS_REGION: ${self:provider.region}
     GAMES_TABLE: ${self:custom.gamesTable}
     CONNECTIONS_TABLE: ${self:custom.connectionsTable}
     GAME_EVENTS_TABLE: ${self:custom.gameEventsTable}
