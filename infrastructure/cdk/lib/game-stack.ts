@@ -2,7 +2,6 @@ import * as cdk from 'aws-cdk-lib';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
-import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import { Construct } from 'constructs';
 
 export class GameStack extends cdk.Stack {
@@ -57,7 +56,7 @@ export class GameStack extends cdk.Stack {
     });
 
     // WebSocket Stage with rate limiting
-    const webSocketStage = new apigatewayv2.WebSocketStage(this, 'GameWebSocketStage', {
+    new apigatewayv2.WebSocketStage(this, 'GameWebSocketStage', {
       webSocketApi,
       stageName: 'prod',
       autoDeploy: true,
