@@ -33,13 +33,13 @@ export const handler = (
   const wsUrl = process.env.WEBSOCKET_API_URL;
   
   if (!wsUrl) {
-    return {
+    return Promise.resolve({
       statusCode: 500,
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ error: 'WebSocket URL not configured' }),
-    };
+    });
   }
 
   // Get allowed origins from environment
@@ -64,7 +64,7 @@ export const handler = (
 
   // Validate required parameters
   if (!gameId || !playerId) {
-    return {
+    return Promise.resolve({
       statusCode: 400,
       headers: {
         'Content-Type': 'application/json',
@@ -73,7 +73,7 @@ export const handler = (
       body: JSON.stringify({
         error: 'Missing required parameters: gameId and playerId',
       }),
-    };
+    });
   }
 
   // TODO: Validate gameId and playerId exist in the game
@@ -86,7 +86,7 @@ export const handler = (
   // Return WebSocket URL with token
   const wsUrlWithToken = `${wsUrl}?token=${encodeURIComponent(token)}`;
 
-  return {
+  return Promise.resolve({
     statusCode: 200,
     headers: {
       'Content-Type': 'application/json',
@@ -98,6 +98,6 @@ export const handler = (
       wsUrl: wsUrlWithToken,
       expiresIn: 1800, // 30 minutes in seconds
     }),
-  };
+  });
 };
 

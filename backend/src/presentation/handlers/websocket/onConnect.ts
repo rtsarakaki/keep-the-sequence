@@ -13,20 +13,24 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = (event) => {
   const connectionId = event.requestContext.connectionId;
   
   if (!connectionId) {
-    return {
+    return Promise.resolve({
       statusCode: 400,
-    };
+    });
   }
 
   // Extract token from query string
-  const queryParams = event.queryStringParameters as Record<string, string | undefined> | undefined;
+  // Note: WebSocket V2 event structure - query params may need custom mapping
+  // For $connect route, query params are typically available via custom mapping in API Gateway
+  // For now, we'll use type assertion to access queryStringParameters
+  const eventWithQuery = event as unknown as { queryStringParameters?: Record<string, string | undefined> };
+  const queryParams = eventWithQuery.queryStringParameters;
   const token: string | undefined = queryParams?.token;
   
   if (!token || typeof token !== 'string') {
-    return {
+    return Promise.resolve({
       statusCode: 401,
       body: JSON.stringify({ error: 'Missing authentication token' }),
-    };
+    });
   }
 
   // Get allowed origins from environment
@@ -34,24 +38,29 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = (event) => {
   const authService = new AuthService(allowedOrigins);
 
   // Extract origin from headers
-  const headers = event.headers as Record<string, string | undefined> | undefined;
+  // Note: WebSocket V2 may not have headers directly - may need custom mapping
+  const eventWithHeaders = event as unknown as { headers?: Record<string, string | undefined> };
+  const headers = eventWithHeaders.headers;
   const origin: string | undefined = headers?.Origin || headers?.origin;
 
   // Validate token
   const authResult = authService.validateToken(token, origin);
   
   if (!authResult.isValid || !authResult.token) {
-    return {
+    return Promise.resolve({
       statusCode: 401,
       body: JSON.stringify({ 
         error: authResult.error || 'Invalid authentication token' 
       }),
-    };
+    });
   }
 
   // Extract gameId and playerId for future use
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { gameId, playerId } = authResult.token;
+  const { gameId: _gameId, playerId: _playerId } = authResult.token;
+  
+  // Suppress unused variable warnings (will be used when implementing TODO)
+  void _gameId;
+  void _playerId;
 
   // TODO: Inject repository via DI
   // const connectionRepository: IConnectionRepository = container.resolve('IConnectionRepository');

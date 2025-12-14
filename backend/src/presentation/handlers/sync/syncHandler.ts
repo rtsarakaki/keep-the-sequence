@@ -2,19 +2,23 @@ import { APIGatewayProxyWebsocketHandlerV2 } from 'aws-lambda';
 
 export const handler: APIGatewayProxyWebsocketHandlerV2 = (event) => {
   const connectionId = event.requestContext.connectionId;
-  const queryParams = event.queryStringParameters as Record<string, string | undefined> | undefined;
+  
+  // Extract gameId from routeKey or custom mapping
+  // Note: WebSocket V2 may need custom route parameter extraction
+  const eventWithQuery = event as unknown as { queryStringParameters?: Record<string, string | undefined> };
+  const queryParams = eventWithQuery.queryStringParameters;
   const gameId: string | undefined = queryParams?.gameId;
 
   if (!connectionId) {
-    return {
+    return Promise.resolve({
       statusCode: 400,
-    };
+    });
   }
 
   if (!gameId) {
-    return {
+    return Promise.resolve({
       statusCode: 400,
-    };
+    });
   }
 
   // TODO: Inject repository via DI

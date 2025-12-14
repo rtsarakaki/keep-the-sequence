@@ -4,9 +4,9 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = (event) => {
   const connectionId = event.requestContext.connectionId;
   
   if (!connectionId) {
-    return {
+    return Promise.resolve({
       statusCode: 400,
-    };
+    });
   }
 
   // TODO: Inject repository via DI
