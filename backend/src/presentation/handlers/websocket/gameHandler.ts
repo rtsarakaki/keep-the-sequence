@@ -51,6 +51,66 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
 
   const action = (messageBody as { action: string }).action;
 
+  // Handle sync action
+  if (action === 'sync') {
+    const syncData = messageBody as { action: 'sync'; gameId?: string };
+    const gameId = syncData.gameId;
+    
+    if (!gameId) {
+      // Try to get gameId from connection
+      const connectionRepository = container.getConnectionRepository();
+      const connection = await connectionRepository.findByConnectionId(connectionId);
+      
+      if (!connection) {
+        return Promise.resolve({
+          statusCode: 400,
+          body: JSON.stringify({ error: 'Connection not found. Please reconnect.' }),
+        });
+      }
+      
+      const syncGameUseCase = container.getSyncGameUseCase();
+      const webSocketService = container.getWebSocketService(event);
+      
+      const result = await syncGameUseCase.execute(connection.gameId);
+      
+      if (!result.isSuccess) {
+        return Promise.resolve({
+          statusCode: 404,
+          body: JSON.stringify({ error: result.error || 'Game not found' }),
+        });
+      }
+      
+      // Serialize game state properly
+      const game = result.value;
+      await webSocketService.sendToConnection(connectionId, {
+        type: 'gameState',
+        game: {
+          id: game.id,
+          players: game.players.map(p => ({
+            id: p.id,
+            name: p.name,
+            hand: p.hand.map(c => ({ value: c.value, suit: c.suit })),
+            isConnected: p.isConnected,
+          })),
+          piles: {
+            ascending1: game.piles.ascending1.map(c => ({ value: c.value, suit: c.suit })),
+            ascending2: game.piles.ascending2.map(c => ({ value: c.value, suit: c.suit })),
+            descending1: game.piles.descending1.map(c => ({ value: c.value, suit: c.suit })),
+            descending2: game.piles.descending2.map(c => ({ value: c.value, suit: c.suit })),
+          },
+          deck: game.deck.map(c => ({ value: c.value, suit: c.suit })),
+          discardPile: game.discardPile.map(c => ({ value: c.value, suit: c.suit })),
+          currentTurn: game.currentTurn,
+          status: game.status,
+        },
+      });
+      
+      return Promise.resolve({
+        statusCode: 200,
+      });
+    }
+  }
+
   try {
     const connectionRepository = container.getConnectionRepository();
     const webSocketService = container.getWebSocketService(event);
