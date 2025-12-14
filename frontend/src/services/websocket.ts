@@ -56,8 +56,9 @@ export class GameWebSocket {
       } catch (error) {
         // Error getting WebSocket URL (before connecting)
         const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao obter URL do WebSocket';
+        const debugInfo = `\n\nInformações para diagnóstico:\nGame ID: ${gameId}\nPlayer ID/Nome: ${playerIdOrName}`;
         this.setStatus('error');
-        this.callbacks.onError?.(new Error(`Não foi possível obter URL do WebSocket: ${errorMessage}`));
+        this.callbacks.onError?.(new Error(`Não foi possível obter URL do WebSocket: ${errorMessage}${debugInfo}`));
         throw error;
       }
 
@@ -164,7 +165,10 @@ export class GameWebSocket {
 
         // Attempt to reconnect if not a normal closure
         if (event.code !== 1000 && this.reconnectAttempts < this.maxReconnectAttempts) {
-          this.attemptReconnect(gameId, playerIdOrName, options);
+          // Use stored values from closure
+          const reconnectGameId = storedGameId;
+          const reconnectPlayerIdOrName = storedPlayerIdOrName;
+          this.attemptReconnect(reconnectGameId, reconnectPlayerIdOrName, options);
         }
       };
     } catch (error) {
