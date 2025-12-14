@@ -87,10 +87,6 @@ jobs:
         working-directory: ./backend
         run: npm install
 
-      - name: Build
-        working-directory: ./backend
-        run: npm run build
-
       - name: Deploy to AWS Lambda
         working-directory: ./backend
         run: npx serverless deploy --stage prod

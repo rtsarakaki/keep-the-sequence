@@ -52,12 +52,17 @@ custom:
   gameEventsQueue: ${self:service}-game-events-${self:provider.stage}
   websocketApiUrl: ${env:WEBSOCKET_API_URL, ''}
   allowedOrigins: ${env:ALLOWED_ORIGINS, '*'}
-  typescript:
+  serverlessPluginTypescript:
     tsConfigFileLocation: './tsconfig.json'
+    exclude:
+      - 'dist/**'
+      - 'node_modules/**'
+      - '*.test.ts'
+      - '*.spec.ts'
 
 functions:
   getWebSocketUrl:
-    handler: dist/presentation/handlers/http/getWebSocketUrl.handler
+    handler: src/presentation/handlers/http/getWebSocketUrl.handler
     events:
       - http:
           path: /api/websocket-url
@@ -70,7 +75,7 @@ functions:
     timeout: 10
 
   onConnect:
-    handler: dist/presentation/handlers/websocket/onConnect.handler
+    handler: src/presentation/handlers/websocket/onConnect.handler
     events:
       - websocket:
           route: $connect
@@ -79,28 +84,28 @@ functions:
       ALLOWED_ORIGINS: ${self:custom.allowedOrigins}
 
   onDisconnect:
-    handler: dist/presentation/handlers/websocket/onDisconnect.handler
+    handler: src/presentation/handlers/websocket/onDisconnect.handler
     events:
       - websocket:
           route: $disconnect
     timeout: 10
 
   gameHandler:
-    handler: dist/presentation/handlers/websocket/gameHandler.handler
+    handler: src/presentation/handlers/websocket/gameHandler.handler
     events:
       - websocket:
           route: $default
     timeout: 30
 
   syncHandler:
-    handler: dist/presentation/handlers/sync/syncHandler.handler
+    handler: src/presentation/handlers/sync/syncHandler.handler
     events:
       - websocket:
           route: sync
     timeout: 10
 
   sqsConsumer:
-    handler: dist/presentation/handlers/sqs/sqsConsumer.handler
+    handler: src/presentation/handlers/sqs/sqsConsumer.handler
     events:
       - sqs:
           arn:
