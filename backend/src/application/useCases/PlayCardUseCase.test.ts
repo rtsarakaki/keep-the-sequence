@@ -35,7 +35,11 @@ describe('PlayCardUseCase', () => {
       }
       
       // Add a lower card to ascending pile to make the play valid
-      const lowerCard = new Card(Math.max(2, cardToPlay.value - 10), 'spades');
+      // For ascending pile: card must be > lastCard OR card === lastCard - 10
+      // So we add a card that is at least 1 less than cardToPlay
+      // This ensures cardToPlay.value > lowerCard.value (valid play)
+      const lowerCardValue = Math.max(2, cardToPlay.value - 1);
+      const lowerCard = new Card(lowerCardValue, 'spades');
       const gameWithPile = game.addCardToPile('ascending1', lowerCard);
       const playingGame = gameWithPile.updateStatus('playing');
 
@@ -51,6 +55,9 @@ describe('PlayCardUseCase', () => {
 
       const result = await playCardUseCase.execute(dto);
 
+      if (!result.isSuccess) {
+        console.error('Test failed:', result.error);
+      }
       expect(result.isSuccess).toBe(true);
       if (result.isSuccess) {
         // Card should be removed from hand
