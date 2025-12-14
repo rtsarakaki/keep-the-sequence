@@ -74,9 +74,11 @@ jobs:
 
       - name: Run tests
         working-directory: ./frontend
-        run: npm test
+        run: npm test -- --passWithNoTests
+        # --passWithNoTests: Allows CI to pass when no tests exist yet
 
       - name: Check coverage
         working-directory: ./frontend
-        run: npm run test:coverage
+        run: npm run test:coverage -- --passWithNoTests
         continue-on-error: true
+        # continue-on-error: Coverage check is optional, don't block CI
