@@ -77,17 +77,54 @@ export class GameWebSocket {
       };
 
       this.ws.onclose = (event) => {
-        console.log('WebSocket desconectado:', event.code, event.reason);
+        console.log('WebSocket desconectado:', {
+          code: event.code,
+          reason: event.reason,
+          wasClean: event.wasClean,
+        });
         this.setStatus('disconnected');
 
         // Provide detailed error message based on close code
         if (event.code !== 1000) {
           let errorMessage = 'Erro na conexão WebSocket';
           
+          // API Gateway WebSocket close codes
+          // 1000: Normal closure
+          // 1006: Abnormal closure (connection lost)
+          // 4001-4004: Custom error codes from API Gateway
+          
           if (event.code === 1006) {
-            errorMessage = 'Conexão fechada inesperadamente. Verifique se o jogo existe e você faz parte dele.';
-          } else if (event.code === 4001 || event.code === 4003) {
-            errorMessage = `Erro de autenticação: ${event.reason || 'Token inválido ou jogo não encontrado'}`;
+            // Connection closed unexpectedly - could be:
+            // - Game not found
+            // - Player not in game
+            // - Token expired/invalid
+            // - Network issue
+            errorMessage = 'Conexão fechada inesperadamente.\n\nPossíveis causas:\n';
+            errorMessage += '1. O jogo não existe ou foi deletado\n';
+            errorMessage += '2. Você não faz parte deste jogo\n';
+            errorMessage += '3. Token de autenticação expirado\n';
+            errorMessage += '4. Problema de rede\n\n';
+            errorMessage += `Código: ${event.code}`;
+            if (event.reason) {
+              errorMessage += `\nDetalhes: ${event.reason}`;
+            }
+          } else if (event.code >= 4001 && event.code <= 4004) {
+            // API Gateway custom error codes
+            let reasonText = event.reason || 'Erro desconhecido';
+            try {
+              const reasonData = JSON.parse(reasonText);
+              reasonText = reasonData.error || reasonText;
+            } catch {
+              // Not JSON, use as-is
+            }
+            
+            if (event.code === 4001) {
+              errorMessage = `Erro de autenticação: ${reasonText}`;
+            } else if (event.code === 4003) {
+              errorMessage = `Acesso negado: ${reasonText}`;
+            } else {
+              errorMessage = `Erro do servidor (código ${event.code}): ${reasonText}`;
+            }
           } else if (event.reason) {
             try {
               const reasonData = JSON.parse(event.reason);

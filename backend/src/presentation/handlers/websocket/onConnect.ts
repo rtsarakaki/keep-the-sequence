@@ -45,10 +45,17 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
   const authResult = authService.validateToken(token, origin);
   
   if (!authResult.isValid || !authResult.token) {
+    console.error('Invalid token', {
+      connectionId,
+      error: authResult.error,
+      hasToken: !!token,
+      origin,
+    });
     return Promise.resolve({
       statusCode: 401,
       body: JSON.stringify({ 
-        error: authResult.error || 'Invalid authentication token' 
+        error: authResult.error || 'Invalid authentication token',
+        code: 'INVALID_TOKEN',
       }),
     });
   }
@@ -63,17 +70,34 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
     // Validate game exists and player is part of it
     const game = await gameRepository.findById(gameId);
     if (!game) {
+      console.error(`Game not found: ${gameId}`, {
+        gameId,
+        playerId,
+        connectionId,
+      });
       return Promise.resolve({
         statusCode: 403,
-        body: JSON.stringify({ error: 'Game not found' }),
+        body: JSON.stringify({ 
+          error: `Game "${gameId}" not found. The game may have been deleted or expired.`,
+          code: 'GAME_NOT_FOUND',
+        }),
       });
     }
 
     const playerExists = game.players.some(p => p.id === playerId);
     if (!playerExists) {
+      console.error(`Player not in game: ${playerId}`, {
+        gameId,
+        playerId,
+        connectionId,
+        gamePlayers: game.players.map(p => ({ id: p.id, name: p.name })),
+      });
       return Promise.resolve({
         statusCode: 403,
-        body: JSON.stringify({ error: 'Player is not part of this game' }),
+        body: JSON.stringify({ 
+          error: `Player "${playerId}" is not part of game "${gameId}". You may need to join the game first.`,
+          code: 'PLAYER_NOT_IN_GAME',
+        }),
       });
     }
 
