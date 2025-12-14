@@ -1,16 +1,13 @@
 name: Deploy Frontend
 
-# Temporarily disabled - will be enabled after infrastructure workflow is working
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/deploy-frontend.yml'
   workflow_dispatch:
-  # push:
-  #   branches:
-  #     - main
-    inputs:
-      approve:
-        description: 'Approve deployment'
-        required: true
-        type: boolean
 
 jobs:
   build-and-test:
@@ -46,41 +43,17 @@ jobs:
         working-directory: ./frontend
         run: npm run build
         env:
-          NEXT_PUBLIC_WS_URL: ${{ secrets.NEXT_PUBLIC_WS_URL }}
-
-      - name: Notify deployment ready
-        run: |
-          echo "✅ Build and tests passed. Ready for deployment approval."
-          echo "Please review the changes and approve the deployment."
+          NEXT_PUBLIC_WS_URL: ${{ secrets.NEXT_PUBLIC_WS_URL || '' }}
 
   deploy:
-    name: Deploy Frontend
+    name: Deploy to Vercel
     needs: build-and-test
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    environment:
-      name: production
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.approve == 'true')
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install dependencies
-        working-directory: ./frontend
-        run: npm install
-
-      - name: Build
-        working-directory: ./frontend
-        run: npm run build
-        env:
-          NEXT_PUBLIC_WS_URL: ${{ secrets.NEXT_PUBLIC_WS_URL }}
 
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
@@ -88,5 +61,7 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
           working-directory: ./frontend
+          scope: ${{ secrets.VERCEL_ORG_ID }}
 
