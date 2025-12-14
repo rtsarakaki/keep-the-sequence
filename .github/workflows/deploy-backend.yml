@@ -8,7 +8,7 @@ on:
   #     - main
     inputs:
       approve:
-        description: 'Approve deployment'
+        description: 'Approve deployment (only works if all tests pass)'
         required: true
         type: boolean
 
@@ -41,6 +41,12 @@ jobs:
       - name: Run tests
         working-directory: ./backend
         run: npm test
+        # Fail the job if tests fail (this is the default behavior)
+
+      - name: Check test coverage
+        working-directory: ./backend
+        run: npm run test:coverage
+        # Fail if coverage is below threshold (configured in jest.config.js)
 
       - name: Build
         working-directory: ./backend
@@ -48,13 +54,15 @@ jobs:
 
       - name: Notify deployment ready
         run: |
-          echo "✅ Build and tests passed. Ready for deployment approval."
+          echo "✅ All tests passed. Ready for deployment approval."
           echo "Please review the changes and approve the deployment."
 
   deploy:
     name: Deploy Backend
-    needs: build-and-test
+    needs: build-and-test  # Only deploy if build-and-test succeeds (all tests passed)
     runs-on: ubuntu-latest
+    # This job will only run if build-and-test completes successfully
+    # If any test fails, this job will be skipped
     permissions:
       id-token: write
       contents: read
@@ -90,6 +98,7 @@ jobs:
         run: npx serverless deploy --stage prod
         env:
           AWS_REGION: ${{ secrets.AWS_REGION }}
+        # This step will only execute if all previous steps (including tests) passed
 
       - name: Health check
         run: |
