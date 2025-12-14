@@ -72,6 +72,23 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
         setWsStatus(status);
         if (status === 'connected') {
           setError(null); // Clear errors when connected
+          console.log('WebSocket conectado, solicitando estado do jogo...');
+          
+          // Request game state after connection is established
+          // This ensures the connection is fully ready before sending messages
+          setTimeout(() => {
+            if (gameWs && gameWs.getStatus() === 'connected') {
+              console.log('Solicitando sincronização do jogo...');
+              try {
+                gameWs.send({
+                  action: 'sync',
+                  gameId: params.gameId,
+                });
+              } catch (err) {
+                console.error('Erro ao solicitar sincronização:', err);
+              }
+            }
+          }, 500); // Wait 500ms for connection to be fully ready
         }
       },
       onError: (err) => {
