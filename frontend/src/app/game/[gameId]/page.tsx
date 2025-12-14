@@ -45,19 +45,28 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
       return;
     }
 
+    console.log('Conectando ao jogo:', { gameId: params.gameId, playerId, playerName });
+
     // Initialize WebSocket connection
     const gameWs = new GameWebSocket({
       onMessage: (message) => {
+        console.log('Mensagem recebida:', message);
         if (message.type === 'gameState' || message.type === 'gameUpdated') {
           setGameState(message.game as GameState);
+          setError(null); // Clear any previous errors
         } else if (message.type === 'error') {
           setError(message.error);
         }
       },
       onStatusChange: (status) => {
+        console.log('Status WebSocket:', status);
         setWsStatus(status);
+        if (status === 'connected') {
+          setError(null); // Clear errors when connected
+        }
       },
       onError: (err) => {
+        console.error('Erro WebSocket:', err);
         setError(`Erro na conexão: ${err.message}`);
       },
     });
@@ -66,7 +75,8 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
 
     // Connect to WebSocket
     gameWs.connect(params.gameId, playerId).catch((err) => {
-      setError(`Erro ao conectar: ${err.message}`);
+      console.error('Erro ao conectar WebSocket:', err);
+      setError(`Erro ao conectar: ${err.message}\n\nVerifique:\n1. Se o jogo existe\n2. Se você faz parte do jogo\n3. Se o playerId está correto`);
     });
 
     // Cleanup on unmount

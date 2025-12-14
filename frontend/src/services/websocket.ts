@@ -68,13 +68,35 @@ export class GameWebSocket {
 
       this.ws.onerror = (error) => {
         console.error('Erro no WebSocket:', error);
-        this.callbacks.onError?.(new Error('Erro na conexão WebSocket'));
+        // Error details will be in onclose event
         this.setStatus('error');
       };
 
       this.ws.onclose = (event) => {
         console.log('WebSocket desconectado:', event.code, event.reason);
         this.setStatus('disconnected');
+
+        // Provide detailed error message based on close code
+        if (event.code !== 1000) {
+          let errorMessage = 'Erro na conexão WebSocket';
+          
+          if (event.code === 1006) {
+            errorMessage = 'Conexão fechada inesperadamente. Verifique se o jogo existe e você faz parte dele.';
+          } else if (event.code === 4001 || event.code === 4003) {
+            errorMessage = `Erro de autenticação: ${event.reason || 'Token inválido ou jogo não encontrado'}`;
+          } else if (event.reason) {
+            try {
+              const reasonData = JSON.parse(event.reason);
+              errorMessage = reasonData.error || event.reason;
+            } catch {
+              errorMessage = event.reason;
+            }
+          } else {
+            errorMessage = `Conexão fechada (código: ${event.code}). Verifique se o jogo existe e você faz parte dele.`;
+          }
+          
+          this.callbacks.onError?.(new Error(errorMessage));
+        }
 
         // Attempt to reconnect if not a normal closure
         if (event.code !== 1000 && this.reconnectAttempts < this.maxReconnectAttempts) {
