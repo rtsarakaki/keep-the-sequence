@@ -59,10 +59,20 @@ export class WebSocketService implements IWebSocketService {
         Data: messageString,
       });
 
-      await this.client.send(command);
-      console.log(`Message sent successfully to ${connectionId}`);
+      const response = await this.client.send(command);
+      console.log(`Message sent successfully to ${connectionId}`, {
+        responseMetadata: response.$metadata,
+        connectionId,
+      });
     } catch (error: unknown) {
       console.error(`Error sending message to ${connectionId}:`, error);
+      console.error('Error details:', {
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorName: error instanceof Error ? error.name : undefined,
+        errorStack: error instanceof Error ? error.stack : undefined,
+        connectionId,
+        endpoint: this.client.config.endpoint,
+      });
       
       // Handle specific AWS errors
       if (error && typeof error === 'object' && 'statusCode' in error) {
