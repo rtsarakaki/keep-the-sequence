@@ -1,5 +1,6 @@
 import { APIGatewayProxyWebsocketHandlerV2 } from 'aws-lambda';
 import { AuthService } from '../../../domain/services/AuthService';
+import { container } from '../../../infrastructure/di/container';
 
 /**
  * WebSocket $connect handler with authentication and origin validation.
@@ -8,8 +9,9 @@ import { AuthService } from '../../../domain/services/AuthService';
  * 1. Connection token (from query string)
  * 2. Origin header (if provided)
  * 3. Game and player existence
+ * 4. Saves connection to DynamoDB
  */
-export const handler: APIGatewayProxyWebsocketHandlerV2 = (event) => {
+export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
   const connectionId = event.requestContext.connectionId;
   
   if (!connectionId) {
@@ -19,9 +21,6 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = (event) => {
   }
 
   // Extract token from query string
-  // Note: WebSocket V2 event structure - query params may need custom mapping
-  // For $connect route, query params are typically available via custom mapping in API Gateway
-  // For now, we'll use type assertion to access queryStringParameters
   const eventWithQuery = event as unknown as { queryStringParameters?: Record<string, string | undefined> };
   const queryParams = eventWithQuery.queryStringParameters;
   const token: string | undefined = queryParams?.token;
@@ -38,7 +37,6 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = (event) => {
   const authService = new AuthService(allowedOrigins);
 
   // Extract origin from headers
-  // Note: WebSocket V2 may not have headers directly - may need custom mapping
   const eventWithHeaders = event as unknown as { headers?: Record<string, string | undefined> };
   const headers = eventWithHeaders.headers;
   const origin: string | undefined = headers?.Origin || headers?.origin;
@@ -55,33 +53,48 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = (event) => {
     });
   }
 
-  // Extract gameId and playerId for future use
-  const { gameId: _gameId, playerId: _playerId } = authResult.token;
-  
-  // Suppress unused variable warnings (will be used when implementing TODO)
-  void _gameId;
-  void _playerId;
+  const { gameId, playerId } = authResult.token;
 
-  // TODO: Inject repository via DI
-  // const connectionRepository: IConnectionRepository = container.resolve('IConnectionRepository');
-  
-  // TODO: Validate game exists and player is part of it
-  // const game = await gameRepository.findById(gameId);
-  // if (!game || !game.players.some(p => p.id === playerId)) {
-  //   return { statusCode: 403, body: JSON.stringify({ error: 'Invalid game or player' }) };
-  // }
-  
-  // TODO: Save connection
-  // await connectionRepository.save({
-  //   connectionId,
-  //   gameId,
-  //   playerId,
-  //   connectedAt: new Date(),
-  //   lastActivity: new Date(),
-  // });
+  try {
+    // Get repositories from container
+    const gameRepository = container.getGameRepository();
+    const connectionRepository = container.getConnectionRepository();
 
-  return Promise.resolve({
-    statusCode: 200,
-  });
+    // Validate game exists and player is part of it
+    const game = await gameRepository.findById(gameId);
+    if (!game) {
+      return Promise.resolve({
+        statusCode: 403,
+        body: JSON.stringify({ error: 'Game not found' }),
+      });
+    }
+
+    const playerExists = game.players.some(p => p.id === playerId);
+    if (!playerExists) {
+      return Promise.resolve({
+        statusCode: 403,
+        body: JSON.stringify({ error: 'Player is not part of this game' }),
+      });
+    }
+
+    // Save connection
+    await connectionRepository.save({
+      connectionId,
+      gameId,
+      playerId,
+      connectedAt: new Date(),
+      lastActivity: new Date(),
+    });
+
+    return Promise.resolve({
+      statusCode: 200,
+    });
+  } catch (error) {
+    console.error('Error in onConnect handler:', error);
+    return Promise.resolve({
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Internal server error' }),
+    });
+  }
 };
 

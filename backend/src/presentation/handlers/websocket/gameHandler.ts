@@ -1,23 +1,169 @@
 import { APIGatewayProxyWebsocketHandlerV2 } from 'aws-lambda';
+import { container } from '../../../infrastructure/di/container';
+import { PlayCardDTO } from '../../../application/dto/PlayCardDTO';
+import { JoinGameDTO } from '../../../application/dto/JoinGameDTO';
+import { Card } from '../../../domain/valueObjects/Card';
 
-export const handler: APIGatewayProxyWebsocketHandlerV2 = (event) => {
+/**
+ * WebSocket game handler for processing game actions.
+ * 
+ * Supported actions:
+ * - playCard: Play a card on a pile
+ * - joinGame: Join an existing game (via WebSocket)
+ * 
+ * After processing, broadcasts the result to all connected players.
+ */
+export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
   const connectionId = event.requestContext.connectionId;
 
   if (!connectionId) {
     return Promise.resolve({
       statusCode: 400,
+      body: JSON.stringify({ error: 'Missing connectionId' }),
     });
   }
 
-  // TODO: Implement game action handling
-  // Parse action type (playCard, joinGame, etc.)
-  // const body = event.body ? JSON.parse(event.body) as unknown : {};
-  // Validate action
-  // Update game state
-  // Broadcast to other players
+  // Parse message body
+  if (!event.body) {
+    return Promise.resolve({
+      statusCode: 400,
+      body: JSON.stringify({ error: 'Missing message body' }),
+    });
+  }
 
-  return Promise.resolve({
-    statusCode: 200,
-  });
+  let messageBody: unknown;
+  try {
+    messageBody = JSON.parse(event.body) as unknown;
+  } catch (error) {
+    return Promise.resolve({
+      statusCode: 400,
+      body: JSON.stringify({ error: 'Invalid JSON in message body' }),
+    });
+  }
+
+  // Validate message structure
+  if (!messageBody || typeof messageBody !== 'object' || !('action' in messageBody)) {
+    return Promise.resolve({
+      statusCode: 400,
+      body: JSON.stringify({ error: 'Missing action field' }),
+    });
+  }
+
+  const action = (messageBody as { action: string }).action;
+
+  try {
+    const connectionRepository = container.getConnectionRepository();
+    const webSocketService = container.getWebSocketService(event);
+
+    // Get connection info to identify game and player
+    const connection = await connectionRepository.findByConnectionId(connectionId);
+    if (!connection) {
+      return Promise.resolve({
+        statusCode: 403,
+        body: JSON.stringify({ error: 'Connection not found' }),
+      });
+    }
+
+    const { gameId, playerId } = connection;
+
+    // Route to appropriate handler based on action
+    switch (action) {
+      case 'playCard': {
+        const playCardUseCase = container.getPlayCardUseCase();
+        const playCardData = messageBody as {
+          action: 'playCard';
+          card: { value: number; suit: string };
+          pileId: 'ascending1' | 'ascending2' | 'descending1' | 'descending2';
+        };
+
+        const card = new Card(playCardData.card.value, playCardData.card.suit);
+        const dto: PlayCardDTO = {
+          gameId,
+          playerId,
+          card,
+          pileId: playCardData.pileId,
+        };
+
+        const result = await playCardUseCase.execute(dto);
+
+        if (!result.isSuccess) {
+          // Send error to the player who made the action
+          await webSocketService.sendToConnection(connectionId, {
+            type: 'error',
+            error: result.error || 'Failed to play card',
+          });
+          return Promise.resolve({
+            statusCode: 400,
+            body: JSON.stringify({ error: result.error }),
+          });
+        }
+
+        // Broadcast updated game state to all players
+        const allConnections = await connectionRepository.findByGameId(gameId);
+        const connectionIds = allConnections.map(c => c.connectionId);
+
+        await webSocketService.sendToConnections(connectionIds, {
+          type: 'gameUpdated',
+          game: result.value,
+        });
+
+        return Promise.resolve({
+          statusCode: 200,
+        });
+      }
+
+      case 'joinGame': {
+        const joinGameUseCase = container.getJoinGameUseCase();
+        const joinGameData = messageBody as {
+          action: 'joinGame';
+          playerName: string;
+        };
+
+        const dto: JoinGameDTO = {
+          gameId,
+          playerId, // Use connection's playerId
+          playerName: joinGameData.playerName,
+        };
+
+        const result = await joinGameUseCase.execute(dto);
+
+        if (!result.isSuccess) {
+          await webSocketService.sendToConnection(connectionId, {
+            type: 'error',
+            error: result.error || 'Failed to join game',
+          });
+          return Promise.resolve({
+            statusCode: 400,
+            body: JSON.stringify({ error: result.error }),
+          });
+        }
+
+        // Broadcast updated game state to all players
+        const allConnections = await connectionRepository.findByGameId(gameId);
+        const connectionIds = allConnections.map(c => c.connectionId);
+
+        await webSocketService.sendToConnections(connectionIds, {
+          type: 'gameUpdated',
+          game: result.value,
+        });
+
+        return Promise.resolve({
+          statusCode: 200,
+        });
+      }
+
+      default:
+        return Promise.resolve({
+          statusCode: 400,
+          body: JSON.stringify({ error: `Unknown action: ${action}` }),
+        });
+    }
+  } catch (error) {
+    console.error('Error in gameHandler:', error);
+    return Promise.resolve({
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Internal server error' }),
+    });
+  }
 };
 
