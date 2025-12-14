@@ -38,7 +38,7 @@ Sistema de jogo cooperativo online baseado no jogo de cartas "The Game" com supo
 
 ## Setup
 
-Consulte `docs/SETUP.md` para instruções completas de configuração.
+Consulte `docs/setup/SETUP.md` para instruções completas de configuração.
 
 **Importante**: Este projeto usa **OIDC com Roles** para autenticação AWS (não access keys de usuários). Isso é mais seguro e segue as melhores práticas da AWS.
 

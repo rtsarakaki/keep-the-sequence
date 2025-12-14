@@ -13,7 +13,7 @@ Se você criou a Role antes do OIDC Provider, é melhor **deletar e recriar** vi
    - Aguarde a deleção completar
 
 2. **Recriar a Role:**
-   - Siga o Passo 2 da documentação `docs/SETUP.md`
+   - Siga o Passo 2 da documentação `docs/setup/SETUP.md`
    - Agora o OIDC Provider já existe, então a Role será criada corretamente
 
 ## Opção 2: Atualizar a Role Existente (Alternativa)

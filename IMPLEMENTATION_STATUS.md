@@ -99,13 +99,13 @@
 
 - ✅ `.gitignore` configurado para não commitar secrets
 - ✅ `.env.example` criado sem valores reais
-- ✅ Documentação de setup criada (`docs/SETUP.md`)
+- ✅ Documentação de setup criada (`docs/setup/SETUP.md`)
 - ✅ Instruções para configurar GitHub Secrets
 
 ## 📝 Documentação
 
 - ✅ README.md criado
-- ✅ SETUP.md com instruções de configuração AWS
+- ✅ SETUP.md com instruções de configuração AWS (`docs/setup/SETUP.md`)
 - ✅ Estrutura de arquivos documentada
 
 ## 🎯 Princípios Aplicados
