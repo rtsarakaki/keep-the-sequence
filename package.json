@@ -1,0 +1,33 @@
+{
+  "name": "the-game",
+  "version": "1.0.0",
+  "description": "The Game - Cooperative Card Game",
+  "private": true,
+  "scripts": {
+    "prepare": "husky install",
+    "lint:backend": "cd backend && npm run lint",
+    "lint:frontend": "cd frontend && npm run lint",
+    "type-check:backend": "cd backend && npm run type-check",
+    "type-check:frontend": "cd frontend && npm run type-check",
+    "test:backend": "cd backend && npm test",
+    "test:frontend": "cd frontend && npm test"
+  },
+  "devDependencies": {
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0"
+  },
+  "lint-staged": {
+    "backend/**/*.ts": [
+      "bash -c 'cd backend && npm run lint -- --fix'",
+      "bash -c 'cd backend && npm run type-check'"
+    ],
+    "frontend/**/*.{ts,tsx}": [
+      "bash -c 'cd frontend && npm run lint -- --fix'",
+      "bash -c 'cd frontend && npm run type-check'"
+    ]
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+
