@@ -150,13 +150,216 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
     });
   };
 
+  const handleDebugTest = async (testType: 'check-game' | 'reconnect-playerId' | 'reconnect-playerName' | 'get-token') => {
+    if (!params.gameId) return;
+
+    try {
+      switch (testType) {
+        case 'check-game': {
+          // Try to get WebSocket URL to check if game/player exists
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+          if (!apiUrl) {
+            alert('API URL não configurada');
+            return;
+          }
+
+          const testPlayerId = playerId || 'test';
+          const response = await fetch(
+            `${apiUrl}/api/websocket-url?gameId=${params.gameId}&playerId=${testPlayerId}`,
+            {
+              method: 'GET',
+              headers: { 'Content-Type': 'application/json' },
+              mode: 'cors',
+            }
+          );
+
+          const data = await response.json();
+          if (response.ok) {
+            alert(`✅ Jogo existe!\n\nGame ID: ${params.gameId}\nPlayer ID: ${testPlayerId}\nToken gerado com sucesso.`);
+          } else {
+            alert(`❌ Erro: ${data.error || 'Erro desconhecido'}\n\nStatus: ${response.status}`);
+          }
+          break;
+        }
+
+        case 'reconnect-playerId': {
+          if (!playerId) {
+            alert('Player ID não disponível');
+            return;
+          }
+          setError(null);
+          if (ws) {
+            ws.disconnect();
+          }
+          const newWs = new GameWebSocket({
+            onMessage: (message) => {
+              console.log('Mensagem recebida:', message);
+              if (message.type === 'gameState' || message.type === 'gameUpdated') {
+                setGameState(message.game as GameState);
+                setError(null);
+              }
+            },
+            onStatusChange: (status) => {
+              setWsStatus(status);
+              if (status === 'connected') {
+                setError(null);
+                alert('✅ Conectado com sucesso usando Player ID!');
+              }
+            },
+            onError: (err) => {
+              setError(`Erro: ${err.message}`);
+            },
+          });
+          setWs(newWs);
+          await newWs.connect(params.gameId, playerId);
+          break;
+        }
+
+        case 'reconnect-playerName': {
+          if (!playerName) {
+            alert('Nome do jogador não disponível');
+            return;
+          }
+          setError(null);
+          if (ws) {
+            ws.disconnect();
+          }
+          const newWs = new GameWebSocket({
+            onMessage: (message) => {
+              console.log('Mensagem recebida:', message);
+              if (message.type === 'gameState' || message.type === 'gameUpdated') {
+                setGameState(message.game as GameState);
+                setError(null);
+              }
+            },
+            onStatusChange: (status) => {
+              setWsStatus(status);
+              if (status === 'connected') {
+                setError(null);
+                alert('✅ Conectado com sucesso usando Nome!');
+              }
+            },
+            onError: (err) => {
+              setError(`Erro: ${err.message}`);
+            },
+          });
+          setWs(newWs);
+          await newWs.connect(params.gameId, playerName, { useName: true });
+          break;
+        }
+
+        case 'get-token': {
+          const { getApiUrl } = await import('@/services/api');
+          let apiUrl: string;
+          try {
+            apiUrl = getApiUrl();
+          } catch (err) {
+            alert(`API URL não configurada: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
+            return;
+          }
+
+          const testPlayerId = playerId || playerName || 'test';
+          const useName = !playerId && !!playerName;
+          const param = useName ? 'playerName' : 'playerId';
+          
+          const response = await fetch(
+            `${apiUrl}/api/websocket-url?gameId=${params.gameId}&${param}=${encodeURIComponent(testPlayerId)}`,
+            {
+              method: 'GET',
+              headers: { 'Content-Type': 'application/json' },
+              mode: 'cors',
+            }
+          );
+
+          const data = await response.json();
+          if (response.ok) {
+            console.log('Token URL:', data.wsUrl);
+            alert(`✅ Token obtido com sucesso!\n\nURL: ${data.wsUrl.substring(0, 100)}...\n\nVerifique o console para URL completa.\n\nGame ID: ${params.gameId}\n${param}: ${testPlayerId}`);
+          } else {
+            alert(`❌ Erro ao obter token: ${data.error || 'Erro desconhecido'}\n\nStatus: ${response.status}\n\nGame ID: ${params.gameId}\n${param}: ${testPlayerId}`);
+          }
+          break;
+        }
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
+      alert(`❌ Erro no teste: ${errorMessage}`);
+      console.error('Debug test error:', err);
+    }
+  };
+
   if (error) {
     return (
       <main className={styles.container}>
         <div className={styles.error}>
           <h2>Erro</h2>
-          <p>{error}</p>
-          <a href="/" className={styles.button}>Voltar à página inicial</a>
+          <p style={{ whiteSpace: 'pre-wrap' }}>{error}</p>
+          
+          <div style={{ marginTop: '2rem', padding: '1rem', backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
+            <h3 style={{ marginTop: 0, marginBottom: '1rem' }}>🔧 Ferramentas de Debug</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <button
+                onClick={() => handleDebugTest('check-game')}
+                style={{
+                  padding: '0.75rem',
+                  backgroundColor: '#0070f3',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                }}
+              >
+                1. Verificar se jogo existe
+              </button>
+              <button
+                onClick={() => handleDebugTest('get-token')}
+                style={{
+                  padding: '0.75rem',
+                  backgroundColor: '#0070f3',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                }}
+              >
+                2. Testar obtenção de token
+              </button>
+              {playerId && (
+                <button
+                  onClick={() => handleDebugTest('reconnect-playerId')}
+                  style={{
+                    padding: '0.75rem',
+                    backgroundColor: '#28a745',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  3. Reconectar usando Player ID
+                </button>
+              )}
+              {playerName && (
+                <button
+                  onClick={() => handleDebugTest('reconnect-playerName')}
+                  style={{
+                    padding: '0.75rem',
+                    backgroundColor: '#28a745',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  4. Reconectar usando Nome
+                </button>
+              )}
+            </div>
+          </div>
+
+          <a href="/" className={styles.button} style={{ marginTop: '1rem', display: 'inline-block' }}>
+            Voltar à página inicial
+          </a>
         </div>
       </main>
     );
