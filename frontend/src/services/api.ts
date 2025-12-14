@@ -90,16 +90,20 @@ export async function createGame(playerName: string, playerId?: string): Promise
 
     if (!response.ok) {
       const errorText = await response.text();
-      let errorMessage = `Erro ao criar partida: ${response.status}`;
+      let errorMessage = `Erro ao criar partida (Status ${response.status})`;
+      let errorDetails: string | undefined;
       
       try {
         const errorData = JSON.parse(errorText);
-        errorMessage = errorData.error || errorMessage;
+        errorMessage = errorData.error || errorData.message || errorMessage;
+        errorDetails = errorData.error || errorData.message;
       } catch {
-        errorMessage = errorText || errorMessage;
+        errorDetails = errorText || `Status ${response.status}: ${response.statusText}`;
+        errorMessage = `${errorMessage}: ${errorDetails}`;
       }
 
-      throw new Error(errorMessage);
+      const fullError = errorDetails ? `${errorMessage}\n\nDetalhes: ${errorDetails}` : errorMessage;
+      throw new Error(fullError);
     }
 
     const data = await response.json();
@@ -122,7 +126,7 @@ export async function createGame(playerName: string, playerId?: string): Promise
 /**
  * Check if API is configured and accessible
  */
-export async function checkApiHealth(): Promise<{ configured: boolean; accessible: boolean; error?: string }> {
+export async function checkApiHealth(): Promise<{ configured: boolean; accessible: boolean; error?: string; details?: string }> {
   if (!API_URL) {
     return {
       configured: false,
@@ -140,16 +144,29 @@ export async function checkApiHealth(): Promise<{ configured: boolean; accessibl
       },
     });
 
+    let errorDetails: string | undefined;
+    if (!response.ok) {
+      try {
+        const errorData = await response.json();
+        errorDetails = errorData.error || errorData.message || `Status ${response.status}: ${response.statusText}`;
+      } catch {
+        errorDetails = `Status ${response.status}: ${response.statusText}`;
+      }
+    }
+
     return {
       configured: true,
       accessible: response.ok,
-      error: response.ok ? undefined : `API retornou status ${response.status}`,
+      error: response.ok ? undefined : `API retornou erro: ${errorDetails || `status ${response.status}`}`,
+      details: errorDetails,
     };
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao conectar com a API';
     return {
       configured: true,
       accessible: false,
-      error: error instanceof Error ? error.message : 'Erro desconhecido ao conectar com a API',
+      error: `Erro de conexão: ${errorMessage}`,
+      details: errorMessage,
     };
   }
 }

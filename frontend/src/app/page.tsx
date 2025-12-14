@@ -27,7 +27,10 @@ export default function Home() {
           '⚠️ API não configurada: Por favor, configure NEXT_PUBLIC_API_URL nas variáveis de ambiente da Vercel.'
         );
       } else if (!status.accessible) {
-        setError(`⚠️ API não acessível: ${status.error || 'Erro desconhecido'}`);
+        // Show detailed error for debugging (will be generic message later)
+        const errorMsg = status.error || 'Erro desconhecido';
+        const detailsMsg = status.details ? `\n\nDetalhes: ${status.details}` : '';
+        setError(`⚠️ API não acessível: ${errorMsg}${detailsMsg}`);
       }
     });
   }, []);
@@ -105,6 +108,9 @@ export default function Home() {
           border: '1px solid #fcc',
           borderRadius: '8px',
           color: '#c33',
+          whiteSpace: 'pre-line', // Allow line breaks
+          fontFamily: 'monospace',
+          fontSize: '0.9rem',
         }}>
           {error}
         </div>
