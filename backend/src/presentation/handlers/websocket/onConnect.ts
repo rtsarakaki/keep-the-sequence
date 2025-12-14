@@ -117,10 +117,8 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
     // API Gateway will close connection with code 1006 if we don't return 200 quickly
     console.log(`Connection established successfully: ${connectionId} for game ${gameId}, player ${playerId}`);
     
-    // Send initial game state asynchronously (don't await - connection is already established)
-    // Serialize Game entity properly (convert Date objects to ISO strings)
-    const webSocketService = container.getWebSocketService(event);
-    webSocketService.sendToConnection(connectionId, {
+    // Prepare game state message
+    const gameStateMessage = {
       type: 'gameState',
       game: {
         id: game.id,
@@ -143,10 +141,28 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
         createdAt: game.createdAt.toISOString(),
         updatedAt: game.updatedAt.toISOString(),
       },
-    }).catch((sendError) => {
-      // Log error but don't fail the connection - player can request sync later
-      console.error(`Failed to send initial game state to ${connectionId}:`, sendError);
-    });
+    };
+    
+    console.log(`Preparing to send game state to ${connectionId}:`, JSON.stringify(gameStateMessage, null, 2));
+    
+    // Send initial game state asynchronously (don't await - connection is already established)
+    // Serialize Game entity properly (convert Date objects to ISO strings)
+    const webSocketService = container.getWebSocketService(event);
+    webSocketService.sendToConnection(connectionId, gameStateMessage)
+      .then(() => {
+        console.log(`Successfully sent game state to ${connectionId}`);
+      })
+      .catch((sendError) => {
+        // Log error but don't fail the connection - player can request sync later
+        console.error(`Failed to send initial game state to ${connectionId}:`, sendError);
+        console.error('Error details:', {
+          errorMessage: sendError instanceof Error ? sendError.message : String(sendError),
+          errorStack: sendError instanceof Error ? sendError.stack : undefined,
+          connectionId,
+          gameId,
+          playerId,
+        });
+      });
 
     return Promise.resolve({
       statusCode: 200,

@@ -51,13 +51,19 @@ export class WebSocketService implements IWebSocketService {
     }
 
     try {
+      const messageString = JSON.stringify(message);
+      console.log(`Sending message to connection ${connectionId}:`, messageString.substring(0, 200));
+      
       const command = new PostToConnectionCommand({
         ConnectionId: connectionId,
-        Data: JSON.stringify(message),
+        Data: messageString,
       });
 
       await this.client.send(command);
+      console.log(`Message sent successfully to ${connectionId}`);
     } catch (error: unknown) {
+      console.error(`Error sending message to ${connectionId}:`, error);
+      
       // Handle specific AWS errors
       if (error && typeof error === 'object' && 'statusCode' in error) {
         const statusCode = (error as { statusCode: number }).statusCode;
