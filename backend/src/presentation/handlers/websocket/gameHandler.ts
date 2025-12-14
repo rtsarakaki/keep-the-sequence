@@ -53,27 +53,34 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
 
   // Handle sync action
   if (action === 'sync') {
-    const syncData = messageBody as { action: 'sync'; gameId?: string };
-    const gameId = syncData.gameId;
-    
-    if (!gameId) {
-      // Try to get gameId from connection
-      const connectionRepository = container.getConnectionRepository();
-      const connection = await connectionRepository.findByConnectionId(connectionId);
+    try {
+      const syncData = messageBody as { action: 'sync'; gameId?: string };
+      let gameIdToSync = syncData.gameId;
       
-      if (!connection) {
-        return Promise.resolve({
-          statusCode: 400,
-          body: JSON.stringify({ error: 'Connection not found. Please reconnect.' }),
-        });
+      // If gameId not provided, get it from connection
+      if (!gameIdToSync) {
+        const connectionRepository = container.getConnectionRepository();
+        const connection = await connectionRepository.findByConnectionId(connectionId);
+        
+        if (!connection) {
+          return Promise.resolve({
+            statusCode: 400,
+            body: JSON.stringify({ error: 'Connection not found. Please reconnect.' }),
+          });
+        }
+        
+        gameIdToSync = connection.gameId;
       }
+      
+      console.log(`Processing sync request for game ${gameIdToSync}, connection ${connectionId}`);
       
       const syncGameUseCase = container.getSyncGameUseCase();
       const webSocketService = container.getWebSocketService(event);
       
-      const result = await syncGameUseCase.execute(connection.gameId);
+      const result = await syncGameUseCase.execute(gameIdToSync);
       
       if (!result.isSuccess) {
+        console.error(`Sync failed for game ${gameIdToSync}:`, result.error);
         return Promise.resolve({
           statusCode: 404,
           body: JSON.stringify({ error: result.error || 'Game not found' }),
@@ -82,7 +89,7 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
       
       // Serialize game state properly
       const game = result.value;
-      await webSocketService.sendToConnection(connectionId, {
+      const gameStateMessage = {
         type: 'gameState',
         game: {
           id: game.id,
@@ -103,10 +110,20 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
           currentTurn: game.currentTurn,
           status: game.status,
         },
-      });
+      };
+      
+      console.log(`Sending game state via sync to ${connectionId}`);
+      await webSocketService.sendToConnection(connectionId, gameStateMessage);
+      console.log(`Sync completed successfully for ${connectionId}`);
       
       return Promise.resolve({
         statusCode: 200,
+      });
+    } catch (error) {
+      console.error('Error in sync action:', error);
+      return Promise.resolve({
+        statusCode: 500,
+        body: JSON.stringify({ error: 'Internal server error during sync' }),
       });
     }
   }
