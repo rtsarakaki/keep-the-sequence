@@ -60,7 +60,7 @@ export const handler = async (
 
     const result = await createGameUseCase.execute(dto);
 
-    if (!result.isSuccess || !result.value) {
+    if (!result.isSuccess) {
       return Promise.resolve({
         statusCode: 400,
         headers: {
