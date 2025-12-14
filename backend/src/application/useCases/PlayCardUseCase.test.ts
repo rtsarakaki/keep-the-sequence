@@ -191,8 +191,12 @@ describe('PlayCardUseCase', () => {
         throw new Error('Player should have cards');
       }
       
-      // Add a card much higher than what player wants to play (making it invalid)
-      const higherCard = new Card(Math.min(99, cardToPlay.value + 20), 'spades');
+      // Add a card much higher than what player wants to play
+      // Make sure the difference is > 10 to avoid the special rule (exactly 10 units difference)
+      // For ascending pile: card must be > lastCard OR exactly lastCard - 10
+      // So we need: cardToPlay.value < higherCard.value - 10 (not equal to higherCard.value - 10)
+      const higherCardValue = Math.min(99, cardToPlay.value + 25); // +25 ensures difference > 10
+      const higherCard = new Card(higherCardValue, 'spades');
       const gameWithPile = game.addCardToPile('ascending1', higherCard);
       const playingGame = gameWithPile.updateStatus('playing');
 
