@@ -11,7 +11,7 @@ import { AuthService } from '../../../domain/services/AuthService';
  * 
  * This prevents exposing the WebSocket URL directly and adds authentication.
  */
-export const handler = (
+export const handler = async (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResultV2> => {
   // Get HTTP method from request context (API Gateway v2 format)
@@ -53,12 +53,14 @@ export const handler = (
   const queryParams = event.queryStringParameters || {};
   let gameId: string | undefined = queryParams.gameId;
   let playerId: string | undefined = queryParams.playerId;
+  let playerName: string | undefined = queryParams.playerName;
   
   if (event.body) {
     try {
-      const body = JSON.parse(event.body) as { gameId?: string; playerId?: string };
+      const body = JSON.parse(event.body) as { gameId?: string; playerId?: string; playerName?: string };
       gameId = gameId || body.gameId;
       playerId = playerId || body.playerId;
+      playerName = playerName || body.playerName;
     } catch {
       // Invalid JSON, will be caught by validation below
     }
@@ -67,7 +69,7 @@ export const handler = (
   const origin = event.headers?.origin || event.headers?.Origin || '';
 
   // Validate required parameters
-  if (!gameId || !playerId) {
+  if (!gameId) {
     return Promise.resolve({
       statusCode: 400,
       headers: {
@@ -75,7 +77,71 @@ export const handler = (
         'Access-Control-Allow-Origin': origin || '*',
       },
       body: JSON.stringify({
-        error: 'Missing required parameters: gameId and playerId',
+        error: 'Missing required parameter: gameId',
+      }),
+    });
+  }
+
+  // If playerId not provided, try to find by playerName
+  if (!playerId && playerName) {
+    try {
+      const { container } = await import('../../../infrastructure/di/container');
+      const gameRepository = container.getGameRepository();
+      const game = await gameRepository.findById(gameId);
+      
+      if (!game) {
+        return Promise.resolve({
+          statusCode: 404,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': origin || '*',
+          },
+          body: JSON.stringify({
+            error: 'Game not found',
+          }),
+        });
+      }
+
+      const player = game.players.find(p => p.name === playerName.trim());
+      if (!player) {
+        return Promise.resolve({
+          statusCode: 404,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': origin || '*',
+          },
+          body: JSON.stringify({
+            error: `Player "${playerName}" not found in this game`,
+          }),
+        });
+      }
+
+      playerId = player.id;
+    } catch (error) {
+      console.error('Error finding player by name:', error);
+      return Promise.resolve({
+        statusCode: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': origin || '*',
+        },
+        body: JSON.stringify({
+          error: 'Error finding player',
+        }),
+      });
+    }
+  }
+
+  // Final validation: need either playerId or playerName
+  if (!playerId) {
+    return Promise.resolve({
+      statusCode: 400,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': origin || '*',
+      },
+      body: JSON.stringify({
+        error: 'Missing required parameter: playerId or playerName',
       }),
     });
   }

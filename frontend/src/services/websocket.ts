@@ -33,9 +33,13 @@ export class GameWebSocket {
   }
 
   /**
-   * Connect to WebSocket using gameId and playerId
+   * Connect to WebSocket using gameId and playerId (or playerName)
    */
-  async connect(gameId: string, playerId: string): Promise<void> {
+  async connect(
+    gameId: string, 
+    playerIdOrName: string,
+    options?: { useName?: boolean }
+  ): Promise<void> {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       console.log('WebSocket já está conectado');
       return;
@@ -45,7 +49,7 @@ export class GameWebSocket {
       this.setStatus('connecting');
 
       // Get WebSocket URL with token
-      const { wsUrl } = await getWebSocketUrl(gameId, playerId);
+      const { wsUrl } = await getWebSocketUrl(gameId, playerIdOrName, options);
 
       // Connect to WebSocket
       this.ws = new WebSocket(wsUrl);
@@ -100,7 +104,7 @@ export class GameWebSocket {
 
         // Attempt to reconnect if not a normal closure
         if (event.code !== 1000 && this.reconnectAttempts < this.maxReconnectAttempts) {
-          this.attemptReconnect(gameId, playerId);
+          this.attemptReconnect(gameId, playerIdOrName, options);
         }
       };
     } catch (error) {
@@ -114,14 +118,18 @@ export class GameWebSocket {
   /**
    * Attempt to reconnect
    */
-  private attemptReconnect(gameId: string, playerId: string): void {
+  private attemptReconnect(
+    gameId: string, 
+    playerIdOrName: string,
+    options?: { useName?: boolean }
+  ): void {
     this.reconnectAttempts++;
     const delay = Math.min(this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1), 30000);
     
     console.log(`Tentando reconectar em ${delay}ms (tentativa ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
     
     setTimeout(() => {
-      this.connect(gameId, playerId).catch((error) => {
+      this.connect(gameId, playerIdOrName, options).catch((error) => {
         console.error('Erro ao reconectar:', error);
       });
     }, delay);

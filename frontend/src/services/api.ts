@@ -19,20 +19,36 @@ export function getApiUrl(): string {
 
 /**
  * Get WebSocket URL with authentication token
+ * 
+ * Can use either playerId or playerName (playerName will be resolved to playerId)
  */
 export async function getWebSocketUrl(
   gameId: string,
-  playerId: string
+  playerIdOrName: string,
+  options?: { useName?: boolean }
 ): Promise<{ wsUrl: string; expiresIn: number }> {
   try {
     const apiUrl = getApiUrl();
+    const params = new URLSearchParams({
+      gameId,
+    });
+    
+    // Use playerName if specified, otherwise use playerId
+    if (options?.useName) {
+      params.append('playerName', playerIdOrName);
+    } else {
+      params.append('playerId', playerIdOrName);
+    }
+    
     const response = await fetch(
-      `${apiUrl}/api/websocket-url?gameId=${encodeURIComponent(gameId)}&playerId=${encodeURIComponent(playerId)}`,
+      `${apiUrl}/api/websocket-url?${params.toString()}`,
       {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
+        mode: 'cors',
+        credentials: 'omit',
       }
     );
 

@@ -35,13 +35,10 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
   const [ws, setWs] = useState<GameWebSocket | null>(null);
 
   useEffect(() => {
-    if (!playerId) {
-      setError('Player ID não encontrado. Por favor, volte à página inicial.');
-      return;
-    }
-
-    if (!playerName) {
-      setError('Nome do jogador não encontrado. Por favor, volte à página inicial.');
+    // For reconnection, we can use either playerId or playerName
+    // If playerId is not available, we'll use playerName
+    if (!playerId && !playerName) {
+      setError('Player ID ou nome não encontrado. Por favor, volte à página inicial.');
       return;
     }
 
@@ -74,10 +71,41 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
     setWs(gameWs);
 
     // Connect to WebSocket
-    gameWs.connect(params.gameId, playerId).catch((err) => {
-      console.error('Erro ao conectar WebSocket:', err);
-      setError(`Erro ao conectar: ${err.message}\n\nVerifique:\n1. Se o jogo existe\n2. Se você faz parte do jogo\n3. Se o playerId está correto`);
-    });
+    // Try using playerId first, fallback to playerName if playerId not found
+    const connectWithId = async () => {
+      // Use playerId if available, otherwise use playerName
+      const identifier = playerId || playerName;
+      if (!identifier) {
+        setError('Player ID ou nome não encontrado. Por favor, volte à página inicial.');
+        return;
+      }
+
+      try {
+        // Try with playerId first if available
+        if (playerId) {
+          await gameWs.connect(params.gameId, playerId);
+        } else if (playerName) {
+          // Use playerName if playerId not available
+          await gameWs.connect(params.gameId, playerName, { useName: true });
+        }
+      } catch (err) {
+        // If playerId fails, try using playerName
+        if (playerId && playerName && err instanceof Error && err.message.includes('not found')) {
+          console.log('Tentando reconectar usando nome do jogador...');
+          try {
+            await gameWs.connect(params.gameId, playerName, { useName: true });
+          } catch (nameErr) {
+            console.error('Erro ao conectar com nome:', nameErr);
+            setError(`Erro ao conectar: ${nameErr instanceof Error ? nameErr.message : 'Erro desconhecido'}\n\nVerifique:\n1. Se o jogo existe\n2. Se você faz parte do jogo\n3. Se o nome está correto`);
+          }
+        } else {
+          console.error('Erro ao conectar WebSocket:', err);
+          setError(`Erro ao conectar: ${err instanceof Error ? err.message : 'Erro desconhecido'}\n\nVerifique:\n1. Se o jogo existe\n2. Se você faz parte do jogo\n3. Se o playerId/nome está correto`);
+        }
+      }
+    };
+
+    connectWithId();
 
     // Cleanup on unmount
     return () => {
