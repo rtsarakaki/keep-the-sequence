@@ -1,6 +1,6 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
-import { container } from '../../infrastructure/di/container';
-import { CreateGameDTO } from '../../application/dto/CreateGameDTO';
+import { container } from '../../../infrastructure/di/container';
+import { CreateGameDTO } from '../../../application/dto/CreateGameDTO';
 
 /**
  * HTTP endpoint to create a new game
