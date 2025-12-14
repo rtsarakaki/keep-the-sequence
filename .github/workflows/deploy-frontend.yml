@@ -1,5 +1,6 @@
-name: Deploy Frontend
+name: Frontend CI
 
+# CI only - Vercel handles deployment automatically via GitHub integration
 on:
   push:
     branches:
@@ -7,11 +8,16 @@ on:
     paths:
       - 'frontend/**'
       - '.github/workflows/deploy-frontend.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
   workflow_dispatch:
 
 jobs:
-  build-and-test:
-    name: Build and Test
+  ci:
+    name: Lint, Test and Build
     runs-on: ubuntu-latest
     
     steps:
@@ -44,24 +50,4 @@ jobs:
         run: npm run build
         env:
           NEXT_PUBLIC_WS_URL: ${{ secrets.NEXT_PUBLIC_WS_URL || '' }}
-
-  deploy:
-    name: Deploy to Vercel
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.approve == 'true')
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
-          working-directory: ./frontend
-          scope: ${{ secrets.VERCEL_ORG_ID }}
 
