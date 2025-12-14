@@ -144,6 +144,9 @@ export async function checkApiHealth(): Promise<{ configured: boolean; accessibl
       },
       // Add timeout to detect connection issues faster
       signal: AbortSignal.timeout(10000), // 10 seconds timeout
+      // Add credentials to handle CORS properly
+      mode: 'cors',
+      credentials: 'omit',
     });
 
     let errorDetails: string | undefined;
