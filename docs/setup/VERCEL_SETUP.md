@@ -20,14 +20,16 @@ Este guia explica como configurar o deploy automático do frontend na Vercel usa
    - **Install Command**: `npm install` (ou deixe padrão)
 5. Clique em **Deploy** (pode falhar, mas não importa - só precisamos do projeto criado)
 
-## Passo 2: Configurar Variáveis de Ambiente (Opcional)
+## Passo 2: Configurar Variáveis de Ambiente
 
-Se precisar de variáveis de ambiente específicas:
+**⚠️ Importante**: Você precisa configurar as variáveis de ambiente manualmente na Vercel.
 
+Para instruções detalhadas, consulte: [`VERCEL_ENV_VARS.md`](./VERCEL_ENV_VARS.md)
+
+**Resumo rápido:**
 1. Acesse **Settings** → **Environment Variables** no projeto Vercel
-2. Adicione variáveis como:
-   - `NEXT_PUBLIC_WS_URL`: URL do WebSocket API (quando a infraestrutura estiver pronta)
-   - Outras variáveis públicas (precisam começar com `NEXT_PUBLIC_`)
+2. Adicione `NEXT_PUBLIC_API_URL` com a URL da API HTTP do backend
+3. Após adicionar, faça um **Redeploy** para aplicar as mudanças
 
 **Nota**: A Vercel automaticamente detecta mudanças no GitHub e faz deploy. Não é necessário configurar secrets no GitHub para o deploy básico.
 
