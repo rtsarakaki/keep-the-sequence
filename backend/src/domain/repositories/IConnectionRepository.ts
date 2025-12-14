@@ -4,6 +4,7 @@ export interface Connection {
   playerId: string;
   connectedAt: Date;
   lastActivity: Date;
+  ttl?: number; // Time to Live (Unix timestamp in seconds)
 }
 
 export interface IConnectionRepository {

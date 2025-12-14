@@ -77,13 +77,16 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
       });
     }
 
-    // Save connection
+    // Save connection with TTL (24 hours)
+    // DynamoDB will automatically delete disconnected connections after 24h
+    const now = new Date();
     await connectionRepository.save({
       connectionId,
       gameId,
       playerId,
-      connectedAt: new Date(),
-      lastActivity: new Date(),
+      connectedAt: now,
+      lastActivity: now,
+      ttl: Math.floor(now.getTime() / 1000) + (24 * 60 * 60), // 24 hours
     });
 
     // Send initial game state to the newly connected player

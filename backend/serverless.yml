@@ -160,6 +160,9 @@ resources:
         KeySchema:
           - AttributeName: connectionId
             KeyType: HASH
+        TimeToLiveSpecification:
+          Enabled: true
+          AttributeName: ttl
 
     GameEventsTable:
       Type: AWS::DynamoDB::Table
@@ -176,6 +179,9 @@ resources:
             KeyType: HASH
           - AttributeName: timestamp
             KeyType: RANGE
+        TimeToLiveSpecification:
+          Enabled: true
+          AttributeName: ttl
 
     GameEventsQueue:
       Type: AWS::SQS::Queue

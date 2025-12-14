@@ -129,7 +129,9 @@ export class GameInitializer {
       status: 'waiting' as GameStatus,
       createdAt: now,
       updatedAt: now,
-      ttl: undefined, // Can be set later for cleanup
+      // TTL: 7 days after creation (in seconds since epoch)
+      // DynamoDB will automatically delete the item after this time
+      ttl: Math.floor(now.getTime() / 1000) + (7 * 24 * 60 * 60),
     });
   }
 }

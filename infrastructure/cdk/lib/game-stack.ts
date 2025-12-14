@@ -21,6 +21,7 @@ export class GameStack extends cdk.Stack {
       tableName: 'the-game-connections',
       partitionKey: { name: 'connectionId', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      timeToLiveAttribute: 'ttl',
       removalPolicy: cdk.RemovalPolicy.DESTROY, // Change for production
     });
 
@@ -29,6 +30,7 @@ export class GameStack extends cdk.Stack {
       partitionKey: { name: 'gameId', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'timestamp', type: dynamodb.AttributeType.NUMBER },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      timeToLiveAttribute: 'ttl',
       removalPolicy: cdk.RemovalPolicy.DESTROY, // Change for production
     });
 

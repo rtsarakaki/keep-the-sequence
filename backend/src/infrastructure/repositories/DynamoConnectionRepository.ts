@@ -86,6 +86,7 @@ export class DynamoConnectionRepository implements IConnectionRepository {
       playerId: connection.playerId,
       connectedAt: connection.connectedAt.getTime(),
       lastActivity: connection.lastActivity.getTime(),
+      ...(connection.ttl !== undefined && { ttl: connection.ttl }),
     };
   }
 
@@ -115,6 +116,7 @@ export class DynamoConnectionRepository implements IConnectionRepository {
       playerId: item.playerId,
       connectedAt: new Date(connectedAt),
       lastActivity: new Date(lastActivity),
+      ttl: typeof item.ttl === 'number' ? item.ttl : undefined,
     };
   }
 }
