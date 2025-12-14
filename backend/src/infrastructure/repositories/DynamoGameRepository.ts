@@ -1,7 +1,9 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, GetCommand, PutCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
 import { IGameRepository } from '../../domain/repositories/IGameRepository';
-import { Game } from '../../domain/entities/Game';
+import { Game, GameStatus } from '../../domain/entities/Game';
+import { Player } from '../../domain/entities/Player';
+import { Card } from '../../domain/valueObjects/Card';
 
 export class DynamoGameRepository implements IGameRepository {
   private readonly client: DynamoDBDocumentClient;
@@ -52,15 +54,135 @@ export class DynamoGameRepository implements IGameRepository {
   }
 
   private mapToGame(item: Record<string, unknown>): Game {
-    // Implementation will map DynamoDB item to Game entity
-    // This is a placeholder - full implementation needed
-    throw new Error('Not implemented');
+    if (!item.gameId || typeof item.gameId !== 'string') {
+      throw new Error('Invalid DynamoDB item: missing or invalid gameId');
+    }
+
+    const mapCards = (cards: unknown[]): Card[] => {
+      if (!Array.isArray(cards)) {
+        return [];
+      }
+      return cards.map(card => {
+        if (
+          typeof card === 'object' &&
+          card !== null &&
+          'value' in card &&
+          'suit' in card &&
+          typeof card.value === 'number' &&
+          typeof card.suit === 'string'
+        ) {
+          return new Card(card.value, card.suit);
+        }
+        throw new Error(`Invalid card format: ${JSON.stringify(card)}`);
+      });
+    };
+
+    const mapPlayers = (players: unknown[]): Player[] => {
+      if (!Array.isArray(players)) {
+        return [];
+      }
+      return players.map(player => {
+        if (
+          typeof player === 'object' &&
+          player !== null &&
+          'id' in player &&
+          'name' in player &&
+          'hand' in player &&
+          'isConnected' in player
+        ) {
+          return new Player({
+            id: String(player.id),
+            name: String(player.name),
+            hand: mapCards(Array.isArray(player.hand) ? player.hand : []),
+            isConnected: Boolean(player.isConnected),
+          });
+        }
+        throw new Error(`Invalid player format: ${JSON.stringify(player)}`);
+      });
+    };
+
+    const piles = item.piles as Record<string, unknown>;
+    if (!piles || typeof piles !== 'object') {
+      throw new Error('Invalid DynamoDB item: missing or invalid piles');
+    }
+
+    const validStatuses: GameStatus[] = ['waiting', 'playing', 'finished', 'abandoned'];
+    const status = item.status as string;
+    if (!status || !validStatuses.includes(status as GameStatus)) {
+      throw new Error(`Invalid status: ${status}`);
+    }
+
+    const createdAt = item.createdAt as number;
+    const updatedAt = item.updatedAt as number;
+    if (typeof createdAt !== 'number' || typeof updatedAt !== 'number') {
+      throw new Error('Invalid DynamoDB item: missing or invalid timestamps');
+    }
+
+    return new Game({
+      id: item.gameId as string,
+      players: mapPlayers(Array.isArray(item.players) ? item.players : []),
+      piles: {
+        ascending1: mapCards(Array.isArray(piles.ascending1) ? piles.ascending1 : []),
+        ascending2: mapCards(Array.isArray(piles.ascending2) ? piles.ascending2 : []),
+        descending1: mapCards(Array.isArray(piles.descending1) ? piles.descending1 : []),
+        descending2: mapCards(Array.isArray(piles.descending2) ? piles.descending2 : []),
+      },
+      deck: mapCards(Array.isArray(item.deck) ? item.deck : []),
+      discardPile: mapCards(Array.isArray(item.discardPile) ? item.discardPile : []),
+      currentTurn: item.currentTurn === null || item.currentTurn === undefined 
+        ? null 
+        : String(item.currentTurn),
+      status: status as GameStatus,
+      createdAt: new Date(createdAt),
+      updatedAt: new Date(updatedAt),
+      ttl: typeof item.ttl === 'number' ? item.ttl : undefined,
+    });
   }
 
   private mapToDynamoItem(game: Game): Record<string, unknown> {
-    // Implementation will map Game entity to DynamoDB item
-    // This is a placeholder - full implementation needed
-    throw new Error('Not implemented');
+    return {
+      gameId: game.id,
+      players: game.players.map(player => ({
+        id: player.id,
+        name: player.name,
+        hand: player.hand.map(card => ({
+          value: card.value,
+          suit: card.suit,
+        })),
+        isConnected: player.isConnected,
+      })),
+      piles: {
+        ascending1: game.piles.ascending1.map(card => ({
+          value: card.value,
+          suit: card.suit,
+        })),
+        ascending2: game.piles.ascending2.map(card => ({
+          value: card.value,
+          suit: card.suit,
+        })),
+        descending1: game.piles.descending1.map(card => ({
+          value: card.value,
+          suit: card.suit,
+        })),
+        descending2: game.piles.descending2.map(card => ({
+          value: card.value,
+          suit: card.suit,
+        })),
+      },
+      deck: game.deck.map(card => ({
+        value: card.value,
+        suit: card.suit,
+      })),
+      discardPile: game.discardPile.map(card => ({
+        value: card.value,
+        suit: card.suit,
+      })),
+      currentTurn: game.currentTurn ?? null,
+      status: game.status,
+      createdAt: game.createdAt.getTime(),
+      updatedAt: game.updatedAt.getTime(),
+      ...(game.ttl !== undefined && { ttl: game.ttl }),
+    };
   }
 }
 

@@ -106,7 +106,7 @@ describe('GameRules', () => {
       };
       
       const totalCards = 98;
-      const playedCards = 5; // 2 + 1 + 2 + 1
+      const playedCards = 6; // 2 + 1 + 2 + 1 = 6 cartas
       const expectedScore = totalCards - playedCards;
       
       const score = calculateScore(piles);
