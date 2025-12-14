@@ -22,6 +22,9 @@ module.exports = {
   transform: {
     '^.+\\.ts$': 'ts-jest'
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!(uuid)/)',
+  ],
   verbose: true
 };
 
