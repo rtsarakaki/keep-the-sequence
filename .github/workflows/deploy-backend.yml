@@ -1,11 +1,10 @@
 name: Deploy Backend
 
-# Temporarily disabled - will be enabled after infrastructure workflow is working
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
-  # push:
-  #   branches:
-  #     - main
     inputs:
       approve:
         description: 'Approve deployment (only works if all tests pass)'
@@ -66,9 +65,8 @@ jobs:
     permissions:
       id-token: write
       contents: read
-    environment:
-      name: production
-      url: https://console.aws.amazon.com/
+    # Removed environment: production to allow automatic deployment after tests pass
+    # If you want manual approval, configure environment protection rules in GitHub Settings
     
     steps:
       - name: Checkout code
