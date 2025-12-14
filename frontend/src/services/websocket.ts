@@ -23,9 +23,9 @@ export interface WebSocketCallbacks {
 export class GameWebSocket {
   private ws: WebSocket | null = null;
   private status: WebSocketStatus = 'disconnected';
-  private callbacks: WebSocketCallbacks = {};
+  private readonly callbacks: WebSocketCallbacks = {};
   private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
+  private readonly maxReconnectAttempts = 5;
   private reconnectDelay = 1000; // Start with 1 second
 
   constructor(callbacks: WebSocketCallbacks = {}) {
