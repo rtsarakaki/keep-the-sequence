@@ -5,6 +5,7 @@ import { useGameWebSocket } from '@/hooks/useGameWebSocket';
 import { GameError } from '@/components/game/GameError';
 import { GameLoading } from '@/components/game/GameLoading';
 import { GameBoard } from '@/components/game/GameBoard';
+import { GameHeader } from '@/components/game/GameHeader';
 import styles from './page.module.css';
 
 export default function GamePage({ params }: { params: { gameId: string } }) {
@@ -162,18 +163,12 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
 
   return (
     <main className={styles.container}>
-      <header className={styles.header}>
-        <h1>The Game</h1>
-        <div className={styles.status}>
-          <span className={styles.statusBadge} data-status={wsStatus}>
-            {wsStatus === 'connected' ? '🟢 Conectado' : wsStatus === 'connecting' ? '🟡 Conectando...' : '🔴 Desconectado'}
-          </span>
-          <span>Status: {gameState.status}</span>
-          {gameState.currentTurn && (
-            <span>Turno: {gameState.players.find(p => p.id === gameState.currentTurn)?.name || 'Desconhecido'}</span>
-          )}
-        </div>
-      </header>
+      <GameHeader
+        wsStatus={wsStatus}
+        gameStatus={gameState.status}
+        currentTurn={gameState.currentTurn}
+        players={gameState.players}
+      />
 
       <GameBoard piles={gameState.piles} />
 
