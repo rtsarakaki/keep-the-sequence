@@ -8,7 +8,7 @@ interface GameErrorProps {
   onRetry: () => void;
 }
 
-export function GameError({ error, playerId, playerName, onDebugTest }: GameErrorProps) {
+export function GameError({ error, playerId, playerName, onDebugTest, onRetry }: GameErrorProps) {
   return (
     <main className={styles.container}>
       <div className={styles.error}>
@@ -74,6 +74,20 @@ export function GameError({ error, playerId, playerName, onDebugTest }: GameErro
                 4. Reconectar usando Nome
               </button>
             )}
+            <button
+              onClick={onRetry}
+              style={{
+                padding: '0.75rem',
+                backgroundColor: '#ffc107',
+                color: 'black',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+              }}
+            >
+              🔄 Tentar Novamente
+            </button>
           </div>
         </div>
 
