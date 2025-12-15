@@ -90,59 +90,64 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
         gameIdToSync = connection.gameId;
       }
       
-      console.log(`Processing sync request for game ${gameIdToSync}, connection ${connectionId}`);
+      console.log(`[MOCK] Processing sync request for game ${gameIdToSync}, connection ${connectionId}`);
       
-      const syncGameUseCase = container.getSyncGameUseCase();
+      // MOCK RESPONSE - Temporary mock to test frontend connection
       const webSocketService = container.getWebSocketService(event);
       
-      const result = await syncGameUseCase.execute(gameIdToSync);
-      
-      if (!result.isSuccess) {
-        console.error(`Sync failed for game ${gameIdToSync}:`, result.error);
-        return Promise.resolve({
-          statusCode: 404,
-          body: JSON.stringify({ error: result.error || 'Game not found' }),
-        });
-      }
-      
-      // Serialize game state properly
-      const game = result.value;
-      const gameStateMessage = {
+      // Create mock game state
+      const mockGameStateMessage = {
         type: 'gameState',
         game: {
-          id: game.id,
-          players: game.players.map(p => ({
-            id: p.id,
-            name: p.name,
-            hand: p.hand.map(c => ({ value: c.value, suit: c.suit })),
-            isConnected: p.isConnected,
-          })),
+          id: gameIdToSync || 'MOCK_GAME',
+          players: [
+            {
+              id: 'mock-player-1',
+              name: 'Jogador Mock',
+              hand: [
+                { value: 10, suit: 'hearts' },
+                { value: 20, suit: 'clubs' },
+                { value: 30, suit: 'diamonds' },
+                { value: 40, suit: 'spades' },
+                { value: 50, suit: 'hearts' },
+                { value: 60, suit: 'clubs' },
+              ],
+              isConnected: true,
+            },
+          ],
           piles: {
-            ascending1: game.piles.ascending1.map(c => ({ value: c.value, suit: c.suit })),
-            ascending2: game.piles.ascending2.map(c => ({ value: c.value, suit: c.suit })),
-            descending1: game.piles.descending1.map(c => ({ value: c.value, suit: c.suit })),
-            descending2: game.piles.descending2.map(c => ({ value: c.value, suit: c.suit })),
+            ascending1: [],
+            ascending2: [],
+            descending1: [],
+            descending2: [],
           },
-          deck: game.deck.map(c => ({ value: c.value, suit: c.suit })),
-          discardPile: game.discardPile.map(c => ({ value: c.value, suit: c.suit })),
-          currentTurn: game.currentTurn,
-          status: game.status,
+          deck: Array.from({ length: 80 }, (_, i) => {
+            const suits: readonly string[] = ['hearts', 'clubs', 'diamonds', 'spades'];
+            const suitIndex = i % 4;
+            return {
+              value: i + 1,
+              suit: suits[suitIndex] ?? 'hearts',
+            };
+          }),
+          discardPile: [],
+          currentTurn: null,
+          status: 'waiting' as const,
         },
       };
       
-      console.log(`Sending game state via sync to ${connectionId}`, {
+      console.log(`[MOCK] Sending mock game state via sync to ${connectionId}`, {
         gameIdToSync,
         connectionId,
-        messageType: gameStateMessage.type,
-        gameStateGameId: gameStateMessage.game.id,
-        playersCount: gameStateMessage.game.players.length,
+        messageType: mockGameStateMessage.type,
+        gameStateGameId: mockGameStateMessage.game.id,
+        playersCount: mockGameStateMessage.game.players.length,
       });
       
       try {
-        await webSocketService.sendToConnection(connectionId, gameStateMessage);
-        console.log(`Sync completed successfully for ${connectionId} - message sent`);
+        await webSocketService.sendToConnection(connectionId, mockGameStateMessage);
+        console.log(`[MOCK] Sync completed successfully for ${connectionId} - mock message sent`);
       } catch (sendError) {
-        console.error(`Failed to send game state to ${connectionId}:`, sendError);
+        console.error(`[MOCK] Failed to send mock game state to ${connectionId}:`, sendError);
         throw sendError; // Re-throw to be caught by outer catch
       }
       
@@ -150,7 +155,7 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
         statusCode: 200,
       });
     } catch (error) {
-      console.error('Error in sync action:', error);
+      console.error('[MOCK] Error in sync action:', error);
       return Promise.resolve({
         statusCode: 500,
         body: JSON.stringify({ error: 'Internal server error during sync' }),
