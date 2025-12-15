@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { useGameWebSocket } from '@/hooks/useGameWebSocket';
 import { GameError } from '@/components/game/GameError';
 import { GameLoading } from '@/components/game/GameLoading';
+import { GameBoard } from '@/components/game/GameBoard';
 import styles from './page.module.css';
 
 export default function GamePage({ params }: { params: { gameId: string } }) {
@@ -174,70 +175,7 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
         </div>
       </header>
 
-      <div className={styles.gameBoard}>
-        <h2>Pilhas</h2>
-        <div className={styles.piles}>
-          <div className={styles.pile}>
-            <h3>Pilha Crescente 1</h3>
-            <div className={styles.pileCards}>
-              {gameState.piles.ascending1.length > 0 ? (
-                gameState.piles.ascending1.map((card, idx) => (
-                  <div key={idx} className={styles.card}>
-                    {card.value}
-                  </div>
-                ))
-              ) : (
-                <div className={styles.emptyPile}>Vazia</div>
-              )}
-            </div>
-          </div>
-
-          <div className={styles.pile}>
-            <h3>Pilha Crescente 2</h3>
-            <div className={styles.pileCards}>
-              {gameState.piles.ascending2.length > 0 ? (
-                gameState.piles.ascending2.map((card, idx) => (
-                  <div key={idx} className={styles.card}>
-                    {card.value}
-                  </div>
-                ))
-              ) : (
-                <div className={styles.emptyPile}>Vazia</div>
-              )}
-            </div>
-          </div>
-
-          <div className={styles.pile}>
-            <h3>Pilha Decrescente 1</h3>
-            <div className={styles.pileCards}>
-              {gameState.piles.descending1.length > 0 ? (
-                gameState.piles.descending1.map((card, idx) => (
-                  <div key={idx} className={styles.card}>
-                    {card.value}
-                  </div>
-                ))
-              ) : (
-                <div className={styles.emptyPile}>Vazia</div>
-              )}
-            </div>
-          </div>
-
-          <div className={styles.pile}>
-            <h3>Pilha Decrescente 2</h3>
-            <div className={styles.pileCards}>
-              {gameState.piles.descending2.length > 0 ? (
-                gameState.piles.descending2.map((card, idx) => (
-                  <div key={idx} className={styles.card}>
-                    {card.value}
-                  </div>
-                ))
-              ) : (
-                <div className={styles.emptyPile}>Vazia</div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      <GameBoard piles={gameState.piles} />
 
       {currentPlayer && (
         <div className={styles.playerHand}>
