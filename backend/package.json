@@ -12,9 +12,10 @@
     "lint:fix": "eslint src --ext .ts --fix",
     "type-check": "tsc --noEmit",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "test:aws": "ts-node scripts/test-aws-access.ts",
-    "clear-tables": "ts-node scripts/clear-dynamodb-tables.ts",
-    "check-game": "ts-node scripts/check-game.ts"
+    "test:aws": "ts-node -r ./scripts/load-env.ts scripts/test-aws-access.ts",
+    "clear-tables": "ts-node -r ./scripts/load-env.ts scripts/clear-dynamodb-tables.ts",
+    "check-game": "ts-node -r ./scripts/load-env.ts scripts/check-game.ts",
+    "local:dev": "ts-node-dev --respawn --transpile-only -r ./scripts/load-env.ts src/index.ts"
   },
   "keywords": [
     "game",
