@@ -14,9 +14,18 @@ import { Card } from '../../../domain/valueObjects/Card';
  * After processing, broadcasts the result to all connected players.
  */
 export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
+  console.log('gameHandler invoked', {
+    connectionId: event.requestContext.connectionId,
+    routeKey: event.requestContext.routeKey,
+    hasBody: !!event.body,
+    bodyLength: event.body?.length || 0,
+    bodyPreview: event.body?.substring(0, 200) || 'no body',
+  });
+
   const connectionId = event.requestContext.connectionId;
 
   if (!connectionId) {
+    console.error('Missing connectionId in gameHandler');
     return Promise.resolve({
       statusCode: 400,
       body: JSON.stringify({ error: 'Missing connectionId' }),
@@ -25,6 +34,10 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
 
   // Parse message body
   if (!event.body) {
+    console.error('Missing message body in gameHandler', {
+      connectionId,
+      routeKey: event.requestContext.routeKey,
+    });
     return Promise.resolve({
       statusCode: 400,
       body: JSON.stringify({ error: 'Missing message body' }),
@@ -50,6 +63,11 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
   }
 
   const action = (messageBody as { action: string }).action;
+  console.log(`Processing action: ${action}`, {
+    connectionId,
+    action,
+    hasGameId: 'gameId' in messageBody,
+  });
 
   // Handle sync action
   if (action === 'sync') {
