@@ -4,15 +4,6 @@ import { useState, useEffect } from 'react';
 import { createGame, joinGame, checkApiHealth } from '@/services/api';
 import styles from './page.module.css';
 
-// Simple UUID generator for browser (crypto.randomUUID is not available in all browsers)
-function generateUUID(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
-
 export default function Home() {
   const [gameId, setGameId] = useState('');
   const [playerName, setPlayerName] = useState('');
@@ -73,12 +64,9 @@ export default function Home() {
       return;
     }
 
-    // Generate player ID
-    const playerId = generateUUID();
-
     try {
-      // Join game via HTTP endpoint
-      const result = await joinGame(gameId.trim(), playerName.trim(), playerId);
+      // Join game via HTTP endpoint (backend will generate playerId automatically)
+      const result = await joinGame(gameId.trim(), playerName.trim());
 
       // Store player info in sessionStorage for the game page
       sessionStorage.setItem('playerId', result.playerId);
