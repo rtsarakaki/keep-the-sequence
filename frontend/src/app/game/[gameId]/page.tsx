@@ -7,6 +7,7 @@ import { GameLoading } from '@/components/game/GameLoading';
 import { GameBoard } from '@/components/game/GameBoard';
 import { GameHeader } from '@/components/game/GameHeader';
 import { PlayersList } from '@/components/game/PlayersList';
+import { PlayerHand } from '@/components/game/PlayerHand';
 import styles from './page.module.css';
 
 export default function GamePage({ params }: { params: { gameId: string } }) {
@@ -174,46 +175,11 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
       <GameBoard piles={gameState.piles} />
 
       {currentPlayer && (
-        <div className={styles.playerHand}>
-          <h2>Suas Cartas ({currentPlayer.name})</h2>
-          <div className={styles.handCards}>
-            {currentPlayer.hand.map((card, index) => (
-              <div key={index} className={styles.handCard}>
-                <div className={styles.cardValue}>{card.value}</div>
-                <div className={styles.cardActions}>
-                  <button
-                    onClick={() => handlePlayCard(index, 'ascending1')}
-                    disabled={wsStatus !== 'connected'}
-                    className={styles.playButton}
-                  >
-                    ↑1
-                  </button>
-                  <button
-                    onClick={() => handlePlayCard(index, 'ascending2')}
-                    disabled={wsStatus !== 'connected'}
-                    className={styles.playButton}
-                  >
-                    ↑2
-                  </button>
-                  <button
-                    onClick={() => handlePlayCard(index, 'descending1')}
-                    disabled={wsStatus !== 'connected'}
-                    className={styles.playButton}
-                  >
-                    ↓1
-                  </button>
-                  <button
-                    onClick={() => handlePlayCard(index, 'descending2')}
-                    disabled={wsStatus !== 'connected'}
-                    className={styles.playButton}
-                  >
-                    ↓2
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <PlayerHand
+          player={currentPlayer}
+          wsStatus={wsStatus}
+          onPlayCard={handlePlayCard}
+        />
       )}
 
       <PlayersList players={gameState.players} currentPlayerId={playerId} />
