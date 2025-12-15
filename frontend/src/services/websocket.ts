@@ -207,7 +207,9 @@ export class GameWebSocket {
       throw new Error('WebSocket não está conectado');
     }
 
-    this.ws.send(JSON.stringify(message));
+    const messageString = JSON.stringify(message);
+    console.log('Enviando mensagem via WebSocket:', messageString);
+    this.ws.send(messageString);
   }
 
   /**
