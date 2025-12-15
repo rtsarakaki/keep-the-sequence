@@ -1,74 +1,26 @@
 import { GameState } from '@/hooks/useGameWebSocket';
+import { Pile } from './Pile';
 import styles from '../../app/game/[gameId]/page.module.css';
 
 interface GameBoardProps {
   piles: GameState['piles'];
 }
 
+const PILE_CONFIG = [
+  { key: 'ascending1' as const, title: 'Pilha Crescente 1' },
+  { key: 'ascending2' as const, title: 'Pilha Crescente 2' },
+  { key: 'descending1' as const, title: 'Pilha Decrescente 1' },
+  { key: 'descending2' as const, title: 'Pilha Decrescente 2' },
+] as const;
+
 export function GameBoard({ piles }: GameBoardProps) {
   return (
     <div className={styles.gameBoard}>
       <h2>Pilhas</h2>
       <div className={styles.piles}>
-        <div className={styles.pile}>
-          <h3>Pilha Crescente 1</h3>
-          <div className={styles.pileCards}>
-            {piles.ascending1.length > 0 ? (
-              piles.ascending1.map((card, idx) => (
-                <div key={idx} className={styles.card}>
-                  {card.value}
-                </div>
-              ))
-            ) : (
-              <div className={styles.emptyPile}>Vazia</div>
-            )}
-          </div>
-        </div>
-
-        <div className={styles.pile}>
-          <h3>Pilha Crescente 2</h3>
-          <div className={styles.pileCards}>
-            {piles.ascending2.length > 0 ? (
-              piles.ascending2.map((card, idx) => (
-                <div key={idx} className={styles.card}>
-                  {card.value}
-                </div>
-              ))
-            ) : (
-              <div className={styles.emptyPile}>Vazia</div>
-            )}
-          </div>
-        </div>
-
-        <div className={styles.pile}>
-          <h3>Pilha Decrescente 1</h3>
-          <div className={styles.pileCards}>
-            {piles.descending1.length > 0 ? (
-              piles.descending1.map((card, idx) => (
-                <div key={idx} className={styles.card}>
-                  {card.value}
-                </div>
-              ))
-            ) : (
-              <div className={styles.emptyPile}>Vazia</div>
-            )}
-          </div>
-        </div>
-
-        <div className={styles.pile}>
-          <h3>Pilha Decrescente 2</h3>
-          <div className={styles.pileCards}>
-            {piles.descending2.length > 0 ? (
-              piles.descending2.map((card, idx) => (
-                <div key={idx} className={styles.card}>
-                  {card.value}
-                </div>
-              ))
-            ) : (
-              <div className={styles.emptyPile}>Vazia</div>
-            )}
-          </div>
-        </div>
+        {PILE_CONFIG.map(({ key, title }) => (
+          <Pile key={key} title={title} cards={piles[key]} />
+        ))}
       </div>
     </div>
   );
