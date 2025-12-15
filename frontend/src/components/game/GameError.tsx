@@ -5,6 +5,7 @@ interface GameErrorProps {
   playerId: string | null;
   playerName: string | null;
   onDebugTest: (testType: 'check-game' | 'reconnect-playerId' | 'reconnect-playerName' | 'get-token') => void;
+  onRetry: () => void;
 }
 
 export function GameError({ error, playerId, playerName, onDebugTest }: GameErrorProps) {

@@ -146,6 +146,7 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
         playerId={playerId}
         playerName={playerName}
         onDebugTest={handleDebugTest}
+        onRetry={retry}
       />
     );
   }
