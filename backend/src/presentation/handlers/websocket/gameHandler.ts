@@ -130,9 +130,21 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
         },
       };
       
-      console.log(`Sending game state via sync to ${connectionId}`);
-      await webSocketService.sendToConnection(connectionId, gameStateMessage);
-      console.log(`Sync completed successfully for ${connectionId}`);
+      console.log(`Sending game state via sync to ${connectionId}`, {
+        gameIdToSync,
+        connectionId,
+        messageType: gameStateMessage.type,
+        gameStateGameId: gameStateMessage.game.id,
+        playersCount: gameStateMessage.game.players.length,
+      });
+      
+      try {
+        await webSocketService.sendToConnection(connectionId, gameStateMessage);
+        console.log(`Sync completed successfully for ${connectionId} - message sent`);
+      } catch (sendError) {
+        console.error(`Failed to send game state to ${connectionId}:`, sendError);
+        throw sendError; // Re-throw to be caught by outer catch
+      }
       
       return Promise.resolve({
         statusCode: 200,
