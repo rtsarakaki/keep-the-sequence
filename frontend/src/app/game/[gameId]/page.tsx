@@ -6,6 +6,7 @@ import { GameError } from '@/components/game/GameError';
 import { GameLoading } from '@/components/game/GameLoading';
 import { GameBoard } from '@/components/game/GameBoard';
 import { GameHeader } from '@/components/game/GameHeader';
+import { PlayersList } from '@/components/game/PlayersList';
 import styles from './page.module.css';
 
 export default function GamePage({ params }: { params: { gameId: string } }) {
@@ -215,17 +216,7 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
         </div>
       )}
 
-      <div className={styles.playersList}>
-        <h2>Jogadores ({gameState.players.length})</h2>
-        <ul>
-          {gameState.players.map((player) => (
-            <li key={player.id} className={player.id === playerId ? styles.currentPlayer : ''}>
-              {player.name} {player.id === playerId && '(Você)'}
-              {player.isConnected ? ' 🟢' : ' 🔴'}
-            </li>
-          ))}
-        </ul>
-      </div>
+      <PlayersList players={gameState.players} currentPlayerId={playerId} />
     </main>
   );
 }
