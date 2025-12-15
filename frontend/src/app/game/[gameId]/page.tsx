@@ -33,6 +33,8 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
   const [wsStatus, setWsStatus] = useState<WebSocketStatus>('disconnected');
   const [error, setError] = useState<string | null>(null);
   const [ws, setWs] = useState<GameWebSocket | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   useEffect(() => {
     // For reconnection, we can use either playerId or playerName
@@ -56,6 +58,8 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
           try {
             setGameState(message.game as GameState);
             setError(null); // Clear any previous errors
+            setRetryCount(0); // Reset retry count on success
+            setIsRetrying(false);
             console.log('Estado do jogo atualizado com sucesso');
           } catch (err) {
             console.error('Erro ao atualizar estado do jogo:', err);
@@ -72,11 +76,11 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
         setWsStatus(status);
         if (status === 'connected') {
           setError(null); // Clear errors when connected
+          setIsRetrying(false);
           console.log('WebSocket conectado, solicitando estado do jogo...');
           
           // Request game state after connection is established
-          // This ensures the connection is fully ready before sending messages
-          setTimeout(() => {
+          const requestSync = () => {
             if (gameWs && gameWs.getStatus() === 'connected') {
               console.log('Solicitando sincronização do jogo...');
               try {
@@ -88,7 +92,23 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
                 console.error('Erro ao solicitar sincronização:', err);
               }
             }
-          }, 500); // Wait 500ms for connection to be fully ready
+          };
+          
+          // First attempt after 500ms
+          setTimeout(requestSync, 500);
+          
+          // Retry if gameState not received after 3 seconds (max 3 retries)
+          setTimeout(() => {
+            // Use functional update to access current state without dependency
+            setGameState((currentState) => {
+              if (!currentState && gameWs && gameWs.getStatus() === 'connected' && retryCount < 3) {
+                console.log(`Retry ${retryCount + 1}/3: solicitando sincronização novamente...`);
+                setRetryCount(prev => prev + 1);
+                requestSync();
+              }
+              return currentState; // Don't change state, just use closure
+            });
+          }, 3000);
         }
       },
       onError: (err) => {
@@ -148,7 +168,71 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
     return () => {
       gameWs.disconnect();
     };
-  }, [params.gameId, playerId, playerName]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.gameId, playerId, playerName]); // gameState and retryCount intentionally excluded to avoid re-renders
+
+  // Manual retry function
+  const handleRetry = () => {
+    setError(null);
+    setRetryCount(0);
+    setIsRetrying(false);
+    if (ws) {
+      ws.disconnect();
+    }
+    
+    const gameWs = new GameWebSocket({
+      onMessage: (message) => {
+        console.log('Mensagem recebida:', message);
+        if (message.type === 'gameState' || message.type === 'gameUpdated') {
+          setGameState(message.game as GameState);
+          setError(null);
+          setRetryCount(0);
+          setIsRetrying(false);
+        } else if (message.type === 'error') {
+          setError((message as { type: 'error'; error: string }).error);
+        }
+      },
+      onStatusChange: (status) => {
+        setWsStatus(status);
+        if (status === 'connected') {
+          setError(null);
+          setIsRetrying(false);
+          setTimeout(() => {
+            if (gameWs && gameWs.getStatus() === 'connected') {
+              gameWs.send({
+                action: 'sync',
+                gameId: params.gameId,
+              });
+            }
+          }, 500);
+        }
+      },
+      onError: (err) => {
+        setError(`Erro na conexão: ${err.message}`);
+      },
+    });
+    
+    setWs(gameWs);
+    
+    const connectWithId = async () => {
+      const identifier = playerId || playerName;
+      if (!identifier) {
+        setError('Player ID ou nome não encontrado.');
+        return;
+      }
+      try {
+        if (playerId) {
+          await gameWs.connect(params.gameId, playerId);
+        } else if (playerName) {
+          await gameWs.connect(params.gameId, playerName, { useName: true });
+        }
+      } catch (err) {
+        setError(`Erro ao conectar: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
+      }
+    };
+    
+    connectWithId();
+  };
 
   const handlePlayCard = (cardIndex: number, pileId: 'ascending1' | 'ascending2' | 'descending1' | 'descending2') => {
     if (!ws || wsStatus !== 'connected') {
@@ -400,6 +484,37 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
         <div className={styles.loading}>
           <h2>Conectando ao jogo...</h2>
           <p>Status: {wsStatus}</p>
+          {wsStatus === 'connected' && (
+            <p style={{ marginTop: '1rem', color: '#666', fontSize: '0.9rem' }}>
+              Aguardando estado do jogo... (Verifique o console do navegador para mais detalhes)
+              {retryCount > 0 && ` (Tentativa ${retryCount}/3)`}
+            </p>
+          )}
+          {(wsStatus === 'disconnected' || wsStatus === 'error' || (wsStatus === 'connected' && retryCount > 0)) && (
+            <div style={{ marginTop: '1.5rem' }}>
+              <button
+                onClick={handleRetry}
+                disabled={isRetrying}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  backgroundColor: isRetrying ? '#ccc' : '#0070f3',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: isRetrying ? 'not-allowed' : 'pointer',
+                  fontSize: '1rem',
+                  fontWeight: 500,
+                }}
+              >
+                {isRetrying ? 'Reconectando...' : retryCount > 0 ? `Tentar Novamente (${retryCount}/3)` : 'Tentar Novamente'}
+              </button>
+              {retryCount >= 3 && (
+                <p style={{ marginTop: '1rem', color: '#c33', fontSize: '0.9rem' }}>
+                  Múltiplas tentativas falharam. Verifique sua conexão e tente novamente.
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </main>
     );
