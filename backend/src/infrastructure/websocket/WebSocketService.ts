@@ -71,7 +71,7 @@ export class WebSocketService implements IWebSocketService {
         errorName: error instanceof Error ? error.name : undefined,
         errorStack: error instanceof Error ? error.stack : undefined,
         connectionId,
-        endpoint: this.client.config.endpoint,
+        endpoint: this.client.config?.endpoint || 'unknown',
       });
       
       // Handle specific AWS errors
