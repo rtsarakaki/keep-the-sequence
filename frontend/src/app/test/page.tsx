@@ -27,8 +27,12 @@ export default function TestPage() {
         }
 
         // Get WebSocket URL (using dummy gameId and playerId for test)
+        // Add test=true query param to bypass authentication
         const result = await getWebSocketUrl('TEST_GAME', 'test-player-1');
-        const wsUrl = result.wsUrl;
+        // Add test=true to bypass authentication in onConnect
+        const wsUrl = result.wsUrl.includes('?') 
+          ? `${result.wsUrl}&test=true`
+          : `${result.wsUrl}?test=true`;
         addMessage(`WebSocket URL obtained: ${wsUrl.substring(0, 60)}...`);
 
         // Connect directly with WebSocket API
