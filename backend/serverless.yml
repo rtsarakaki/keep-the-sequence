@@ -114,6 +114,13 @@ functions:
           route: $default
     timeout: 30
 
+  testHandler:
+    handler: src/presentation/handlers/websocket/testHandler.handler
+    events:
+      - websocket:
+          route: test
+    timeout: 10
+
   # syncHandler removed - API Gateway WebSocket doesn't support custom routes
   # All messages go to gameHandler via $default route
 

@@ -244,3 +244,6 @@ Após confirmar que tudo está funcionando:
 - [Vercel Environment Variables](https://vercel.com/docs/concepts/projects/environment-variables)
 - [AWS API Gateway Testing](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-test-method.html)
 
+
+
+

@@ -123,3 +123,6 @@ aws lambda get-function-configuration \
   --query 'Environment.Variables'
 ```
 
+
+
+

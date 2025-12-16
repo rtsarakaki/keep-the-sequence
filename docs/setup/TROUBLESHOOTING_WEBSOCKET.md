@@ -149,3 +149,6 @@ Após o deploy, você verá mensagens mais específicas:
 3. Se o jogo não existir, crie um novo
 4. Se o player não estiver no jogo, use `/api/games/join` primeiro
 
+
+
+

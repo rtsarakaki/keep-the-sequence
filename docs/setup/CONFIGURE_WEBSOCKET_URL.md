@@ -101,3 +101,6 @@ Após configurar `WEBSOCKET_API_URL`:
 2. ✅ O frontend deve conseguir obter a URL do WebSocket
 3. ✅ Os jogadores devem conseguir conectar via WebSocket
 
+
+
+

@@ -39,3 +39,6 @@ curl "https://ga8w9ineg6.execute-api.us-east-1.amazonaws.com/prod/api/websocket-
 
 Após o deploy funcionar, o frontend deve conseguir conectar com a API! 🎉
 
+
+
+

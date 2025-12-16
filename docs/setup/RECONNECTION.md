@@ -83,3 +83,6 @@ O sistema já faz isso automaticamente quando você cria ou entra em uma partida
 - Verifique o ID do jogo
 - Crie uma nova partida se necessário
 
+
+
+
