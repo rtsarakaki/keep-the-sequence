@@ -1,6 +1,7 @@
 import { DynamoGameRepository } from '../repositories/DynamoGameRepository';
 import { DynamoConnectionRepository } from '../repositories/DynamoConnectionRepository';
 import { WebSocketService, getWebSocketEndpoint } from '../websocket/WebSocketService';
+import { SQSEventService } from '../sqs/SQSEventService';
 import { IGameRepository } from '../../domain/repositories/IGameRepository';
 import { IConnectionRepository } from '../../domain/repositories/IConnectionRepository';
 import { CreateGameUseCase } from '../../application/useCases/CreateGameUseCase';
@@ -18,6 +19,7 @@ import { APIGatewayProxyWebsocketHandlerV2 } from 'aws-lambda';
 class Container {
   private gameRepository: IGameRepository | null = null;
   private connectionRepository: IConnectionRepository | null = null;
+  private sqsEventService: SQSEventService | null = null;
   private createGameUseCase: CreateGameUseCase | null = null;
   private joinGameUseCase: JoinGameUseCase | null = null;
   private playCardUseCase: PlayCardUseCase | null = null;
@@ -74,6 +76,16 @@ class Container {
       this.syncGameUseCase = new SyncGameUseCase(this.getGameRepository());
     }
     return this.syncGameUseCase;
+  }
+
+  getSQSEventService(): SQSEventService {
+    if (!this.sqsEventService) {
+      // Queue URL can be provided via environment variable GAME_EVENTS_QUEUE_URL
+      // If not provided, will use GetQueueUrl with queue name from GAME_EVENTS_QUEUE
+      const queueUrl = process.env.GAME_EVENTS_QUEUE_URL;
+      this.sqsEventService = new SQSEventService(queueUrl);
+    }
+    return this.sqsEventService;
   }
 }
 

@@ -278,6 +278,25 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
           game: result.value,
         });
 
+        // Send event to SQS asynchronously (fire-and-forget)
+        const sqsEventService = container.getSQSEventService();
+        sqsEventService.sendEvent({
+          gameId,
+          eventType: 'playCard',
+          eventData: {
+            playerId,
+            card: { value: card.value, suit: card.suit },
+            pileId: playCardData.pileId,
+          },
+          timestamp: Date.now(),
+        }).catch((error) => {
+          console.error('Failed to send playCard event to SQS (non-blocking):', {
+            errorMessage: error instanceof Error ? error.message : String(error),
+            gameId,
+            playerId,
+          });
+        });
+
         return Promise.resolve({
           statusCode: 200,
         });
@@ -316,6 +335,24 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
         await webSocketService.sendToConnections(connectionIds, {
           type: 'gameUpdated',
           game: result.value,
+        });
+
+        // Send event to SQS asynchronously (fire-and-forget)
+        const sqsEventService = container.getSQSEventService();
+        sqsEventService.sendEvent({
+          gameId,
+          eventType: 'joinGame',
+          eventData: {
+            playerId,
+            playerName: joinGameData.playerName,
+          },
+          timestamp: Date.now(),
+        }).catch((error) => {
+          console.error('Failed to send joinGame event to SQS (non-blocking):', {
+            errorMessage: error instanceof Error ? error.message : String(error),
+            gameId,
+            playerId,
+          });
         });
 
         return Promise.resolve({

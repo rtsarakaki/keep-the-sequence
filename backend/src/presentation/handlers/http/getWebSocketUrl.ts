@@ -146,9 +146,52 @@ export const handler = async (
     });
   }
 
-  // TODO: Validate gameId and playerId exist in the game
-  // This should check DynamoDB to ensure the game exists and player is valid
-  // For now, we'll trust the parameters
+  // Validate gameId and playerId exist in the game
+  try {
+    const { container } = await import('../../../infrastructure/di/container');
+    const gameRepository = container.getGameRepository();
+    const game = await gameRepository.findById(gameId);
+    
+    if (!game) {
+      return Promise.resolve({
+        statusCode: 404,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': origin || '*',
+        },
+        body: JSON.stringify({
+          error: 'Game not found',
+        }),
+      });
+    }
+
+    // Validate playerId exists in the game
+    const player = game.players.find(p => p.id === playerId);
+    if (!player) {
+      return Promise.resolve({
+        statusCode: 403,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': origin || '*',
+        },
+        body: JSON.stringify({
+          error: 'Player not found in this game',
+        }),
+      });
+    }
+  } catch (error) {
+    console.error('Error validating game and player:', error);
+    return Promise.resolve({
+      statusCode: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': origin || '*',
+      },
+      body: JSON.stringify({
+        error: 'Error validating game and player',
+      }),
+    });
+  }
 
   // Create connection token (valid for 30 minutes)
   const token = authService.createToken(gameId, playerId, origin, 30);
