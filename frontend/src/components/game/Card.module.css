@@ -1,0 +1,89 @@
+.card {
+  background-color: white;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  border-color: #0070f3;
+}
+
+.card:active {
+  transform: translateY(0);
+}
+
+.card.dragging {
+  opacity: 0.5;
+  transform: rotate(5deg);
+}
+
+.card.small {
+  width: 50px;
+  height: 70px;
+  font-size: 0.875rem;
+}
+
+.card.medium {
+  width: 70px;
+  height: 100px;
+  font-size: 1rem;
+}
+
+.card.large {
+  width: 90px;
+  height: 130px;
+  font-size: 1.25rem;
+}
+
+.cardValue {
+  font-weight: bold;
+  font-size: 1.2em;
+  color: #333;
+  margin-bottom: 0.25rem;
+}
+
+.cardSuit {
+  font-size: 1.5em;
+  line-height: 1;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .card.small {
+    width: 45px;
+    height: 63px;
+    font-size: 0.75rem;
+  }
+
+  .card.medium {
+    width: 60px;
+    height: 85px;
+    font-size: 0.875rem;
+  }
+
+  .card.large {
+    width: 75px;
+    height: 110px;
+    font-size: 1rem;
+  }
+
+  .cardValue {
+    font-size: 1em;
+  }
+
+  .cardSuit {
+    font-size: 1.25em;
+  }
+}
+

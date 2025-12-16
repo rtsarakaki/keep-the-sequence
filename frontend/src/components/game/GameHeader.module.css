@@ -1,0 +1,132 @@
+.header {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.topRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 2rem;
+  color: #333;
+  font-weight: 700;
+}
+
+.gameId {
+  font-size: 0.875rem;
+  color: #666;
+  background-color: #f5f5f5;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-family: monospace;
+  font-weight: 500;
+}
+
+.statusRow {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.statusBadge {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.statusBadge[data-status='connected'] {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.statusBadge[data-status='connecting'] {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.statusBadge[data-status='disconnected'],
+.statusBadge[data-status='error'] {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.gameStatus {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.gameStatus[data-status='waiting'] {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.gameStatus[data-status='playing'] {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.gameStatus[data-status='finished'] {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+.gameStatus[data-status='abandoned'] {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.turnInfo {
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.turnInfo strong {
+  color: #333;
+  font-weight: 600;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .header {
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .gameId {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.6rem;
+  }
+
+  .statusRow {
+    gap: 0.75rem;
+  }
+
+  .statusBadge,
+  .gameStatus,
+  .turnInfo {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.75rem;
+  }
+}
+

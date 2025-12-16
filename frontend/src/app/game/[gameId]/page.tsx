@@ -171,9 +171,14 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
         gameStatus={gameState.status}
         currentTurn={gameState.currentTurn}
         players={gameState.players}
+        gameId={params.gameId}
       />
 
-      <GameBoard piles={gameState.piles} />
+      <GameBoard 
+        piles={gameState.piles} 
+        onCardDrop={(cardIndex, pileId) => handlePlayCard(cardIndex, pileId)}
+        isDroppable={wsStatus === 'connected'}
+      />
 
       {currentPlayer && (
         <PlayerHand

@@ -1,0 +1,121 @@
+.playersList {
+  background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+  margin: 0 0 1rem 0;
+  font-size: 1.25rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.count {
+  font-weight: normal;
+  color: #666;
+  font-size: 1rem;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.playerItem {
+  padding: 1rem;
+  background-color: white;
+  border-radius: 8px;
+  border: 2px solid #e0e0e0;
+  transition: all 0.2s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.playerItem:hover {
+  border-color: #0070f3;
+  box-shadow: 0 2px 4px rgba(0, 112, 243, 0.1);
+}
+
+.playerItem.currentPlayer {
+  border-color: #0070f3;
+  background: linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%);
+  font-weight: 500;
+}
+
+.playerItem.disconnected {
+  opacity: 0.6;
+}
+
+.playerInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.statusIndicator {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.playerName {
+  font-size: 1rem;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.youBadge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  background-color: #0070f3;
+  color: white;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.playerStats {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cardCount {
+  font-size: 0.875rem;
+  color: #666;
+  background-color: #f5f5f5;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .playersList {
+    padding: 1rem;
+  }
+
+  .title {
+    font-size: 1.125rem;
+  }
+
+  .playerItem {
+    padding: 0.75rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .playerStats {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
