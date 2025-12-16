@@ -1,19 +1,26 @@
 .playerHand {
   margin-bottom: 2rem;
-  padding: 1.5rem;
-  background: linear-gradient(135deg, #f9f9f9 0%, #ffffff 100%);
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.playerHand:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
 }
 
 .title {
   margin: 0 0 1rem 0;
   font-size: 1.5rem;
-  color: #333;
+  color: #667eea;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
+  font-weight: 700;
 }
 
 .playerName {
@@ -87,21 +94,20 @@
 
 .playButton {
   padding: 0.5rem 0.75rem;
-  background-color: #0070f3;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   transition: all 0.2s ease;
   min-width: 50px;
 }
 
 .playButton:hover:not(:disabled) {
-  background-color: #0051cc;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 112, 243, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
 }
 
 .playButton:active:not(:disabled) {

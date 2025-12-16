@@ -1,14 +1,19 @@
 .container {
   min-height: 100vh;
-  padding: 1rem;
+  padding: 2rem 1rem;
   max-width: 1200px;
   margin: 0 auto;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
 }
 
 .header {
   margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #e0e0e0;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  color: #333;
 }
 
 .header h1 {
@@ -50,173 +55,38 @@
 .error {
   text-align: center;
   padding: 3rem;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  color: #333;
 }
 
 .error {
-  background-color: #fee;
-  border: 1px solid #fcc;
-  border-radius: 8px;
+  background: rgba(255, 238, 238, 0.95);
+  border: 2px solid #fcc;
   color: #c33;
 }
 
 .button {
   display: inline-block;
   margin-top: 1rem;
-  padding: 0.75rem 1.5rem;
-  background-color: #0070f3;
+  padding: 0.75rem 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   text-decoration: none;
-  border-radius: 4px;
-  font-weight: 500;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: none;
+  cursor: pointer;
 }
 
 .button:hover {
-  background-color: #0051cc;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
 }
 
-.gameBoard {
-  margin-bottom: 2rem;
-}
-
-.gameBoard h2 {
-  margin-bottom: 1rem;
-}
-
-.piles {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.pile {
-  background-color: #f5f5f5;
-  border: 2px solid #ddd;
-  border-radius: 8px;
-  padding: 1rem;
-}
-
-.pile h3 {
-  margin: 0 0 0.75rem 0;
-  font-size: 1rem;
-  color: #666;
-}
-
-.pileCards {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  min-height: 60px;
-  align-items: flex-start;
-}
-
-.card {
-  background-color: white;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 0.5rem;
-  min-width: 40px;
-  text-align: center;
-  font-weight: bold;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.emptyPile {
-  color: #999;
-  font-style: italic;
-  padding: 1rem;
-  text-align: center;
-}
-
-.playerHand {
-  margin-bottom: 2rem;
-  padding: 1.5rem;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-}
-
-.playerHand h2 {
-  margin: 0 0 1rem 0;
-}
-
-.handCards {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.handCard {
-  background-color: white;
-  border: 2px solid #0070f3;
-  border-radius: 8px;
-  padding: 1rem;
-  min-width: 120px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.cardValue {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #0070f3;
-}
-
-.cardActions {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.25rem;
-  width: 100%;
-}
-
-.playButton {
-  padding: 0.5rem;
-  background-color: #0070f3;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.playButton:hover:not(:disabled) {
-  background-color: #0051cc;
-}
-
-.playButton:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-.playersList {
-  background-color: #f5f5f5;
-  border-radius: 8px;
-  padding: 1rem;
-}
-
-.playersList h2 {
-  margin: 0 0 0.75rem 0;
-}
-
-.playersList ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.playersList li {
-  padding: 0.5rem;
-  margin-bottom: 0.25rem;
-  background-color: white;
-  border-radius: 4px;
-}
-
-.currentPlayer {
-  font-weight: bold;
-  background-color: #e3f2fd !important;
-}
+/* GameBoard, PlayerHand, PlayersList styles are now in their own component CSS files */
 
 /* Mobile responsive */
 @media (max-width: 768px) {
