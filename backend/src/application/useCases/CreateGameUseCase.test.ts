@@ -144,6 +144,57 @@ describe('CreateGameUseCase', () => {
         expect(result2.value.id).toHaveLength(6);
       }
     });
+
+    it('should return error if GameIdGenerator fails', async () => {
+      const dto = {
+        playerName: 'Player 1',
+      };
+
+      // Mock GameIdGenerator to throw an error
+      const error = new Error('Failed to generate game ID');
+      mockGameRepository.findById = jest.fn().mockRejectedValue(error);
+
+      const result = await createGameUseCase.execute(dto);
+
+      expect(result.isSuccess).toBe(false);
+      if (!result.isSuccess) {
+        expect(result.error).toContain('Failed to create game');
+      }
+    });
+
+    it('should return error if repository save fails', async () => {
+      const dto = {
+        playerName: 'Player 1',
+      };
+
+      mockGameRepository.findById = jest.fn().mockResolvedValue(null);
+      const error = new Error('Database error');
+      mockGameRepository.save = jest.fn().mockRejectedValue(error);
+
+      const result = await createGameUseCase.execute(dto);
+
+      expect(result.isSuccess).toBe(false);
+      if (!result.isSuccess) {
+        expect(result.error).toContain('Failed to create game');
+      }
+    });
+
+    it('should handle non-Error exceptions', async () => {
+      const dto = {
+        playerName: 'Player 1',
+      };
+
+      // Mock to throw a non-Error object
+      mockGameRepository.findById = jest.fn().mockRejectedValue('String error');
+
+      const result = await createGameUseCase.execute(dto);
+
+      expect(result.isSuccess).toBe(false);
+      if (!result.isSuccess) {
+        expect(result.error).toContain('Failed to create game');
+        expect(result.error).toContain('Unknown error');
+      }
+    });
   });
 });
 

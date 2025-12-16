@@ -60,6 +60,36 @@ describe('Game', () => {
       expect(game.piles.ascending1).toHaveLength(0);
       expect(updatedGame.piles.ascending1).toHaveLength(1);
     });
+
+    it('deve adicionar carta a pilha que já tem cartas', () => {
+      const game = createGame();
+      const card1 = new Card(10, 'hearts');
+      const card2 = new Card(20, 'spades');
+      
+      const gameWithOneCard = game.addCardToPile('ascending1', card1);
+      const gameWithTwoCards = gameWithOneCard.addCardToPile('ascending1', card2);
+      
+      expect(gameWithTwoCards.piles.ascending1).toHaveLength(2);
+      expect(gameWithTwoCards.piles.ascending1[0]).toEqual(card1);
+      expect(gameWithTwoCards.piles.ascending1[1]).toEqual(card2);
+    });
+
+    it('deve lidar com pilha inexistente usando array vazio', () => {
+      const game = createGame();
+      const card = new Card(10, 'hearts');
+      
+      // Test all pile types to ensure they work
+      const game1 = game.addCardToPile('ascending1', card);
+      const game2 = game.addCardToPile('ascending2', card);
+      const game3 = game.addCardToPile('descending1', card);
+      const game4 = game.addCardToPile('descending2', card);
+      
+      expect(game1.piles.ascending1).toHaveLength(1);
+      expect(game2.piles.ascending2).toHaveLength(1);
+      expect(game3.piles.descending1).toHaveLength(1);
+      expect(game4.piles.descending2).toHaveLength(1);
+    });
+
   });
 
   describe('updateTurn', () => {
@@ -117,6 +147,30 @@ describe('Game', () => {
       );
       
       expect(updatedGame.players[0].isConnected).toBe(false);
+      expect(game.players[0].isConnected).toBe(true); // Original não foi modificado
+    });
+
+    it('não deve modificar jogadores que não correspondem ao playerId', () => {
+      const player1 = new Player({
+        id: 'player1',
+        name: 'Player 1',
+        hand: [],
+        isConnected: true,
+      });
+      const player2 = new Player({
+        id: 'player2',
+        name: 'Player 2',
+        hand: [],
+        isConnected: false,
+      });
+      const game = createGame().addPlayer(player1).addPlayer(player2);
+      
+      const updatedGame = game.updatePlayer('player1', (p) =>
+        p.updateConnectionStatus(false)
+      );
+      
+      expect(updatedGame.players[0].isConnected).toBe(false);
+      expect(updatedGame.players[1].isConnected).toBe(false); // player2 não foi modificado
       expect(game.players[0].isConnected).toBe(true); // Original não foi modificado
     });
   });

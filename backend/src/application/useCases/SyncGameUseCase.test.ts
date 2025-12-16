@@ -111,6 +111,20 @@ describe('SyncGameUseCase', () => {
       expect(result.isSuccess).toBe(false);
       if (!result.isSuccess) {
         expect(result.error).toContain('Failed to sync game');
+        expect(result.error).toContain('Database error');
+      }
+    });
+
+    it('should handle non-Error exceptions', async () => {
+      // Mock to throw a non-Error object
+      mockGameRepository.findById = jest.fn().mockRejectedValue('String error');
+
+      const result = await syncGameUseCase.execute('game-1');
+
+      expect(result.isSuccess).toBe(false);
+      if (!result.isSuccess) {
+        expect(result.error).toContain('Failed to sync game');
+        expect(result.error).toContain('Unknown error');
       }
     });
   });

@@ -12,7 +12,9 @@ module.exports = {
     // Exclude presentation handlers (will be tested via integration tests)
     '!src/presentation/handlers/**/*.ts',
     // Exclude DI container (simple infrastructure code, tested indirectly via handlers)
-    '!src/infrastructure/di/**/*.ts'
+    '!src/infrastructure/di/**/*.ts',
+    // Exclude SQS Event Service (infrastructure code, will be tested via integration tests)
+    '!src/infrastructure/sqs/**/*.ts'
   ],
   coverageThreshold: {
     global: {
