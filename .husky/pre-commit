@@ -11,8 +11,8 @@ if git diff --cached --name-only | grep -qE '^(backend|frontend)/'; then
   
   # Check if backend has changes
   if git diff --cached --name-only | grep -qE '^backend/'; then
-    echo "Running backend tests..."
-    cd backend && npm test || exit 1
+    echo "Running backend tests with coverage validation..."
+    cd backend && npm run test:coverage || exit 1
     cd ..
   fi
   
