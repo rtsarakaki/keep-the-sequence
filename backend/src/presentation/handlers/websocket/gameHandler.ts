@@ -129,37 +129,52 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
       console.log(`[MOCK] Mock game state created successfully`);
       
       // Try to send via WebSocket (non-blocking - won't fail if it doesn't work)
-      // Check if we have the required context first
-      const hasWebSocketContext = event.requestContext.domainName && event.requestContext.stage;
+      // Use same approach as testHandler (direct client creation)
+      const domainName = event.requestContext.domainName;
+      const stage = event.requestContext.stage;
       
-      if (hasWebSocketContext) {
+      if (domainName && stage) {
         try {
-          console.log(`[MOCK] Attempting to get WebSocketService...`);
-          const webSocketService = container.getWebSocketService(event);
-          console.log(`[MOCK] WebSocketService obtained, attempting to send message...`);
-          
-          // Send asynchronously - don't wait for it
-          webSocketService.sendToConnection(connectionId, mockGameStateMessage)
-            .then(() => {
-              console.log(`[MOCK] Mock message sent successfully to ${connectionId}`);
-            })
-            .catch((sendError) => {
-              console.error(`[MOCK] Failed to send mock message (non-blocking):`, {
-                errorMessage: sendError instanceof Error ? sendError.message : String(sendError),
-                connectionId,
-              });
-            });
-        } catch (serviceError) {
-          console.error(`[MOCK] Failed to create WebSocketService (non-blocking):`, {
-            errorMessage: serviceError instanceof Error ? serviceError.message : String(serviceError),
-            connectionId,
+          const endpoint = `https://${domainName}/${stage}`;
+          console.log(`[MOCK] Creating WebSocket client with endpoint:`, endpoint);
+
+          const { ApiGatewayManagementApiClient, PostToConnectionCommand } = await import('@aws-sdk/client-apigatewaymanagementapi');
+          const client = new ApiGatewayManagementApiClient({
+            endpoint,
+            region: process.env.AWS_REGION || 'us-east-1',
           });
-          // Continue - this is not a fatal error for the mock
+
+          const messageString = JSON.stringify(mockGameStateMessage);
+          console.log(`[MOCK] Sending message (non-blocking):`, messageString.substring(0, 100));
+
+          // Send asynchronously - start the promise but don't wait for it
+          await Promise.resolve(
+            client.send(new PostToConnectionCommand({
+              ConnectionId: connectionId,
+              Data: messageString,
+            }))
+              .then(() => {
+                console.log(`[MOCK] Mock message sent successfully to ${connectionId}`);
+              })
+              .catch((error) => {
+                console.error(`[MOCK] Failed to send mock message (non-blocking):`, {
+                  errorMessage: error instanceof Error ? error.message : String(error),
+                  connectionId,
+                });
+              })
+          );
+        } catch (error) {
+          console.error(`[MOCK] Failed to create WebSocket client:`, {
+            errorMessage: error instanceof Error ? error.message : String(error),
+            connectionId,
+            domainName,
+            stage,
+          });
         }
       } else {
-        console.warn(`[MOCK] WebSocket context incomplete, skipping WebSocket send`, {
-          hasDomainName: !!event.requestContext.domainName,
-          hasStage: !!event.requestContext.stage,
+        console.warn(`[MOCK] Missing domainName or stage, skipping WebSocket send`, {
+          domainName: !!domainName,
+          stage: !!stage,
         });
       }
       

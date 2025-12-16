@@ -114,16 +114,6 @@ functions:
           route: $default
     timeout: 30
 
-  testOnConnect:
-    handler: src/presentation/handlers/websocket/testOnConnect.handler
-    events:
-      - websocket:
-          route: $connect
-          routeSelectionExpression: $request.body.action
-    timeout: 10
-    # Note: This won't work as expected - API Gateway doesn't support route selection for $connect
-    # We'll need a different approach - maybe use a custom route or modify onConnect
-
   testHandler:
     handler: src/presentation/handlers/websocket/testHandler.handler
     events:
