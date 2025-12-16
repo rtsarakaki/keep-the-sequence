@@ -69,148 +69,8 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
     hasGameId: 'gameId' in messageBody,
   });
 
-  // Handle sync action
-  if (action === 'sync') {
-    console.log(`[MOCK] Sync action detected, starting mock response`);
-    
-    try {
-      const syncData = messageBody as { action: 'sync'; gameId?: string };
-      const gameIdToSync = syncData.gameId || 'MOCK_GAME';
-      
-      console.log(`[MOCK] Processing sync request`, {
-        gameIdToSync,
-        connectionId,
-        hasDomainName: !!event.requestContext.domainName,
-        hasStage: !!event.requestContext.stage,
-        domainName: event.requestContext.domainName,
-        stage: event.requestContext.stage,
-      });
-      
-      // Create mock game state (simple, no external dependencies)
-      const mockGameStateMessage = {
-        type: 'gameState',
-        game: {
-          id: gameIdToSync,
-          players: [
-            {
-              id: 'mock-player-1',
-              name: 'Jogador Mock',
-              hand: [
-                { value: 10, suit: 'hearts' },
-                { value: 20, suit: 'clubs' },
-                { value: 30, suit: 'diamonds' },
-                { value: 40, suit: 'spades' },
-                { value: 50, suit: 'hearts' },
-                { value: 60, suit: 'clubs' },
-              ],
-              isConnected: true,
-            },
-          ],
-          piles: {
-            ascending1: [],
-            ascending2: [],
-            descending1: [],
-            descending2: [],
-          },
-          deck: Array.from({ length: 80 }, (_, i) => {
-            const suits: readonly string[] = ['hearts', 'clubs', 'diamonds', 'spades'];
-            const suitIndex = i % 4;
-            return {
-              value: i + 1,
-              suit: suits[suitIndex] ?? 'hearts',
-            };
-          }),
-          discardPile: [],
-          currentTurn: null,
-          status: 'waiting' as const,
-        },
-      };
-      
-      console.log(`[MOCK] Mock game state created successfully`);
-      
-      // Try to send via WebSocket (non-blocking - won't fail if it doesn't work)
-      // Use same approach as testHandler (direct client creation)
-      const domainName = event.requestContext.domainName;
-      const stage = event.requestContext.stage;
-      
-      if (domainName && stage) {
-        try {
-          const endpoint = `https://${domainName}/${stage}`;
-          console.log(`[MOCK] Creating WebSocket client with endpoint:`, endpoint);
-
-          const { ApiGatewayManagementApiClient, PostToConnectionCommand } = await import('@aws-sdk/client-apigatewaymanagementapi');
-          const client = new ApiGatewayManagementApiClient({
-            endpoint,
-            region: process.env.AWS_REGION || 'us-east-1',
-          });
-
-          const messageString = JSON.stringify(mockGameStateMessage);
-          console.log(`[MOCK] Sending message (non-blocking):`, messageString.substring(0, 100));
-
-          // Send asynchronously - start the promise but don't wait for it
-          await Promise.resolve(
-            client.send(new PostToConnectionCommand({
-              ConnectionId: connectionId,
-              Data: messageString,
-            }))
-              .then(() => {
-                console.log(`[MOCK] Mock message sent successfully to ${connectionId}`);
-              })
-              .catch((error) => {
-                console.error(`[MOCK] Failed to send mock message (non-blocking):`, {
-                  errorMessage: error instanceof Error ? error.message : String(error),
-                  connectionId,
-                });
-              })
-          );
-        } catch (error) {
-          console.error(`[MOCK] Failed to create WebSocket client:`, {
-            errorMessage: error instanceof Error ? error.message : String(error),
-            connectionId,
-            domainName,
-            stage,
-          });
-        }
-      } else {
-        console.warn(`[MOCK] Missing domainName or stage, skipping WebSocket send`, {
-          domainName: !!domainName,
-          stage: !!stage,
-        });
-      }
-      
-      // Always return success immediately - don't wait for WebSocket send
-      console.log(`[MOCK] Returning success response immediately`);
-      return Promise.resolve({
-        statusCode: 200,
-      });
-    } catch (error) {
-      // This should never happen, but just in case
-      console.error('[MOCK] CRITICAL: Unexpected error in sync action:', error);
-      console.error('[MOCK] Error details:', {
-        errorMessage: error instanceof Error ? error.message : String(error),
-        errorName: error instanceof Error ? error.name : undefined,
-        errorStack: error instanceof Error ? error.stack : undefined,
-        connectionId,
-        eventContext: {
-          domainName: event.requestContext.domainName,
-          stage: event.requestContext.stage,
-          routeKey: event.requestContext.routeKey,
-        },
-      });
-      
-      // Even on error, return success for mock
-      return Promise.resolve({
-        statusCode: 200,
-        body: JSON.stringify({ 
-          message: 'Mock sync completed (with errors logged)',
-        }),
-      });
-    }
-  }
-
   try {
     const connectionRepository = container.getConnectionRepository();
-    const webSocketService = container.getWebSocketService(event);
 
     // Get connection info to identify game and player
     const connection = await connectionRepository.findByConnectionId(connectionId);
@@ -222,6 +82,160 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
     }
 
     const { gameId, playerId } = connection;
+
+    // Handle sync action
+    if (action === 'sync') {
+      console.log(`Sync action detected for game ${gameId}, player ${playerId}`);
+      
+      try {
+        // Get game state using SyncGameUseCase
+        const syncGameUseCase = container.getSyncGameUseCase();
+        const result = await syncGameUseCase.execute(gameId);
+
+        if (!result.isSuccess) {
+          console.error(`Failed to sync game ${gameId}:`, result.error);
+          
+          // Send error to the player
+          const domainName = event.requestContext.domainName;
+          const stage = event.requestContext.stage;
+          
+          if (domainName && stage) {
+            try {
+              const { ApiGatewayManagementApiClient, PostToConnectionCommand } = await import('@aws-sdk/client-apigatewaymanagementapi');
+              const client = new ApiGatewayManagementApiClient({
+                endpoint: `https://${domainName}/${stage}`,
+                region: process.env.AWS_REGION || 'us-east-1',
+              });
+
+              await Promise.resolve(
+                client.send(new PostToConnectionCommand({
+                  ConnectionId: connectionId,
+                  Data: JSON.stringify({
+                    type: 'error',
+                    error: result.error || 'Failed to sync game',
+                  }),
+                }))
+                  .catch((error) => {
+                    console.error(`Failed to send error message (non-blocking):`, {
+                      errorMessage: error instanceof Error ? error.message : String(error),
+                      connectionId,
+                    });
+                  })
+              );
+            } catch (error) {
+              console.error(`Failed to create WebSocket client for error:`, {
+                errorMessage: error instanceof Error ? error.message : String(error),
+                connectionId,
+              });
+            }
+          }
+          
+          return Promise.resolve({
+            statusCode: 404,
+            body: JSON.stringify({ error: result.error }),
+          });
+        }
+
+        const game = result.value;
+        
+        // Convert Game entity to message format (same pattern as onConnect)
+        const gameStateMessage = {
+          type: 'gameState',
+          game: {
+            id: game.id,
+            players: game.players.map(p => ({
+              id: p.id,
+              name: p.name,
+              hand: p.hand.map(c => ({ value: c.value, suit: c.suit })),
+              isConnected: p.isConnected,
+            })),
+            piles: {
+              ascending1: game.piles.ascending1.map(c => ({ value: c.value, suit: c.suit })),
+              ascending2: game.piles.ascending2.map(c => ({ value: c.value, suit: c.suit })),
+              descending1: game.piles.descending1.map(c => ({ value: c.value, suit: c.suit })),
+              descending2: game.piles.descending2.map(c => ({ value: c.value, suit: c.suit })),
+            },
+            deck: game.deck.map(c => ({ value: c.value, suit: c.suit })),
+            discardPile: game.discardPile.map(c => ({ value: c.value, suit: c.suit })),
+            currentTurn: game.currentTurn,
+            status: game.status,
+            createdAt: game.createdAt.toISOString(),
+            updatedAt: game.updatedAt.toISOString(),
+          },
+        };
+        
+        console.log(`Preparing to send game state to ${connectionId} for game ${gameId}`);
+        
+        // Send game state via WebSocket (non-blocking - same pattern as testHandler)
+        const domainName = event.requestContext.domainName;
+        const stage = event.requestContext.stage;
+        
+        if (domainName && stage) {
+          try {
+            const endpoint = `https://${domainName}/${stage}`;
+            const { ApiGatewayManagementApiClient, PostToConnectionCommand } = await import('@aws-sdk/client-apigatewaymanagementapi');
+            const client = new ApiGatewayManagementApiClient({
+              endpoint,
+              region: process.env.AWS_REGION || 'us-east-1',
+            });
+
+            const messageString = JSON.stringify(gameStateMessage);
+            console.log(`Sending game state (non-blocking):`, messageString.substring(0, 100));
+
+            // Send asynchronously - start the promise but don't wait for it
+            await Promise.resolve(
+              client.send(new PostToConnectionCommand({
+                ConnectionId: connectionId,
+                Data: messageString,
+              }))
+                .then(() => {
+                  console.log(`Game state sent successfully to ${connectionId}`);
+                })
+                .catch((error) => {
+                  console.error(`Failed to send game state (non-blocking):`, {
+                    errorMessage: error instanceof Error ? error.message : String(error),
+                    connectionId,
+                  });
+                })
+            );
+          } catch (error) {
+            console.error(`Failed to create WebSocket client:`, {
+              errorMessage: error instanceof Error ? error.message : String(error),
+              connectionId,
+              domainName,
+              stage,
+            });
+          }
+        } else {
+          console.warn(`Missing domainName or stage, skipping WebSocket send`, {
+            domainName: !!domainName,
+            stage: !!stage,
+          });
+        }
+        
+        // Return success immediately - don't wait for WebSocket send
+        return Promise.resolve({
+          statusCode: 200,
+        });
+      } catch (error) {
+        console.error('Unexpected error in sync action:', error);
+        console.error('Error details:', {
+          errorMessage: error instanceof Error ? error.message : String(error),
+          errorName: error instanceof Error ? error.name : undefined,
+          errorStack: error instanceof Error ? error.stack : undefined,
+          connectionId,
+          gameId,
+        });
+        
+        return Promise.resolve({
+          statusCode: 500,
+          body: JSON.stringify({ error: 'Internal server error during sync' }),
+        });
+      }
+    }
+
+    // For other actions, use WebSocketService from container
+    const webSocketService = container.getWebSocketService(event);
 
     // Route to appropriate handler based on action
     switch (action) {
