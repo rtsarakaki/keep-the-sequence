@@ -87,7 +87,15 @@ describe('PlayCardUseCase', () => {
       }
       
       // Add a higher card to descending pile to make the play valid
-      const higherCard = new Card(Math.min(99, cardToPlay.value + 10), 'spades');
+      // For descending pile: card must be < lastCard OR card === lastCard + 10
+      // So we need: cardToPlay.value < higherCard.value
+      // Ensure higherCard is at least 1 more than cardToPlay, but not more than 99
+      // If cardToPlay is 99, we can't have a higher card, so use a different approach:
+      // Use a card that is definitely higher (but if cardToPlay is 99, we need to use the special rule)
+      const higherCardValue = cardToPlay.value >= 99 
+        ? 89 // Use 89 so that 99 === 89 + 10 (special rule)
+        : Math.min(99, cardToPlay.value + 1); // Otherwise, just 1 more
+      const higherCard = new Card(higherCardValue, 'spades');
       const gameWithPile = game.addCardToPile('descending1', higherCard);
       const playingGame = gameWithPile.updateStatus('playing');
 
@@ -103,6 +111,9 @@ describe('PlayCardUseCase', () => {
 
       const result = await playCardUseCase.execute(dto);
 
+      if (!result.isSuccess) {
+        console.error('Test failed:', result.error);
+      }
       expect(result.isSuccess).toBe(true);
       if (result.isSuccess) {
         expect(result.value.piles.descending1).toContainEqual(cardToPlay);
