@@ -38,12 +38,32 @@ export class JoinGameUseCase {
       // Generate player ID if not provided
       const playerId = dto.playerId || randomUUID();
 
-      // Deal cards to the new player based on current number of players
+      // When a new player joins, we need to redistribute cards for all players
+      // Collect all cards from existing players' hands back to the deck
+      const allCards = [
+        ...existingGame.deck,
+        ...existingGame.players.flatMap(p => p.hand),
+      ];
+
+      // Shuffle the combined deck
+      const shuffledDeck = GameInitializer.shuffleDeck(allCards);
+
+      // Deal cards to all players (including the new one)
       const numPlayersAfterJoin = existingGame.players.length + 1;
       const { hands, remainingDeck } = GameInitializer.dealCards(
-        existingGame.deck,
+        shuffledDeck,
         numPlayersAfterJoin
       );
+
+      // Update existing players with new hands (redistribute cards)
+      const updatedExistingPlayers = existingGame.players.map((player, index) => {
+        return new Player({
+          id: player.id,
+          name: player.name,
+          hand: hands[index],
+          isConnected: player.isConnected,
+        });
+      });
 
       // Get cards for the new player (last hand in the array)
       const newPlayerHand = hands[hands.length - 1];
@@ -56,8 +76,31 @@ export class JoinGameUseCase {
         isConnected: false,
       });
 
-      // Add player to game and update deck
-      const gameWithNewPlayer = existingGame.addPlayer(newPlayer);
+      // Create game with updated players
+      const gameWithUpdatedPlayers = new Game({
+        id: existingGame.id,
+        players: Object.freeze([...updatedExistingPlayers, newPlayer]),
+        piles: existingGame.piles,
+        deck: existingGame.deck, // Will be updated below
+        discardPile: existingGame.discardPile,
+        currentTurn: existingGame.currentTurn,
+        status: existingGame.status,
+        createdAt: existingGame.createdAt,
+        updatedAt: existingGame.updatedAt,
+        ttl: existingGame.ttl,
+      });
+      
+      const gameWithNewPlayer = gameWithUpdatedPlayers;
+      
+      // Determine new game status and current turn
+      // Game starts (status: 'playing') when there are at least 2 players
+      const shouldStartGame = numPlayersAfterJoin >= 2 && gameWithNewPlayer.status === 'waiting';
+      
+      // If game should start, set status to 'playing' and assign first turn to first player
+      const newStatus = shouldStartGame ? 'playing' as const : gameWithNewPlayer.status;
+      const newCurrentTurn = shouldStartGame 
+        ? gameWithNewPlayer.players[0]?.id || null 
+        : gameWithNewPlayer.currentTurn;
       
       // Create updated game with new deck (Game is immutable, so we create a new instance)
       const gameWithUpdatedDeck = new Game({
@@ -66,8 +109,8 @@ export class JoinGameUseCase {
         piles: gameWithNewPlayer.piles,
         deck: remainingDeck,
         discardPile: gameWithNewPlayer.discardPile,
-        currentTurn: gameWithNewPlayer.currentTurn,
-        status: gameWithNewPlayer.status,
+        currentTurn: newCurrentTurn,
+        status: newStatus,
         createdAt: gameWithNewPlayer.createdAt,
         updatedAt: new Date(),
         ttl: gameWithNewPlayer.ttl,

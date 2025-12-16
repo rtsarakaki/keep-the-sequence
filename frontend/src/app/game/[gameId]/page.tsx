@@ -8,6 +8,7 @@ import { GameBoard } from '@/components/game/GameBoard';
 import { GameHeader } from '@/components/game/GameHeader';
 import { PlayersList } from '@/components/game/PlayersList';
 import { PlayerHand } from '@/components/game/PlayerHand';
+import { WaitingForPlayers } from '@/components/game/WaitingForPlayers';
 import styles from './page.module.css';
 
 export default function GamePage({ params }: { params: { gameId: string } }) {
@@ -27,6 +28,13 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
     }
 
     if (!gameState || !playerId) {
+      return;
+    }
+
+    // Check if game is in playing status
+    if (gameState.status !== 'playing') {
+      // Show a user-friendly message
+      alert('O jogo ainda não começou. Aguarde mais jogadores entrarem (mínimo 2 jogadores).');
       return;
     }
 
@@ -163,6 +171,7 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
   }
 
   const currentPlayer = gameState.players.find(p => p.id === playerId);
+  const isWaitingForPlayers = gameState.status === 'waiting';
 
   return (
     <main className={styles.container}>
@@ -174,18 +183,24 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
         gameId={params.gameId}
       />
 
-      <GameBoard 
-        piles={gameState.piles} 
-        onCardDrop={(cardIndex, pileId) => handlePlayCard(cardIndex, pileId)}
-        isDroppable={wsStatus === 'connected'}
-      />
+      {isWaitingForPlayers ? (
+        <WaitingForPlayers gameState={gameState} currentPlayerId={playerId} />
+      ) : (
+        <>
+          <GameBoard 
+            piles={gameState.piles} 
+            onCardDrop={(cardIndex, pileId) => handlePlayCard(cardIndex, pileId)}
+            isDroppable={wsStatus === 'connected' && gameState.status === 'playing'}
+          />
 
-      {currentPlayer && (
-        <PlayerHand
-          player={currentPlayer}
-          wsStatus={wsStatus}
-          onPlayCard={handlePlayCard}
-        />
+          {currentPlayer && (
+            <PlayerHand
+              player={currentPlayer}
+              wsStatus={wsStatus}
+              onPlayCard={handlePlayCard}
+            />
+          )}
+        </>
       )}
 
       <PlayersList players={gameState.players} currentPlayerId={playerId} />
