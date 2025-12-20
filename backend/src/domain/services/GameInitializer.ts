@@ -126,6 +126,7 @@ export class GameInitializer {
       deck: remainingDeck,
       discardPile: Object.freeze([]),
       currentTurn: null, // Will be set when game starts
+      cardsPlayedThisTurn: 0,
       status: 'waiting' as GameStatus,
       createdAt: now,
       updatedAt: now,

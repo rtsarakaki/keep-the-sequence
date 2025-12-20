@@ -9,6 +9,7 @@ import { JoinGameUseCase } from '../../application/useCases/JoinGameUseCase';
 import { PlayCardUseCase } from '../../application/useCases/PlayCardUseCase';
 import { SyncGameUseCase } from '../../application/useCases/SyncGameUseCase';
 import { EndGameUseCase } from '../../application/useCases/EndGameUseCase';
+import { EndTurnUseCase } from '../../application/useCases/EndTurnUseCase';
 import { APIGatewayProxyWebsocketHandlerV2 } from 'aws-lambda';
 
 /**
@@ -26,6 +27,7 @@ class Container {
   private playCardUseCase: PlayCardUseCase | null = null;
   private syncGameUseCase: SyncGameUseCase | null = null;
   private endGameUseCase: EndGameUseCase | null = null;
+  private endTurnUseCase: EndTurnUseCase | null = null;
 
   getGameRepository(): IGameRepository {
     if (!this.gameRepository) {
@@ -88,6 +90,13 @@ class Container {
       );
     }
     return this.endGameUseCase;
+  }
+
+  getEndTurnUseCase(): EndTurnUseCase {
+    if (!this.endTurnUseCase) {
+      this.endTurnUseCase = new EndTurnUseCase(this.getGameRepository());
+    }
+    return this.endTurnUseCase;
   }
 
   getSQSEventService(): SQSEventService {

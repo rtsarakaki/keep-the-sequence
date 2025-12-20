@@ -32,6 +32,11 @@ export class PlayCardUseCase {
         return failure('Game is not in playing status');
       }
 
+      // Validate it's the player's turn
+      if (game.currentTurn !== dto.playerId) {
+        return failure('It is not your turn');
+      }
+
       // Find player
       const player = game.players.find(p => p.id === dto.playerId);
       if (!player) {

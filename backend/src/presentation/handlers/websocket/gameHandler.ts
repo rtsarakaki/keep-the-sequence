@@ -4,6 +4,7 @@ import { PlayCardDTO } from '../../../application/dto/PlayCardDTO';
 import { JoinGameDTO } from '../../../application/dto/JoinGameDTO';
 import { Card } from '../../../domain/valueObjects/Card';
 import { formatGameForMessage } from './gameMessageFormatter';
+import { areAllHandsEmpty } from '../../../domain/services/GameRules';
 
 /**
  * WebSocket game handler for processing game actions.
@@ -350,6 +351,70 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
           timestamp: Date.now(),
         }).catch((error) => {
           console.error('Failed to send joinGame event to SQS (non-blocking):', {
+            errorMessage: error instanceof Error ? error.message : String(error),
+            gameId,
+            playerId,
+          });
+        });
+
+        return Promise.resolve({
+          statusCode: 200,
+        });
+      }
+
+      case 'endTurn': {
+        console.log('endTurn action received', { gameId, playerId, connectionId });
+        const endTurnUseCase = container.getEndTurnUseCase();
+
+        const result = await endTurnUseCase.execute({
+          gameId,
+          playerId,
+        });
+
+        if (!result.isSuccess) {
+          console.error('Failed to end turn', { error: result.error, gameId, playerId });
+          await webSocketService.sendToConnection(connectionId, {
+            type: 'error',
+            error: result.error || 'Failed to end turn',
+          });
+          return Promise.resolve({
+            statusCode: 400,
+            body: JSON.stringify({ error: result.error }),
+          });
+        }
+
+        // Check if game ended (victory or defeat)
+        const gameEnded = result.value.status === 'finished';
+
+        // Broadcast updated game state to all players
+        const allConnections = await connectionRepository.findByGameId(gameId);
+        const connectionIds = allConnections.map(c => c.connectionId);
+
+        await webSocketService.sendToConnections(connectionIds, {
+          type: gameEnded ? 'gameFinished' : 'gameUpdated',
+          game: formatGameForMessage(result.value),
+          result: gameEnded ? (areAllHandsEmpty(result.value.players) ? 'victory' : 'defeat') : undefined,
+        }).catch((error) => {
+          console.error('Error sending gameUpdated/gameFinished notifications (non-blocking):', {
+            errorMessage: error instanceof Error ? error.message : String(error),
+            connectionIds,
+          });
+        });
+        console.log('Turn ended successfully, game state broadcasted');
+
+        // Send event to SQS asynchronously (fire-and-forget)
+        const sqsEventService = container.getSQSEventService();
+        sqsEventService.sendEvent({
+          gameId,
+          eventType: 'endTurn',
+          eventData: {
+            playerId,
+            gameEnded,
+            result: gameEnded ? (areAllHandsEmpty(result.value.players) ? 'victory' : 'defeat') : undefined,
+          },
+          timestamp: Date.now(),
+        }).catch((error) => {
+          console.error('Failed to send endTurn event to SQS (non-blocking):', {
             errorMessage: error instanceof Error ? error.message : String(error),
             gameId,
             playerId,

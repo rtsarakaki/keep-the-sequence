@@ -16,6 +16,7 @@ describe('Game', () => {
       deck: [],
       discardPile: [],
       currentTurn: null,
+      cardsPlayedThisTurn: 0,
       status: 'waiting',
       createdAt: new Date('2024-01-01'),
       updatedAt: new Date('2024-01-01'),

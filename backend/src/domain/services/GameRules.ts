@@ -37,3 +37,51 @@ export const calculateScore = (piles: GamePiles): number => {
   return totalCards - playedCards;
 };
 
+/**
+ * Calculate the minimum number of cards a player must play in their turn
+ * - If deck has cards: minimum is 2
+ * - If deck is empty: minimum is 1
+ */
+export const getMinimumCardsToPlay = (deckLength: number): number => {
+  return deckLength > 0 ? 2 : 1;
+};
+
+/**
+ * Check if a player can play at least one card from their hand
+ */
+export const canPlayerPlayAnyCard = (
+  playerHand: readonly Card[],
+  piles: GamePiles
+): boolean => {
+  if (playerHand.length === 0) {
+    return false;
+  }
+
+  // Check each card in hand against each pile
+  for (const card of playerHand) {
+    // Check ascending piles
+    if (canPlayCard(card, piles.ascending1, 'ascending')) {
+      return true;
+    }
+    if (canPlayCard(card, piles.ascending2, 'ascending')) {
+      return true;
+    }
+    // Check descending piles
+    if (canPlayCard(card, piles.descending1, 'descending')) {
+      return true;
+    }
+    if (canPlayCard(card, piles.descending2, 'descending')) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+/**
+ * Check if all players have empty hands (victory condition)
+ */
+export const areAllHandsEmpty = (players: ReadonlyArray<{ hand: readonly Card[] }>): boolean => {
+  return players.every(player => player.hand.length === 0);
+};
+

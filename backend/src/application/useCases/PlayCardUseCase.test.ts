@@ -41,7 +41,7 @@ describe('PlayCardUseCase', () => {
       const lowerCardValue = Math.max(2, cardToPlay.value - 1);
       const lowerCard = new Card(lowerCardValue, 'spades');
       const gameWithPile = game.addCardToPile('ascending1', lowerCard);
-      const playingGame = gameWithPile.updateStatus('playing');
+      const playingGame = gameWithPile.updateStatus('playing').updateTurn('player-1');
 
       mockGameRepository.findById = jest.fn().mockResolvedValue(playingGame);
       mockGameRepository.save = jest.fn().mockResolvedValue(undefined);
@@ -97,7 +97,7 @@ describe('PlayCardUseCase', () => {
         : Math.min(99, cardToPlay.value + 1); // Otherwise, just 1 more
       const higherCard = new Card(higherCardValue, 'spades');
       const gameWithPile = game.addCardToPile('descending1', higherCard);
-      const playingGame = gameWithPile.updateStatus('playing');
+      const playingGame = gameWithPile.updateStatus('playing').updateTurn('player-1');
 
       mockGameRepository.findById = jest.fn().mockResolvedValue(playingGame);
       mockGameRepository.save = jest.fn().mockResolvedValue(undefined);
@@ -146,7 +146,8 @@ describe('PlayCardUseCase', () => {
         isConnected: true,
       });
       const game = GameInitializer.createGame('game-1', player);
-      const playingGame = game.updateStatus('playing');
+      // Set turn to non-existent player to test player validation
+      const playingGame = game.updateStatus('playing').updateTurn('non-existent-player');
 
       mockGameRepository.findById = jest.fn().mockResolvedValue(playingGame);
 
@@ -173,7 +174,7 @@ describe('PlayCardUseCase', () => {
         isConnected: true,
       });
       const game = GameInitializer.createGame('game-1', player);
-      const playingGame = game.updateStatus('playing');
+      const playingGame = game.updateStatus('playing').updateTurn('player-1');
 
       mockGameRepository.findById = jest.fn().mockResolvedValue(playingGame);
 
@@ -216,7 +217,7 @@ describe('PlayCardUseCase', () => {
       const higherCardValue = Math.min(99, cardToPlay.value + 25); // +25 ensures difference > 10
       const higherCard = new Card(higherCardValue, 'spades');
       const gameWithPile = game.addCardToPile('ascending1', higherCard);
-      const playingGame = gameWithPile.updateStatus('playing');
+      const playingGame = gameWithPile.updateStatus('playing').updateTurn('player-1');
 
       mockGameRepository.findById = jest.fn().mockResolvedValue(playingGame);
 
@@ -243,7 +244,7 @@ describe('PlayCardUseCase', () => {
         isConnected: true,
       });
       const game = GameInitializer.createGame('game-1', player);
-      const playingGame = game.updateStatus('playing');
+      const playingGame = game.updateStatus('playing').updateTurn('player-1');
       
       // Get a card from player's hand
       const cardToPlay = playingGame.players[0].hand[0];
@@ -305,7 +306,7 @@ describe('PlayCardUseCase', () => {
         isConnected: true,
       });
       const game = GameInitializer.createGame('game-1', player);
-      const playingGame = game.updateStatus('playing');
+      const playingGame = game.updateStatus('playing').updateTurn('player-1');
       
       // Get a card from player's hand
       const cardToPlay = playingGame.players[0].hand[0];

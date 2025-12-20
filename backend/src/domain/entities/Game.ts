@@ -11,6 +11,7 @@ export class Game {
   readonly deck: readonly Card[];
   readonly discardPile: readonly Card[];
   readonly currentTurn: string | null;
+  readonly cardsPlayedThisTurn: number; // Number of cards played by current player in this turn
   readonly status: GameStatus;
   readonly createdAt: Date;
   readonly updatedAt: Date;
@@ -23,6 +24,7 @@ export class Game {
     deck: readonly Card[];
     discardPile: readonly Card[];
     currentTurn: string | null;
+    cardsPlayedThisTurn?: number; // Optional, defaults to 0
     status: GameStatus;
     createdAt: Date;
     updatedAt: Date;
@@ -39,6 +41,7 @@ export class Game {
     this.deck = Object.freeze([...data.deck]);
     this.discardPile = Object.freeze([...data.discardPile]);
     this.currentTurn = data.currentTurn;
+    this.cardsPlayedThisTurn = data.cardsPlayedThisTurn ?? 0;
     this.status = data.status;
     this.createdAt = data.createdAt;
     this.updatedAt = data.updatedAt;
@@ -54,6 +57,7 @@ export class Game {
         ...this.piles,
         [pileId]: Object.freeze([...currentPile, card]),
       },
+      cardsPlayedThisTurn: this.cardsPlayedThisTurn + 1, // Increment cards played this turn
       updatedAt: new Date(),
     });
   }
@@ -62,6 +66,7 @@ export class Game {
     return new Game({
       ...this,
       currentTurn: nextPlayerId,
+      cardsPlayedThisTurn: 0, // Reset cards played when turn changes
       updatedAt: new Date(),
     });
   }

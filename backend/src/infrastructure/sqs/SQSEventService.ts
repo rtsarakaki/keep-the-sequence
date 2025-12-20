@@ -1,6 +1,6 @@
 import { SQSClient, SendMessageCommand, GetQueueUrlCommand } from '@aws-sdk/client-sqs';
 
-export type GameEventType = 'playCard' | 'joinGame' | 'playerDisconnected' | 'gameCreated' | 'gameEnded';
+export type GameEventType = 'playCard' | 'joinGame' | 'playerDisconnected' | 'gameCreated' | 'gameEnded' | 'endTurn';
 
 export interface GameEvent {
   gameId: string;

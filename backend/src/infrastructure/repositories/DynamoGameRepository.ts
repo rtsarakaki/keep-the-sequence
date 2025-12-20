@@ -132,6 +132,7 @@ export class DynamoGameRepository implements IGameRepository {
       currentTurn: item.currentTurn === null || item.currentTurn === undefined 
         ? null 
         : String(item.currentTurn),
+      cardsPlayedThisTurn: typeof item.cardsPlayedThisTurn === 'number' ? item.cardsPlayedThisTurn : 0,
       status: status as GameStatus,
       createdAt: new Date(createdAt),
       updatedAt: new Date(updatedAt),
@@ -178,6 +179,7 @@ export class DynamoGameRepository implements IGameRepository {
         suit: card.suit,
       })),
       currentTurn: game.currentTurn ?? null,
+      cardsPlayedThisTurn: game.cardsPlayedThisTurn,
       status: game.status,
       createdAt: game.createdAt.getTime(),
       updatedAt: game.updatedAt.getTime(),

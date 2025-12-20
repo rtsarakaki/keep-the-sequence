@@ -64,6 +64,35 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
     });
   };
 
+  const handleEndTurn = () => {
+    if (wsStatus !== 'connected' || !playerId || !gameState) {
+      return;
+    }
+
+    // Check if it's the player's turn
+    if (gameState.currentTurn !== playerId) {
+      alert('Não é seu turno!');
+      return;
+    }
+
+    // Check if game is in playing status
+    if (gameState.status !== 'playing') {
+      return;
+    }
+
+    const minimumCards = gameState.deck.length > 0 ? 2 : 1;
+    
+    // Validate player has played minimum cards
+    if (gameState.cardsPlayedThisTurn < minimumCards) {
+      alert(`Você deve jogar pelo menos ${minimumCards} carta${minimumCards > 1 ? 's' : ''} antes de passar o turno.`);
+      return;
+    }
+
+    sendMessage({
+      action: 'endTurn',
+    });
+  };
+
   const handleEndGame = () => {
     console.log('handleEndGame chamado', { wsStatus, playerId, gameId: params.gameId });
     
@@ -205,6 +234,10 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
 
   const currentPlayer = gameState.players.find(p => p.id === playerId);
   const isWaitingForPlayers = gameState.status === 'waiting';
+  const isGameFinished = gameState.status === 'finished';
+  const isMyTurn = gameState.currentTurn === playerId && gameState.status === 'playing';
+  const minimumCards = gameState.deck.length > 0 ? 2 : 1;
+  const canEndTurn = isMyTurn && gameState.cardsPlayedThisTurn >= minimumCards;
 
   return (
     <main className={styles.container}>
@@ -218,12 +251,30 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
 
       {isWaitingForPlayers ? (
         <WaitingForPlayers gameState={gameState} currentPlayerId={playerId} />
+      ) : isGameFinished ? (
+        <div className={styles.gameFinished}>
+          <h2>Jogo Finalizado</h2>
+          <p>
+            {gameState.players.every(p => p.hand.length === 0)
+              ? '🎉 Vitória! Todos os jogadores descartaram suas cartas!'
+              : '😔 Derrota! Um jogador não conseguiu jogar o número mínimo de cartas.'}
+          </p>
+        </div>
       ) : (
         <>
+          {isMyTurn && (
+            <div className={styles.turnInfo}>
+              <p>
+                Seu turno! Você deve jogar pelo menos <strong>{minimumCards} carta{minimumCards > 1 ? 's' : ''}</strong>.
+                Cartas jogadas neste turno: <strong>{gameState.cardsPlayedThisTurn}</strong>
+              </p>
+            </div>
+          )}
+          
           <GameBoard 
             piles={gameState.piles} 
             onCardDrop={(cardIndex, pileId) => handlePlayCard(cardIndex, pileId)}
-            isDroppable={wsStatus === 'connected' && gameState.status === 'playing'}
+            isDroppable={wsStatus === 'connected' && isMyTurn}
           />
 
           {currentPlayer && (
@@ -237,6 +288,20 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
       )}
 
       <PlayersList players={gameState.players} currentPlayerId={playerId} />
+
+      {!isGameFinished && (
+        <div className={styles.turnActions}>
+          {isMyTurn && (
+            <button
+              onClick={handleEndTurn}
+              className={styles.endTurnButton}
+              disabled={!canEndTurn || wsStatus !== 'connected'}
+            >
+              {canEndTurn ? 'Passar Turno' : `Jogue pelo menos ${minimumCards} carta${minimumCards > 1 ? 's' : ''} primeiro`}
+            </button>
+          )}
+        </div>
+      )}
 
       <div className={styles.endGameSection}>
         <button

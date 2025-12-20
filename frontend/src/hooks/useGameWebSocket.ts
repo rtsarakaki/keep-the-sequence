@@ -18,6 +18,7 @@ export interface GameState {
   deck: Array<{ value: number; suit: string }>;
   discardPile: Array<{ value: number; suit: string }>;
   currentTurn: string | null;
+  cardsPlayedThisTurn: number;
   status: 'waiting' | 'playing' | 'finished' | 'abandoned';
   updatedAt?: string; // ISO timestamp for comparing state freshness
 }
@@ -136,6 +137,19 @@ export function useGameWebSocket({
           console.log('Jogo encerrado:', message);
           if (onGameEnded) {
             onGameEnded();
+          }
+        } else if (message.type === 'gameFinished') {
+          console.log('Jogo finalizado:', message);
+          const finishedMessage = message as { type: 'gameFinished'; game: unknown; result?: 'victory' | 'defeat' };
+          try {
+            setGameState(finishedMessage.game as GameState);
+            setError(null);
+            console.log('Estado final do jogo atualizado', { result: finishedMessage.result });
+          } catch (err) {
+            console.error('Erro ao atualizar estado final do jogo:', err);
+            handleError(
+              `Erro ao processar fim do jogo: ${err instanceof Error ? err.message : 'Erro desconhecido'}`
+            );
           }
         } else if (message.type === 'error') {
           handleError((message as { type: 'error'; error: string }).error);
