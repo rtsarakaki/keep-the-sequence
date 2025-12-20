@@ -342,6 +342,14 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
       }
 
       case 'endGame': {
+        console.log('endGame action received', { gameId, playerId, connectionId });
+        
+        // IMPORTANT: Get connections BEFORE deleting them (EndGameUseCase deletes connections)
+        // We need to get them before calling the use case so we can notify players
+        const allConnections = await connectionRepository.findByGameId(gameId);
+        const connectionIds = allConnections.map(c => c.connectionId);
+        console.log('Found connections to notify (before deletion)', { count: connectionIds.length, connectionIds });
+
         const endGameUseCase = container.getEndGameUseCase();
 
         const result = await endGameUseCase.execute({
@@ -349,7 +357,10 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
           playerId,
         });
 
+        console.log('endGameUseCase result', { isSuccess: result.isSuccess, error: result.isSuccess ? undefined : result.error });
+
         if (!result.isSuccess) {
+          console.error('Failed to end game', { error: result.error, gameId, playerId });
           await webSocketService.sendToConnection(connectionId, {
             type: 'error',
             error: result.error || 'Failed to end game',
@@ -360,15 +371,22 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
           });
         }
 
+        console.log('Game ended successfully, notifying all players', { gameId, connectionIds });
+        
         // Notify all players that the game has ended
-        const allConnections = await connectionRepository.findByGameId(gameId);
-        const connectionIds = allConnections.map(c => c.connectionId);
-
+        // Note: Connections may have been deleted, but WebSocket connections are still active
+        // until the client disconnects, so we can still send messages
         await webSocketService.sendToConnections(connectionIds, {
           type: 'gameEnded',
           gameId,
           message: 'O jogo foi encerrado por um dos jogadores.',
+        }).catch((error) => {
+          console.error('Error sending gameEnded notifications (non-blocking):', {
+            errorMessage: error instanceof Error ? error.message : String(error),
+            connectionIds,
+          });
         });
+        console.log('gameEnded notifications sent to all players');
 
         // Send event to SQS asynchronously (fire-and-forget)
         const sqsEventService = container.getSQSEventService();

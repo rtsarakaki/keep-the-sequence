@@ -65,17 +65,29 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
   };
 
   const handleEndGame = () => {
+    console.log('handleEndGame chamado', { wsStatus, playerId, gameId: params.gameId });
+    
     if (wsStatus !== 'connected' || !playerId) {
+      console.warn('Não é possível encerrar o jogo:', { wsStatus, playerId });
+      alert(`Não é possível encerrar o jogo. Status: ${wsStatus}, Player ID: ${playerId || 'não encontrado'}`);
       return;
     }
 
     if (!confirm('Tem certeza que deseja encerrar o jogo? Todos os jogadores serão desconectados.')) {
+      console.log('Usuário cancelou o encerramento do jogo');
       return;
     }
 
-    sendMessage({
-      action: 'endGame',
-    });
+    console.log('Enviando mensagem endGame...', { gameId: params.gameId, playerId });
+    try {
+      sendMessage({
+        action: 'endGame',
+      });
+      console.log('Mensagem endGame enviada com sucesso');
+    } catch (error) {
+      console.error('Erro ao enviar mensagem endGame:', error);
+      alert(`Erro ao encerrar o jogo: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+    }
   };
 
   const handleDebugTest = async (testType: 'check-game' | 'reconnect-playerId' | 'reconnect-playerName' | 'get-token') => {
