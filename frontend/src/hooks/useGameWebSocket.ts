@@ -19,6 +19,7 @@ export interface GameState {
   discardPile: Array<{ value: number; suit: string }>;
   currentTurn: string | null;
   status: 'waiting' | 'playing' | 'finished' | 'abandoned';
+  updatedAt?: string; // ISO timestamp for comparing state freshness
 }
 
 interface UseGameWebSocketOptions {
@@ -81,7 +82,46 @@ export function useGameWebSocket({
         if (message.type === 'gameState' || message.type === 'gameUpdated') {
           console.log('Atualizando estado do jogo:', message.game);
           try {
-            setGameState(message.game as GameState);
+            const newGameState = message.game as GameState;
+            
+            // Only update if the new state is more recent than the current one
+            // This prevents sync responses from overwriting more recent gameUpdated messages
+            setGameState((currentState) => {
+              if (!currentState) {
+                // No current state, accept the new one
+                return newGameState;
+              }
+              
+              // If we have updatedAt timestamps, compare them
+              if (currentState.updatedAt && newGameState.updatedAt) {
+                const currentTime = new Date(currentState.updatedAt).getTime();
+                const newTime = new Date(newGameState.updatedAt).getTime();
+                
+                if (newTime < currentTime) {
+                  console.log('Ignorando estado mais antigo do sync (já temos estado mais recente)');
+                  return currentState;
+                }
+              }
+              
+              // If it's a gameUpdated message, always accept it (it's a real-time update)
+              // If it's a gameState message (from sync), only accept if we don't have a state or if it's newer
+              if (message.type === 'gameUpdated') {
+                console.log('Aceitando gameUpdated (atualização em tempo real)');
+                return newGameState;
+              } else if (message.type === 'gameState') {
+                // For sync responses, only update if status changed or if we don't have a playing state
+                // This prevents sync from overwriting a 'playing' state with an old 'waiting' state
+                if (currentState.status === 'playing' && newGameState.status === 'waiting') {
+                  console.log('Ignorando sync que tentaria voltar de playing para waiting');
+                  return currentState;
+                }
+                console.log('Aceitando gameState do sync');
+                return newGameState;
+              }
+              
+              return newGameState;
+            });
+            
             setError(null);
             setRetryCount(0);
             setIsRetrying(false);
@@ -112,17 +152,28 @@ export function useGameWebSocket({
           console.log('WebSocket conectado, solicitando estado do jogo...');
 
           // Request game state after connection is established
+          // Only sync if we don't have a game state yet
           const requestSync = () => {
             if (gameWs && gameWs.getStatus() === 'connected') {
-              console.log('Solicitando sincronização do jogo...');
-              try {
-                gameWs.send({
-                  action: 'sync',
-                  gameId,
-                });
-              } catch (err) {
-                console.error('Erro ao solicitar sincronização:', err);
-              }
+              // Check if we already have a game state - if so, don't sync
+              // This prevents overwriting a more recent gameUpdated message
+              setGameState((currentState) => {
+                if (currentState) {
+                  console.log('Já temos estado do jogo, pulando sincronização para evitar sobrescrever estado mais recente');
+                  return currentState;
+                }
+                
+                console.log('Solicitando sincronização do jogo...');
+                try {
+                  gameWs.send({
+                    action: 'sync',
+                    gameId,
+                  });
+                } catch (err) {
+                  console.error('Erro ao solicitar sincronização:', err);
+                }
+                return currentState;
+              });
             }
           };
 
