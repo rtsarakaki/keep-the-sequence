@@ -1,6 +1,8 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { container } from '../../../infrastructure/di/container';
 import { JoinGameDTO } from '../../../application/dto/JoinGameDTO';
+import { formatGameForMessage } from '../websocket/gameMessageFormatter';
+import { WebSocketService } from '../../../infrastructure/websocket/WebSocketService';
 
 /**
  * HTTP endpoint to join an existing game
@@ -92,6 +94,75 @@ export const handler = async (
       p.name === playerName && 
       (!body.playerId || p.id === body.playerId)
     );
+
+    // Notify all connected players about the game update (e.g., when second player joins and game starts)
+    // This is important so the first player sees the game status change from 'waiting' to 'playing'
+    try {
+      const connectionRepository = container.getConnectionRepository();
+      const allConnections = await connectionRepository.findByGameId(result.value.id);
+      const connectionIds = allConnections.map(c => c.connectionId);
+      
+      // Get WebSocket endpoint from environment variable
+      const wsEndpoint = process.env.WEBSOCKET_API_URL;
+      if (wsEndpoint && connectionIds.length > 0) {
+        // Extract endpoint from WebSocket URL (remove wss:// or ws:// prefix and path)
+        // WEBSOCKET_API_URL format: wss://xxxxx.execute-api.region.amazonaws.com/stage
+        // We need: https://xxxxx.execute-api.region.amazonaws.com/stage
+        const endpoint = wsEndpoint.replace(/^wss?:\/\//, 'https://').split('?')[0];
+        const webSocketService = new WebSocketService(endpoint);
+      
+        console.log('Notifying players about game update after joinGame', {
+          gameId: result.value.id,
+          gameStatus: result.value.status,
+          numPlayers: result.value.players.length,
+          connectionCount: connectionIds.length,
+        });
+
+        await webSocketService.sendToConnections(connectionIds, {
+          type: 'gameUpdated',
+          game: formatGameForMessage(result.value),
+        }).catch((error) => {
+          console.error('Error sending gameUpdated notifications after joinGame (non-blocking):', {
+            errorMessage: error instanceof Error ? error.message : String(error),
+            connectionIds,
+          });
+        });
+        console.log('gameUpdated notifications sent to all players after joinGame');
+      } else if (!wsEndpoint) {
+        console.warn('WEBSOCKET_API_URL not configured, skipping WebSocket notifications');
+      }
+    } catch (error) {
+      // Log error but don't fail the HTTP request - notification is best-effort
+      console.error('Error notifying players after joinGame (non-blocking):', {
+        errorMessage: error instanceof Error ? error.message : String(error),
+        gameId: result.value.id,
+      });
+    }
+
+    // Send event to SQS asynchronously (fire-and-forget)
+    try {
+      const sqsEventService = container.getSQSEventService();
+      sqsEventService.sendEvent({
+        gameId: result.value.id,
+        eventType: 'joinGame',
+        eventData: {
+          playerId: player?.id,
+          playerName: body.playerName.trim(),
+        },
+        timestamp: Date.now(),
+      }).catch((error) => {
+        console.error('Failed to send joinGame event to SQS (non-blocking):', {
+          errorMessage: error instanceof Error ? error.message : String(error),
+          gameId: result.value.id,
+          playerId: player?.id,
+        });
+      });
+    } catch (error) {
+      console.error('Error sending joinGame event to SQS (non-blocking):', {
+        errorMessage: error instanceof Error ? error.message : String(error),
+        gameId: result.value.id,
+      });
+    }
 
     return Promise.resolve({
       statusCode: 200,

@@ -284,6 +284,7 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
       }
 
       case 'joinGame': {
+        console.log('joinGame action received', { gameId, playerId, connectionId });
         const joinGameUseCase = container.getJoinGameUseCase();
         const joinGameData = messageBody as {
           action: 'joinGame';
@@ -299,6 +300,7 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
         const result = await joinGameUseCase.execute(dto);
 
         if (!result.isSuccess) {
+          console.error('Failed to join game', { error: result.error, gameId, playerId });
           await webSocketService.sendToConnection(connectionId, {
             type: 'error',
             error: result.error || 'Failed to join game',
@@ -309,14 +311,32 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
           });
         }
 
+        console.log('Game joined successfully', { 
+          gameId, 
+          newPlayerId: playerId, 
+          gameStatus: result.value.status,
+          numPlayers: result.value.players.length 
+        });
+
         // Broadcast updated game state to all players
         const allConnections = await connectionRepository.findByGameId(gameId);
         const connectionIds = allConnections.map(c => c.connectionId);
+        console.log('Found connections to notify', { 
+          count: connectionIds.length, 
+          connectionIds,
+          gameStatus: result.value.status 
+        });
 
         await webSocketService.sendToConnections(connectionIds, {
           type: 'gameUpdated',
           game: formatGameForMessage(result.value),
+        }).catch((error) => {
+          console.error('Error sending gameUpdated notifications (non-blocking):', {
+            errorMessage: error instanceof Error ? error.message : String(error),
+            connectionIds,
+          });
         });
+        console.log('gameUpdated notifications sent to all players');
 
         // Send event to SQS asynchronously (fire-and-forget)
         const sqsEventService = container.getSQSEventService();
