@@ -4,7 +4,7 @@ Este guia explica como rodar o jogo localmente conectando aos serviços de produ
 
 ## Pré-requisitos
 
-- Node.js >= 22.0.0
+- Node.js >= 24.0.0
 - npm ou yarn
 - Credenciais AWS configuradas (Access Key ID e Secret Access Key)
 - Acesso aos recursos AWS de produção (DynamoDB, SQS, API Gateway)
