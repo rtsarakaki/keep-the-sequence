@@ -22,6 +22,7 @@ export function formatGameForMessage(game: Game): {
   discardPile: Array<{ value: number; suit: string }>;
   currentTurn: string | null;
   cardsPlayedThisTurn: number;
+  createdBy: string;
   status: 'waiting' | 'playing' | 'finished' | 'abandoned';
   createdAt: string;
   updatedAt: string;
@@ -44,6 +45,7 @@ export function formatGameForMessage(game: Game): {
     discardPile: game.discardPile.map(c => ({ value: c.value, suit: c.suit })),
     currentTurn: game.currentTurn,
     cardsPlayedThisTurn: game.cardsPlayedThisTurn,
+    createdBy: game.createdBy,
     status: game.status,
     createdAt: game.createdAt.toISOString(),
     updatedAt: game.updatedAt.toISOString(),

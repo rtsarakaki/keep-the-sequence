@@ -93,6 +93,8 @@ export class GameInitializer {
 
   /**
    * Creates a new game with the first player
+   * @param gameId - Unique game identifier
+   * @param firstPlayer - The first player (who creates the game)
    */
   static createGame(
     gameId: string,
@@ -127,6 +129,7 @@ export class GameInitializer {
       discardPile: Object.freeze([]),
       currentTurn: null, // Will be set when game starts
       cardsPlayedThisTurn: 0,
+      createdBy: playerWithCards.id, // First player is the creator
       status: 'waiting' as GameStatus,
       createdAt: now,
       updatedAt: now,

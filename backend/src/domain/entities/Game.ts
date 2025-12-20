@@ -12,6 +12,7 @@ export class Game {
   readonly discardPile: readonly Card[];
   readonly currentTurn: string | null;
   readonly cardsPlayedThisTurn: number; // Number of cards played by current player in this turn
+  readonly createdBy: string; // Player ID of the player who created the game
   readonly status: GameStatus;
   readonly createdAt: Date;
   readonly updatedAt: Date;
@@ -25,6 +26,7 @@ export class Game {
     discardPile: readonly Card[];
     currentTurn: string | null;
     cardsPlayedThisTurn?: number; // Optional, defaults to 0
+    createdBy: string; // Player ID of the player who created the game
     status: GameStatus;
     createdAt: Date;
     updatedAt: Date;
@@ -42,6 +44,7 @@ export class Game {
     this.discardPile = Object.freeze([...data.discardPile]);
     this.currentTurn = data.currentTurn;
     this.cardsPlayedThisTurn = data.cardsPlayedThisTurn ?? 0;
+    this.createdBy = data.createdBy;
     this.status = data.status;
     this.createdAt = data.createdAt;
     this.updatedAt = data.updatedAt;

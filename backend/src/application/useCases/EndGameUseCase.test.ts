@@ -52,6 +52,7 @@ describe('EndGameUseCase', () => {
         deck: [],
         discardPile: [],
         currentTurn: playerId,
+        createdBy: playerId, // Player is the creator
         status: 'playing',
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -119,6 +120,7 @@ describe('EndGameUseCase', () => {
         deck: [],
         discardPile: [],
         currentTurn: otherPlayerId,
+        createdBy: otherPlayerId,
         status: 'playing',
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -160,6 +162,7 @@ describe('EndGameUseCase', () => {
         deck: [],
         discardPile: [],
         currentTurn: playerId,
+        createdBy: playerId, // Player is the creator
         status: 'playing',
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -221,6 +224,7 @@ describe('EndGameUseCase', () => {
         deck: [],
         discardPile: [],
         currentTurn: playerId,
+        createdBy: playerId, // Player is the creator
         status: 'playing',
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -236,6 +240,53 @@ describe('EndGameUseCase', () => {
       if (!result.isSuccess) {
         expect(result.error).toContain('Failed to end game');
       }
+    });
+
+    it('should return error if player is not the creator', async () => {
+      const gameId = 'game-1';
+      const creatorId = 'creator-1';
+      const playerId = 'player-1';
+
+      const game = new Game({
+        id: gameId,
+        players: [
+          new Player({
+            id: creatorId,
+            name: 'Creator',
+            hand: [new Card(10, 'hearts')],
+            isConnected: true,
+          }),
+          new Player({
+            id: playerId,
+            name: 'Player 1',
+            hand: [new Card(20, 'hearts')],
+            isConnected: true,
+          }),
+        ],
+        piles: {
+          ascending1: [],
+          ascending2: [],
+          descending1: [],
+          descending2: [],
+        },
+        deck: [],
+        discardPile: [],
+        currentTurn: playerId,
+        createdBy: creatorId, // Different from playerId
+        status: 'playing',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      gameRepository.findById.mockResolvedValue(game);
+
+      const result = await endGameUseCase.execute({ gameId, playerId });
+
+      expect(result.isSuccess).toBe(false);
+      if (!result.isSuccess) {
+        expect(result.error).toBe('Only the game creator can end the game');
+      }
+      expect(gameRepository.delete).not.toHaveBeenCalled();
     });
 
     it('should handle non-Error exceptions', async () => {

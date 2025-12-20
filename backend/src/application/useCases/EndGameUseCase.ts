@@ -36,6 +36,11 @@ export class EndGameUseCase {
         return failure('Player is not part of this game');
       }
 
+      // Verify player is the creator of the game
+      if (game.createdBy !== dto.playerId) {
+        return failure('Only the game creator can end the game');
+      }
+
       // Get all connections for this game to delete them
       const connections = await this.connectionRepository.findByGameId(dto.gameId);
 

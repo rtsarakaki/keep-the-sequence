@@ -85,6 +85,7 @@ export class JoinGameUseCase {
         discardPile: existingGame.discardPile,
         currentTurn: existingGame.currentTurn,
         cardsPlayedThisTurn: existingGame.cardsPlayedThisTurn,
+        createdBy: existingGame.createdBy, // Preserve creator
         status: existingGame.status,
         createdAt: existingGame.createdAt,
         updatedAt: existingGame.updatedAt,
@@ -112,6 +113,7 @@ export class JoinGameUseCase {
         discardPile: gameWithNewPlayer.discardPile,
         currentTurn: newCurrentTurn,
         cardsPlayedThisTurn: 0, // Reset when game starts
+        createdBy: gameWithNewPlayer.createdBy, // Preserve creator
         status: newStatus,
         createdAt: gameWithNewPlayer.createdAt,
         updatedAt: new Date(),

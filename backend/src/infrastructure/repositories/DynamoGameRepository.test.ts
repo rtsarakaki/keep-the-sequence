@@ -38,6 +38,7 @@ describe('DynamoGameRepository', () => {
       ],
       discardPile: [new Card(5, 'clubs')],
       currentTurn: 'player-1',
+      createdBy: 'player-1',
       status: 'playing',
       createdAt: new Date('2024-01-01T10:00:00Z'),
       updatedAt: new Date('2024-01-01T11:00:00Z'),

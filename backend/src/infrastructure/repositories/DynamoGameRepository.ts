@@ -58,6 +58,24 @@ export class DynamoGameRepository implements IGameRepository {
       throw new Error('Invalid DynamoDB item: missing or invalid gameId');
     }
 
+    const getCreatedBy = (): string => {
+      if (typeof item.createdBy === 'string') {
+        return item.createdBy;
+      }
+      // Fallback to first player for backward compatibility
+      const players = item.players;
+      if (!Array.isArray(players) || players.length === 0) {
+        return '';
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const firstPlayer = players[0];
+      if (typeof firstPlayer !== 'object' || firstPlayer === null || !('id' in firstPlayer)) {
+        return '';
+      }
+      const playerId = (firstPlayer as { id: unknown }).id;
+      return typeof playerId === 'string' ? playerId : '';
+    };
+
     const mapCards = (cards: unknown[]): Card[] => {
       if (!Array.isArray(cards)) {
         return [];
@@ -133,6 +151,7 @@ export class DynamoGameRepository implements IGameRepository {
         ? null 
         : String(item.currentTurn),
       cardsPlayedThisTurn: typeof item.cardsPlayedThisTurn === 'number' ? item.cardsPlayedThisTurn : 0,
+      createdBy: getCreatedBy(),
       status: status as GameStatus,
       createdAt: new Date(createdAt),
       updatedAt: new Date(updatedAt),
@@ -180,6 +199,7 @@ export class DynamoGameRepository implements IGameRepository {
       })),
       currentTurn: game.currentTurn ?? null,
       cardsPlayedThisTurn: game.cardsPlayedThisTurn,
+      createdBy: game.createdBy,
       status: game.status,
       createdAt: game.createdAt.getTime(),
       updatedAt: game.updatedAt.getTime(),

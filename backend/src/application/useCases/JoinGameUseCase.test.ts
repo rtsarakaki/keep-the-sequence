@@ -91,6 +91,7 @@ describe('JoinGameUseCase', () => {
         deck: [],
         discardPile: [],
         currentTurn: null,
+        createdBy: players[0]?.id || 'creator-id',
         status: 'waiting',
         createdAt: new Date(),
         updatedAt: new Date(),
