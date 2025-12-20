@@ -238,6 +238,7 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
   const isMyTurn = gameState.currentTurn === playerId && gameState.status === 'playing';
   const minimumCards = gameState.deck.length > 0 ? 2 : 1;
   const canEndTurn = isMyTurn && gameState.cardsPlayedThisTurn >= minimumCards;
+  const isGameCreator = gameState.createdBy === playerId; // Check if current player is the game creator
 
   return (
     <main className={styles.container}>
@@ -303,15 +304,17 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
         </div>
       )}
 
-      <div className={styles.endGameSection}>
-        <button
-          onClick={handleEndGame}
-          className={styles.endGameButton}
-          disabled={wsStatus !== 'connected' || !playerId}
-        >
-          Encerrar Jogo
-        </button>
-      </div>
+      {isGameCreator && (
+        <div className={styles.endGameSection}>
+          <button
+            onClick={handleEndGame}
+            className={styles.endGameButton}
+            disabled={wsStatus !== 'connected' || !playerId}
+          >
+            Encerrar Jogo
+          </button>
+        </div>
+      )}
     </main>
   );
 }

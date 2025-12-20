@@ -21,6 +21,7 @@ export interface GameState {
   cardsPlayedThisTurn: number;
   status: 'waiting' | 'playing' | 'finished' | 'abandoned';
   updatedAt?: string; // ISO timestamp for comparing state freshness
+  createdBy: string; // ID of the player who created the game
 }
 
 interface UseGameWebSocketOptions {
