@@ -60,6 +60,15 @@ custom:
       - '*.spec.ts'
 
 functions:
+  healthCheck:
+    handler: src/presentation/handlers/http/healthCheck.handler
+    events:
+      - http:
+          path: /api/health
+          method: get
+          cors: true
+    timeout: 5
+
   getWebSocketUrl:
     handler: src/presentation/handlers/http/getWebSocketUrl.handler
     events:

@@ -211,8 +211,8 @@ export async function checkApiHealth(): Promise<{ configured: boolean; accessibl
   }
 
   try {
-    // Try to call a simple endpoint to check if API is accessible
-    const response = await fetch(`${API_URL}/api/websocket-url?gameId=health-check&playerId=health-check`, {
+    // Try to call the health check endpoint to verify API is accessible
+    const response = await fetch(`${API_URL}/api/health`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
