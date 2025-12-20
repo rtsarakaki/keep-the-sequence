@@ -402,6 +402,122 @@ describe('JoinGameUseCase', () => {
       }
     });
 
+    it('should allow existing player to reconnect when game is in playing status', async () => {
+      const existingPlayer = new Player({
+        id: 'player-1',
+        name: 'Player 1',
+        hand: [new Card(10, 'hearts'), new Card(20, 'spades')],
+        isConnected: false, // Disconnected
+      });
+      const game = GameInitializer.createGame('game-1', existingPlayer);
+      const playingGame = game
+        .addPlayer(new Player({
+          id: 'player-2',
+          name: 'Player 2',
+          hand: [new Card(30, 'hearts')],
+          isConnected: true,
+        }))
+        .updateStatus('playing')
+        .updateTurn('player-1');
+
+      mockGameRepository.findById = jest.fn().mockResolvedValue(playingGame);
+      mockGameRepository.save = jest.fn().mockResolvedValue(undefined);
+
+      const dto = {
+        gameId: 'game-1',
+        playerName: 'Player 1',
+        playerId: 'player-1', // Existing player reconnecting
+      };
+
+      const result = await joinGameUseCase.execute(dto);
+
+      expect(result.isSuccess).toBe(true);
+      if (result.isSuccess) {
+        // Player count should remain the same (no new player added)
+        expect(result.value.players).toHaveLength(2);
+        // Player 1 should be reconnected
+        const reconnectedPlayer = result.value.players.find(p => p.id === 'player-1');
+        expect(reconnectedPlayer?.isConnected).toBe(true);
+        // Game status should remain 'playing'
+        expect(result.value.status).toBe('playing');
+        // Cards should not be redistributed - should match the cards in the game before reconnection
+        const originalPlayerInGame = playingGame.players.find(p => p.id === 'player-1');
+        expect(reconnectedPlayer?.hand).toEqual(originalPlayerInGame?.hand);
+      }
+    });
+
+    it('should allow existing player to reconnect using only playerName when game is in playing status', async () => {
+      const existingPlayer = new Player({
+        id: 'player-1',
+        name: 'Player 1',
+        hand: [new Card(10, 'hearts')],
+        isConnected: false,
+      });
+      const game = GameInitializer.createGame('game-1', existingPlayer);
+      const playingGame = game
+        .addPlayer(new Player({
+          id: 'player-2',
+          name: 'Player 2',
+          hand: [new Card(30, 'hearts')],
+          isConnected: true,
+        }))
+        .updateStatus('playing')
+        .updateTurn('player-1');
+
+      mockGameRepository.findById = jest.fn().mockResolvedValue(playingGame);
+      mockGameRepository.save = jest.fn().mockResolvedValue(undefined);
+
+      const dto = {
+        gameId: 'game-1',
+        playerName: 'Player 1', // Reconnecting using name only
+        // No playerId provided
+      };
+
+      const result = await joinGameUseCase.execute(dto);
+
+      expect(result.isSuccess).toBe(true);
+      if (result.isSuccess) {
+        const reconnectedPlayer = result.value.players.find(p => p.name === 'Player 1');
+        expect(reconnectedPlayer?.isConnected).toBe(true);
+        expect(result.value.status).toBe('playing');
+      }
+    });
+
+    it('should not allow new player to join when game is in playing status', async () => {
+      const player1 = new Player({
+        id: 'player-1',
+        name: 'Player 1',
+        hand: [new Card(10, 'hearts')],
+        isConnected: true,
+      });
+      const game = GameInitializer.createGame('game-1', player1);
+      const playingGame = game
+        .addPlayer(new Player({
+          id: 'player-2',
+          name: 'Player 2',
+          hand: [new Card(30, 'hearts')],
+          isConnected: true,
+        }))
+        .updateStatus('playing')
+        .updateTurn('player-1');
+
+      mockGameRepository.findById = jest.fn().mockResolvedValue(playingGame);
+
+      const dto = {
+        gameId: 'game-1',
+        playerName: 'New Player', // New player trying to join
+        playerId: 'new-player-id',
+      };
+
+      const result = await joinGameUseCase.execute(dto);
+
+      expect(result.isSuccess).toBe(false);
+      if (!result.isSuccess) {
+        expect(result.error).toBe('Game is not accepting new players');
+      }
+      expect(mockGameRepository.save).not.toHaveBeenCalled();
+    });
+
     it('should handle case where players array is empty when starting game', async () => {
       // This is an edge case - shouldn't happen in practice but tests the branch
       const firstPlayer = new Player({

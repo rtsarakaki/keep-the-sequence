@@ -26,7 +26,26 @@ export class JoinGameUseCase {
         return failure('Game not found');
       }
 
-      // Validate game can accept new players
+      // Generate player ID if not provided
+      const playerId = dto.playerId || randomUUID();
+
+      // Check if player already exists in the game
+      const existingPlayer = existingGame.players.find(
+        p => p.id === playerId || p.name === dto.playerName
+      );
+
+      // If player exists, allow reconnection even if game is in 'playing' status
+      if (existingPlayer) {
+        // Player is reconnecting - just update connection status
+        const updatedGame = existingGame.updatePlayer(existingPlayer.id, (p) =>
+          p.updateConnectionStatus(true)
+        );
+        
+        await this.gameRepository.save(updatedGame);
+        return success(updatedGame);
+      }
+
+      // New player joining - only allow if game is in 'waiting' status
       if (existingGame.status !== 'waiting') {
         return failure('Game is not accepting new players');
       }
@@ -34,9 +53,6 @@ export class JoinGameUseCase {
       if (existingGame.players.length >= this.MAX_PLAYERS) {
         return failure('Game is full (maximum 5 players)');
       }
-
-      // Generate player ID if not provided
-      const playerId = dto.playerId || randomUUID();
 
       // When a new player joins, we need to redistribute cards for all players
       // Collect all cards from existing players' hands back to the deck
