@@ -60,7 +60,7 @@ export class Game {
         ...this.piles,
         [pileId]: Object.freeze([...currentPile, card]),
       },
-      cardsPlayedThisTurn: this.cardsPlayedThisTurn + 1, // Increment cards played this turn
+      cardsPlayedThisTurn: this.cardsPlayedThisTurn + 1, // Increment cards played this vez
       updatedAt: new Date(),
     });
   }
@@ -69,7 +69,7 @@ export class Game {
     return new Game({
       ...this,
       currentTurn: nextPlayerId,
-      cardsPlayedThisTurn: 0, // Reset cards played when turn changes
+      cardsPlayedThisTurn: 0, // Reset cards played when vez changes
       updatedAt: new Date(),
     });
   }
@@ -97,6 +97,43 @@ export class Game {
     return new Game({
       ...this,
       players: Object.freeze(updatedPlayers),
+      updatedAt: new Date(),
+    });
+  }
+
+  /**
+   * Draws a card from the deck and adds it to a player's hand.
+   * Returns a new Game instance with the updated deck and player hand.
+   * If the deck is empty, returns the game unchanged.
+   */
+  drawCardForPlayer(playerId: string): Game {
+    if (this.deck.length === 0) {
+      return this; // No cards to draw
+    }
+
+    const player = this.players.find(p => p.id === playerId);
+    if (!player) {
+      return this; // Player not found
+    }
+
+    // Take first card from deck
+    const drawnCard = this.deck[0];
+    const newDeck = this.deck.slice(1);
+
+    // Add card to player's hand
+    const updatedPlayer = player.addCardToHand(drawnCard);
+
+    // Update player in game
+    return this.updatePlayer(playerId, () => updatedPlayer).updateDeck(newDeck);
+  }
+
+  /**
+   * Updates the deck with a new deck array.
+   */
+  private updateDeck(newDeck: readonly Card[]): Game {
+    return new Game({
+      ...this,
+      deck: Object.freeze(newDeck),
       updatedAt: new Date(),
     });
   }

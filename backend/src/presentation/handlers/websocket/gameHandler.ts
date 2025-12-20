@@ -372,10 +372,10 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
         });
 
         if (!result.isSuccess) {
-          console.error('Failed to end turn', { error: result.error, gameId, playerId });
+          console.error('Failed to end vez', { error: result.error, gameId, playerId });
           await webSocketService.sendToConnection(connectionId, {
             type: 'error',
-            error: result.error || 'Failed to end turn',
+            error: result.error || 'Falha ao passar a vez',
           });
           return Promise.resolve({
             statusCode: 400,
@@ -400,7 +400,7 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
             connectionIds,
           });
         });
-        console.log('Turn ended successfully, game state broadcasted');
+        console.log('Vez finalizada com sucesso, estado do jogo transmitido');
 
         // Send event to SQS asynchronously (fire-and-forget)
         const sqsEventService = container.getSQSEventService();

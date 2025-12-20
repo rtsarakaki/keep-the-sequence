@@ -2,6 +2,7 @@ import { PlayCardUseCase } from './PlayCardUseCase';
 import { IGameRepository } from '../../domain/repositories/IGameRepository';
 import { Player } from '../../domain/entities/Player';
 import { Card } from '../../domain/valueObjects/Card';
+import { Game } from '../../domain/entities/Game';
 import { GameInitializer } from '../../domain/services/GameInitializer';
 
 describe('PlayCardUseCase', () => {
@@ -66,6 +67,14 @@ describe('PlayCardUseCase', () => {
         
         // Card should be added to pile
         expect(result.value.piles.ascending1).toContainEqual(cardToPlay);
+        
+        // If deck has cards, player should have drawn a new card (hand size should be same or +1)
+        // Since we removed 1 card and drew 1 card, hand size should be same
+        const originalHandSize = playingGame.players[0].hand.length;
+        expect(playerAfter?.hand.length).toBe(originalHandSize);
+        
+        // Deck should have one less card
+        expect(result.value.deck.length).toBe(playingGame.deck.length - 1);
         
         expect(mockGameRepository.save).toHaveBeenCalledTimes(1);
       }
@@ -294,6 +303,109 @@ describe('PlayCardUseCase', () => {
       expect(result.isSuccess).toBe(false);
       if (!result.isSuccess) {
         expect(result.error).toContain('Game is not in playing status');
+      }
+    });
+
+    it('should draw a card from deck after playing a card when deck has cards', async () => {
+      const player = new Player({
+        id: 'player-1',
+        name: 'Player 1',
+        hand: [],
+        isConnected: true,
+      });
+      const game = GameInitializer.createGame('game-1', player);
+      
+      // Ensure deck has cards
+      const gameWithDeck = new Game({
+        ...game,
+        deck: [new Card(50, 'hearts'), new Card(60, 'spades')],
+      });
+      
+      const cardToPlay = gameWithDeck.players[0].hand[0];
+      if (!cardToPlay) {
+        throw new Error('Player should have cards');
+      }
+      
+      const lowerCard = new Card(Math.max(2, cardToPlay.value - 1), 'spades');
+      const gameWithPile = gameWithDeck.addCardToPile('ascending1', lowerCard);
+      const playingGame = gameWithPile.updateStatus('playing').updateTurn('player-1');
+
+      const originalHandSize = playingGame.players[0].hand.length;
+      const originalDeckSize = playingGame.deck.length;
+
+      mockGameRepository.findById = jest.fn().mockResolvedValue(playingGame);
+      mockGameRepository.save = jest.fn().mockResolvedValue(undefined);
+
+      const dto = {
+        gameId: 'game-1',
+        playerId: 'player-1',
+        card: cardToPlay,
+        pileId: 'ascending1' as const,
+      };
+
+      const result = await playCardUseCase.execute(dto);
+
+      expect(result.isSuccess).toBe(true);
+      if (result.isSuccess) {
+        const playerAfter = result.value.players.find(p => p.id === 'player-1');
+        // Hand size should remain the same (removed 1, drew 1)
+        expect(playerAfter?.hand.length).toBe(originalHandSize);
+        // Deck should have one less card
+        expect(result.value.deck.length).toBe(originalDeckSize - 1);
+        // Player should have a new card from deck
+        expect(playerAfter?.hand).not.toContainEqual(cardToPlay);
+        // The new card should be from the deck (first card in original deck)
+        expect(playerAfter?.hand).toContainEqual(new Card(50, 'hearts'));
+      }
+    });
+
+    it('should not draw a card when deck is empty', async () => {
+      const player = new Player({
+        id: 'player-1',
+        name: 'Player 1',
+        hand: [],
+        isConnected: true,
+      });
+      const game = GameInitializer.createGame('game-1', player);
+      
+      // Set deck to empty
+      const gameWithEmptyDeck = new Game({
+        ...game,
+        deck: [],
+      });
+      
+      const cardToPlay = gameWithEmptyDeck.players[0].hand[0];
+      if (!cardToPlay) {
+        throw new Error('Player should have cards');
+      }
+      
+      const lowerCard = new Card(Math.max(2, cardToPlay.value - 1), 'spades');
+      const gameWithPile = gameWithEmptyDeck.addCardToPile('ascending1', lowerCard);
+      const playingGame = gameWithPile.updateStatus('playing').updateTurn('player-1');
+
+      const originalHandSize = playingGame.players[0].hand.length;
+
+      mockGameRepository.findById = jest.fn().mockResolvedValue(playingGame);
+      mockGameRepository.save = jest.fn().mockResolvedValue(undefined);
+
+      const dto = {
+        gameId: 'game-1',
+        playerId: 'player-1',
+        card: cardToPlay,
+        pileId: 'ascending1' as const,
+      };
+
+      const result = await playCardUseCase.execute(dto);
+
+      expect(result.isSuccess).toBe(true);
+      if (result.isSuccess) {
+        const playerAfter = result.value.players.find(p => p.id === 'player-1');
+        // Hand size should be one less (removed 1, drew 0)
+        expect(playerAfter?.hand.length).toBe(originalHandSize - 1);
+        // Deck should remain empty
+        expect(result.value.deck.length).toBe(0);
+        // Player should not have the played card
+        expect(playerAfter?.hand).not.toContainEqual(cardToPlay);
       }
     });
 

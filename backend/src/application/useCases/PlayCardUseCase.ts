@@ -32,9 +32,9 @@ export class PlayCardUseCase {
         return failure('Game is not in playing status');
       }
 
-      // Validate it's the player's turn
+      // Validate it's the player's vez
       if (game.currentTurn !== dto.playerId) {
-        return failure('It is not your turn');
+        return failure('Não é sua vez');
       }
 
       // Find player
@@ -75,12 +75,15 @@ export class PlayCardUseCase {
       const gameWithUpdatedPlayer = game.updatePlayer(dto.playerId, () => updatedPlayer);
 
       // Add card to pile
-      const updatedGame = gameWithUpdatedPlayer.addCardToPile(dto.pileId, dto.card);
+      const gameWithCardPlayed = gameWithUpdatedPlayer.addCardToPile(dto.pileId, dto.card);
+
+      // Draw a new card from deck if available
+      const finalGame = gameWithCardPlayed.drawCardForPlayer(dto.playerId);
 
       // Save updated game
-      await this.gameRepository.save(updatedGame);
+      await this.gameRepository.save(finalGame);
 
-      return success(updatedGame);
+      return success(finalGame);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return failure(`Failed to play card: ${errorMessage}`);

@@ -37,7 +37,7 @@ export function GameHeader({ wsStatus, gameStatus, currentTurn, players, gameId 
         </span>
         {currentTurn && (
           <span className={styles.turnInfo}>
-            Turno: <strong>{currentTurnPlayer?.name || 'Desconhecido'}</strong>
+            Vez: <strong>{currentTurnPlayer?.name || 'Desconhecido'}</strong>
           </span>
         )}
       </div>

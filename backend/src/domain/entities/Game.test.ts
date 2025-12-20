@@ -95,7 +95,7 @@ describe('Game', () => {
   });
 
   describe('updateTurn', () => {
-    it('deve atualizar o turno atual', () => {
+    it('deve atualizar a vez atual', () => {
       const game = createGame();
       
       const updatedGame = game.updateTurn('player1');
@@ -131,6 +131,60 @@ describe('Game', () => {
       expect(updatedGame.players).toHaveLength(1);
       expect(updatedGame.players[0]).toEqual(player);
       expect(game.players).toHaveLength(0); // Original não foi modificado
+    });
+  });
+
+  describe('drawCardForPlayer', () => {
+    it('deve comprar uma carta do deck e adicionar à mão do jogador', () => {
+      const player = new Player({
+        id: 'player-1',
+        name: 'Player 1',
+        hand: [new Card(10, 'hearts')],
+        isConnected: true,
+      });
+      const game = new Game({
+        ...createGame(),
+        players: Object.freeze([player]),
+        deck: [new Card(20, 'spades'), new Card(30, 'diamonds')],
+      });
+
+      const updatedGame = game.drawCardForPlayer('player-1');
+      const updatedPlayer = updatedGame.players.find(p => p.id === 'player-1');
+
+      expect(updatedPlayer?.hand.length).toBe(2); // Original hand + 1 drawn card
+      expect(updatedPlayer?.hand).toContainEqual(new Card(20, 'spades'));
+      expect(updatedGame.deck.length).toBe(1); // Deck should have one less card
+      expect(updatedGame.deck).toContainEqual(new Card(30, 'diamonds'));
+    });
+
+    it('não deve modificar o jogo se o deck estiver vazio', () => {
+      const player = new Player({
+        id: 'player-1',
+        name: 'Player 1',
+        hand: [new Card(10, 'hearts')],
+        isConnected: true,
+      });
+      const game = new Game({
+        ...createGame(),
+        players: Object.freeze([player]),
+        deck: [],
+      });
+
+      const updatedGame = game.drawCardForPlayer('player-1');
+
+      expect(updatedGame).toBe(game); // Should return same instance
+      expect(updatedGame.players[0].hand.length).toBe(1); // Hand unchanged
+    });
+
+    it('não deve modificar o jogo se o jogador não existir', () => {
+      const game = new Game({
+        ...createGame(),
+        deck: [new Card(20, 'spades')],
+      });
+
+      const updatedGame = game.drawCardForPlayer('non-existent-player');
+
+      expect(updatedGame).toBe(game); // Should return same instance
     });
   });
 

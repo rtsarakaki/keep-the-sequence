@@ -13,15 +13,15 @@ export interface EndTurnDTO {
 }
 
 /**
- * Use Case: End a player's turn
- * 
- * Validates and executes ending a turn:
+ * Use Case: End a player's vez
+ *
+ * Validates and executes ending a vez:
  * 1. Validates game exists and is in playing status
- * 2. Validates it's the player's turn
+ * 2. Validates it's the player's vez
  * 3. Validates player has played minimum required cards
  * 4. Checks if player can play more cards (for defeat detection)
  * 5. Checks if all players have empty hands (victory condition)
- * 6. Passes turn to next player or ends game
+ * 6. Passes vez to next player or ends game
  */
 export class EndTurnUseCase {
   constructor(private readonly gameRepository: IGameRepository) {}
@@ -40,9 +40,9 @@ export class EndTurnUseCase {
         return failure('Game is not in playing status');
       }
 
-      // Validate it's the player's turn
+      // Validate it's the player's vez
       if (game.currentTurn !== dto.playerId) {
-        return failure('It is not your turn');
+        return failure('Não é sua vez');
       }
 
       // Find current player
@@ -69,9 +69,9 @@ export class EndTurnUseCase {
         }
         
         // Player hasn't played minimum but can still play - return error
-        return failure(
-          `You must play at least ${minimumCards} card${minimumCards > 1 ? 's' : ''} before ending your turn`
-        );
+          return failure(
+            `Você deve jogar pelo menos ${minimumCards} carta${minimumCards > 1 ? 's' : ''} antes de passar a vez`
+          );
       }
 
       // Check victory condition: all players have empty hands
@@ -81,7 +81,7 @@ export class EndTurnUseCase {
         return success(victoriousGame);
       }
 
-      // Pass turn to next player
+      // Pass vez to next player
       const currentPlayerIndex = game.players.findIndex(p => p.id === dto.playerId);
       const nextPlayerIndex = (currentPlayerIndex + 1) % game.players.length;
       const nextPlayer = game.players[nextPlayerIndex];
@@ -94,7 +94,7 @@ export class EndTurnUseCase {
       return success(gameWithNextTurn);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      return failure(`Failed to end turn: ${errorMessage}`);
+      return failure(`Falha ao passar a vez: ${errorMessage}`);
     }
   }
 }

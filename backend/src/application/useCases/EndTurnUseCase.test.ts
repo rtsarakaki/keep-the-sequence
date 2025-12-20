@@ -4,6 +4,7 @@ import { Game, GameStatus } from '../../domain/entities/Game';
 import { Player } from '../../domain/entities/Player';
 import { Card } from '../../domain/valueObjects/Card';
 import { GameInitializer } from '../../domain/services/GameInitializer';
+import * as GameRules from '../../domain/services/GameRules';
 
 describe('EndTurnUseCase', () => {
   let mockGameRepository: jest.Mocked<IGameRepository>;
@@ -16,10 +17,19 @@ describe('EndTurnUseCase', () => {
       delete: jest.fn(),
     };
     endTurnUseCase = new EndTurnUseCase(mockGameRepository);
+    
+    // Reset mocks for GameRules
+    jest.spyOn(GameRules, 'getMinimumCardsToPlay').mockReturnValue(2);
+    jest.spyOn(GameRules, 'canPlayerPlayAnyCard').mockReturnValue(true);
+    jest.spyOn(GameRules, 'areAllHandsEmpty').mockReturnValue(false);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   describe('execute', () => {
-    it('should successfully end turn and pass to next player', async () => {
+    it('should successfully end vez and pass to next player', async () => {
       const player1 = new Player({
         id: 'player-1',
         name: 'Player 1',
@@ -54,7 +64,7 @@ describe('EndTurnUseCase', () => {
       expect(result.isSuccess).toBe(true);
       if (result.isSuccess) {
         expect(result.value.currentTurn).toBe('player-2');
-        expect(result.value.cardsPlayedThisTurn).toBe(0); // Reset when turn changes
+        expect(result.value.cardsPlayedThisTurn).toBe(0); // Reset when vez changes
       }
       expect(mockGameRepository.save).toHaveBeenCalledTimes(1);
     });
@@ -96,7 +106,7 @@ describe('EndTurnUseCase', () => {
       }
     });
 
-    it('should return error if it is not the player\'s turn', async () => {
+    it('should return error if it is not the player\'s vez', async () => {
       const player1 = new Player({
         id: 'player-1',
         name: 'Player 1',
@@ -115,7 +125,7 @@ describe('EndTurnUseCase', () => {
         ...game,
         players: Object.freeze([player1, player2]),
         status: 'playing' as GameStatus,
-        currentTurn: 'player-2', // Not player-1's turn
+        currentTurn: 'player-2', // Not player-1's vez
         cardsPlayedThisTurn: 0,
       });
 
@@ -128,7 +138,7 @@ describe('EndTurnUseCase', () => {
 
       expect(result.isSuccess).toBe(false);
       if (!result.isSuccess) {
-        expect(result.error).toBe('It is not your turn');
+        expect(result.error).toBe('Não é sua vez');
       }
     });
 
@@ -158,7 +168,7 @@ describe('EndTurnUseCase', () => {
 
       expect(result.isSuccess).toBe(false);
       if (!result.isSuccess) {
-        expect(result.error).toContain('You must play at least 2 cards');
+        expect(result.error).toContain('Você deve jogar pelo menos 2 cartas');
       }
     });
 
@@ -179,6 +189,9 @@ describe('EndTurnUseCase', () => {
         deck: [], // Deck is empty
       });
 
+      // Mock minimum cards to return 1 when deck is empty
+      jest.spyOn(GameRules, 'getMinimumCardsToPlay').mockReturnValue(1);
+
       mockGameRepository.findById.mockResolvedValue(playingGame);
 
       const result = await endTurnUseCase.execute({
@@ -188,7 +201,7 @@ describe('EndTurnUseCase', () => {
 
       expect(result.isSuccess).toBe(false);
       if (!result.isSuccess) {
-        expect(result.error).toContain('You must play at least 1 card');
+        expect(result.error).toContain('Você deve jogar pelo menos 1 carta');
       }
     });
 
@@ -215,6 +228,10 @@ describe('EndTurnUseCase', () => {
         cardsPlayedThisTurn: 0, // Hasn't played minimum
         deck: [new Card(50, 'hearts')], // Deck has cards, so minimum is 2
       });
+
+      // Mock to return false - player cannot play any card
+      jest.spyOn(GameRules, 'canPlayerPlayAnyCard').mockReturnValue(false);
+      jest.spyOn(GameRules, 'getMinimumCardsToPlay').mockReturnValue(2);
 
       mockGameRepository.findById.mockResolvedValue(playingGame);
       mockGameRepository.save.mockResolvedValue(undefined);
@@ -255,6 +272,10 @@ describe('EndTurnUseCase', () => {
         deck: [], // Deck is empty, so minimum is 1
       });
 
+      // Mock to return true - all hands are empty
+      jest.spyOn(GameRules, 'areAllHandsEmpty').mockReturnValue(true);
+      jest.spyOn(GameRules, 'getMinimumCardsToPlay').mockReturnValue(1);
+
       mockGameRepository.findById.mockResolvedValue(playingGame);
       mockGameRepository.save.mockResolvedValue(undefined);
 
@@ -287,6 +308,9 @@ describe('EndTurnUseCase', () => {
         deck: [], // Deck is empty, so minimum is 1
       });
 
+      // Mock minimum cards to return 1 when deck is empty
+      jest.spyOn(GameRules, 'getMinimumCardsToPlay').mockReturnValue(1);
+
       mockGameRepository.findById.mockResolvedValue(playingGame);
       mockGameRepository.save.mockRejectedValue(new Error('Database error'));
 
@@ -297,7 +321,7 @@ describe('EndTurnUseCase', () => {
 
       expect(result.isSuccess).toBe(false);
       if (!result.isSuccess) {
-        expect(result.error).toContain('Failed to end turn');
+        expect(result.error).toContain('Falha ao passar a vez');
       }
     });
 
@@ -311,7 +335,7 @@ describe('EndTurnUseCase', () => {
 
       expect(result.isSuccess).toBe(false);
       if (!result.isSuccess) {
-        expect(result.error).toContain('Failed to end turn');
+        expect(result.error).toContain('Falha ao passar a vez');
       }
     });
   });

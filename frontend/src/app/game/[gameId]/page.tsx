@@ -69,11 +69,11 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
       return;
     }
 
-    // Check if it's the player's turn
-    if (gameState.currentTurn !== playerId) {
-      alert('Não é seu turno!');
-      return;
-    }
+      // Check if it's the player's vez
+      if (gameState.currentTurn !== playerId) {
+        alert('Não é sua vez!');
+        return;
+      }
 
     // Check if game is in playing status
     if (gameState.status !== 'playing') {
@@ -84,7 +84,7 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
     
     // Validate player has played minimum cards
     if (gameState.cardsPlayedThisTurn < minimumCards) {
-      alert(`Você deve jogar pelo menos ${minimumCards} carta${minimumCards > 1 ? 's' : ''} antes de passar o turno.`);
+          alert(`Você deve jogar pelo menos ${minimumCards} carta${minimumCards > 1 ? 's' : ''} antes de passar a vez.`);
       return;
     }
 
@@ -265,8 +265,8 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
           {isMyTurn && (
             <div className={styles.turnInfo}>
               <p>
-                Seu turno! Você deve jogar pelo menos <strong>{minimumCards} carta{minimumCards > 1 ? 's' : ''}</strong>.
-                Cartas jogadas neste turno: <strong>{gameState.cardsPlayedThisTurn}</strong>
+                Sua vez! Você deve jogar pelo menos <strong>{minimumCards} carta{minimumCards > 1 ? 's' : ''}</strong>.
+                Cartas jogadas nesta vez: <strong>{gameState.cardsPlayedThisTurn}</strong>
               </p>
             </div>
           )}
@@ -297,7 +297,7 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
               className={styles.endTurnButton}
               disabled={!canEndTurn || wsStatus !== 'connected'}
             >
-              {canEndTurn ? 'Passar Turno' : `Jogue pelo menos ${minimumCards} carta${minimumCards > 1 ? 's' : ''} primeiro`}
+              {canEndTurn ? 'Passar a Vez' : `Jogue pelo menos ${minimumCards} carta${minimumCards > 1 ? 's' : ''} primeiro`}
             </button>
           )}
         </div>
