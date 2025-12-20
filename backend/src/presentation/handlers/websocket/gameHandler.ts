@@ -341,6 +341,58 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
         });
       }
 
+      case 'endGame': {
+        const endGameUseCase = container.getEndGameUseCase();
+
+        const result = await endGameUseCase.execute({
+          gameId,
+          playerId,
+        });
+
+        if (!result.isSuccess) {
+          await webSocketService.sendToConnection(connectionId, {
+            type: 'error',
+            error: result.error || 'Failed to end game',
+          });
+          return Promise.resolve({
+            statusCode: 400,
+            body: JSON.stringify({ error: result.error }),
+          });
+        }
+
+        // Notify all players that the game has ended
+        const allConnections = await connectionRepository.findByGameId(gameId);
+        const connectionIds = allConnections.map(c => c.connectionId);
+
+        await webSocketService.sendToConnections(connectionIds, {
+          type: 'gameEnded',
+          gameId,
+          message: 'O jogo foi encerrado por um dos jogadores.',
+        });
+
+        // Send event to SQS asynchronously (fire-and-forget)
+        const sqsEventService = container.getSQSEventService();
+        sqsEventService.sendEvent({
+          gameId,
+          eventType: 'gameEnded',
+          eventData: {
+            playerId,
+            reason: 'ended_by_player',
+          },
+          timestamp: Date.now(),
+        }).catch((error) => {
+          console.error('Failed to send gameEnded event to SQS (non-blocking):', {
+            errorMessage: error instanceof Error ? error.message : String(error),
+            gameId,
+            playerId,
+          });
+        });
+
+        return Promise.resolve({
+          statusCode: 200,
+        });
+      }
+
       default:
         return Promise.resolve({
           statusCode: 400,

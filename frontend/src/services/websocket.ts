@@ -7,6 +7,7 @@ import { getWebSocketUrl } from './api';
 export type WebSocketMessage = 
   | { type: 'gameUpdated'; game: unknown }
   | { type: 'gameState'; game: unknown }
+  | { type: 'gameEnded'; gameId: string; message: string }
   | { type: 'error'; error: string };
 
 export type WebSocketStatus = 'disconnected' | 'connecting' | 'connected' | 'error';

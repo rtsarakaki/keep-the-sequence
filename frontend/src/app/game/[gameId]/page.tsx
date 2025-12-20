@@ -1,6 +1,6 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useGameWebSocket } from '@/hooks/useGameWebSocket';
 import { GameError } from '@/components/game/GameError';
 import { GameLoading } from '@/components/game/GameLoading';
@@ -13,13 +13,20 @@ import styles from './page.module.css';
 
 export default function GamePage({ params }: { params: { gameId: string } }) {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const playerId = searchParams.get('playerId');
   const playerName = typeof window !== 'undefined' ? sessionStorage.getItem('playerName') : null;
+
+  const handleGameEnded = () => {
+    // Redirect to home page when game is ended
+    router.push('/');
+  };
 
   const { gameState, wsStatus, error, retryCount, isRetrying, retry, sendMessage } = useGameWebSocket({
     gameId: params.gameId,
     playerId: playerId || undefined,
     playerName: playerName || undefined,
+    onGameEnded: handleGameEnded,
   });
 
   const handlePlayCard = (cardIndex: number, pileId: 'ascending1' | 'ascending2' | 'descending1' | 'descending2') => {
@@ -54,6 +61,20 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
         suit: card.suit,
       },
       pileId,
+    });
+  };
+
+  const handleEndGame = () => {
+    if (wsStatus !== 'connected' || !playerId) {
+      return;
+    }
+
+    if (!confirm('Tem certeza que deseja encerrar o jogo? Todos os jogadores serão desconectados.')) {
+      return;
+    }
+
+    sendMessage({
+      action: 'endGame',
     });
   };
 
@@ -204,6 +225,16 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
       )}
 
       <PlayersList players={gameState.players} currentPlayerId={playerId} />
+
+      <div className={styles.endGameSection}>
+        <button
+          onClick={handleEndGame}
+          className={styles.endGameButton}
+          disabled={wsStatus !== 'connected' || !playerId}
+        >
+          Encerrar Jogo
+        </button>
+      </div>
     </main>
   );
 }

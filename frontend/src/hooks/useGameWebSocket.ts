@@ -26,6 +26,7 @@ interface UseGameWebSocketOptions {
   playerId?: string;
   playerName?: string;
   onError?: (error: string) => void;
+  onGameEnded?: () => void;
 }
 
 interface UseGameWebSocketReturn {
@@ -46,6 +47,7 @@ export function useGameWebSocket({
   playerId,
   playerName,
   onError,
+  onGameEnded,
 }: UseGameWebSocketOptions): UseGameWebSocketReturn {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [wsStatus, setWsStatus] = useState<WebSocketStatus>('disconnected');
@@ -89,6 +91,11 @@ export function useGameWebSocket({
             handleError(
               `Erro ao processar estado do jogo: ${err instanceof Error ? err.message : 'Erro desconhecido'}`
             );
+          }
+        } else if (message.type === 'gameEnded') {
+          console.log('Jogo encerrado:', message);
+          if (onGameEnded) {
+            onGameEnded();
           }
         } else if (message.type === 'error') {
           handleError((message as { type: 'error'; error: string }).error);
