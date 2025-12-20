@@ -1,5 +1,6 @@
 import { APIGatewayProxyWebsocketHandlerV2 } from 'aws-lambda';
 import { container } from '../../../infrastructure/di/container';
+import { formatGameForMessage } from './gameMessageFormatter';
 
 /**
  * WebSocket $disconnect handler.
@@ -80,27 +81,7 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
           // Prepare game state message with updated player status
           const gameStateMessage = {
             type: 'gameUpdated',
-            game: {
-              id: updatedGame.id,
-              players: updatedGame.players.map(p => ({
-                id: p.id,
-                name: p.name,
-                hand: p.hand.map(c => ({ value: c.value, suit: c.suit })),
-                isConnected: p.isConnected,
-              })),
-              piles: {
-                ascending1: updatedGame.piles.ascending1.map(c => ({ value: c.value, suit: c.suit })),
-                ascending2: updatedGame.piles.ascending2.map(c => ({ value: c.value, suit: c.suit })),
-                descending1: updatedGame.piles.descending1.map(c => ({ value: c.value, suit: c.suit })),
-                descending2: updatedGame.piles.descending2.map(c => ({ value: c.value, suit: c.suit })),
-              },
-              deck: updatedGame.deck.map(c => ({ value: c.value, suit: c.suit })),
-              discardPile: updatedGame.discardPile.map(c => ({ value: c.value, suit: c.suit })),
-              currentTurn: updatedGame.currentTurn,
-              status: updatedGame.status,
-              createdAt: updatedGame.createdAt.toISOString(),
-              updatedAt: updatedGame.updatedAt.toISOString(),
-            },
+            game: formatGameForMessage(updatedGame),
           };
           
           // Notify other players asynchronously (don't block disconnect)

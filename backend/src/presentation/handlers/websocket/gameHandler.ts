@@ -3,6 +3,7 @@ import { container } from '../../../infrastructure/di/container';
 import { PlayCardDTO } from '../../../application/dto/PlayCardDTO';
 import { JoinGameDTO } from '../../../application/dto/JoinGameDTO';
 import { Card } from '../../../domain/valueObjects/Card';
+import { formatGameForMessage } from './gameMessageFormatter';
 
 /**
  * WebSocket game handler for processing game actions.
@@ -138,30 +139,10 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
 
         const game = result.value;
         
-        // Convert Game entity to message format (same pattern as onConnect)
+        // Convert Game entity to message format
         const gameStateMessage = {
           type: 'gameState',
-          game: {
-            id: game.id,
-            players: game.players.map(p => ({
-              id: p.id,
-              name: p.name,
-              hand: p.hand.map(c => ({ value: c.value, suit: c.suit })),
-              isConnected: p.isConnected,
-            })),
-            piles: {
-              ascending1: game.piles.ascending1.map(c => ({ value: c.value, suit: c.suit })),
-              ascending2: game.piles.ascending2.map(c => ({ value: c.value, suit: c.suit })),
-              descending1: game.piles.descending1.map(c => ({ value: c.value, suit: c.suit })),
-              descending2: game.piles.descending2.map(c => ({ value: c.value, suit: c.suit })),
-            },
-            deck: game.deck.map(c => ({ value: c.value, suit: c.suit })),
-            discardPile: game.discardPile.map(c => ({ value: c.value, suit: c.suit })),
-            currentTurn: game.currentTurn,
-            status: game.status,
-            createdAt: game.createdAt.toISOString(),
-            updatedAt: game.updatedAt.toISOString(),
-          },
+          game: formatGameForMessage(game),
         };
         
         console.log(`Preparing to send game state to ${connectionId} for game ${gameId}`);
@@ -275,7 +256,7 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
 
         await webSocketService.sendToConnections(connectionIds, {
           type: 'gameUpdated',
-          game: result.value,
+          game: formatGameForMessage(result.value),
         });
 
         // Send event to SQS asynchronously (fire-and-forget)
@@ -334,7 +315,7 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
 
         await webSocketService.sendToConnections(connectionIds, {
           type: 'gameUpdated',
-          game: result.value,
+          game: formatGameForMessage(result.value),
         });
 
         // Send event to SQS asynchronously (fire-and-forget)

@@ -1,6 +1,7 @@
 import { APIGatewayProxyWebsocketHandlerV2 } from 'aws-lambda';
 import { AuthService } from '../../../domain/services/AuthService';
 import { container } from '../../../infrastructure/di/container';
+import { formatGameForMessage } from './gameMessageFormatter';
 
 /**
  * WebSocket $connect handler with authentication and origin validation.
@@ -120,27 +121,7 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
     // Prepare game state message
     const gameStateMessage = {
       type: 'gameState',
-      game: {
-        id: game.id,
-        players: game.players.map(p => ({
-          id: p.id,
-          name: p.name,
-          hand: p.hand.map(c => ({ value: c.value, suit: c.suit })),
-          isConnected: p.isConnected,
-        })),
-        piles: {
-          ascending1: game.piles.ascending1.map(c => ({ value: c.value, suit: c.suit })),
-          ascending2: game.piles.ascending2.map(c => ({ value: c.value, suit: c.suit })),
-          descending1: game.piles.descending1.map(c => ({ value: c.value, suit: c.suit })),
-          descending2: game.piles.descending2.map(c => ({ value: c.value, suit: c.suit })),
-        },
-        deck: game.deck.map(c => ({ value: c.value, suit: c.suit })),
-        discardPile: game.discardPile.map(c => ({ value: c.value, suit: c.suit })),
-        currentTurn: game.currentTurn,
-        status: game.status,
-        createdAt: game.createdAt.toISOString(),
-        updatedAt: game.updatedAt.toISOString(),
-      },
+      game: formatGameForMessage(game),
     };
     
     console.log(`Preparing to send game state to ${connectionId}:`, JSON.stringify(gameStateMessage, null, 2));
