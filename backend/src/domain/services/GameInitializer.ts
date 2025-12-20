@@ -51,7 +51,7 @@ export class GameInitializer {
     
     // Number of cards per player based on number of players
     const cardsPerPlayer: Record<number, number> = {
-      2: 7,
+      2: 6,
       3: 6,
       4: 6,
       5: 5,

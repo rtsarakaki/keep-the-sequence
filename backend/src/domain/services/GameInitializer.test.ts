@@ -56,13 +56,13 @@ describe('GameInitializer', () => {
   });
 
   describe('dealCards', () => {
-    it('should deal 7 cards to each player for 2 players', () => {
+    it('should deal 6 cards to each player for 2 players', () => {
       const deck = GameInitializer.createDeck();
       const { hands } = GameInitializer.dealCards(deck, 2);
       
       expect(hands).toHaveLength(2);
-      expect(hands[0].length).toBe(7);
-      expect(hands[1].length).toBe(7);
+      expect(hands[0].length).toBe(6);
+      expect(hands[1].length).toBe(6);
     });
 
     it('should deal 6 cards to each player for 3 players', () => {
