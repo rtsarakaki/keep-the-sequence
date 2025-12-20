@@ -1,7 +1,7 @@
 import { IGameRepository } from '../../domain/repositories/IGameRepository';
 import { PlayCardDTO } from '../dto/PlayCardDTO';
 import { Game } from '../../domain/entities/Game';
-import { canPlayCard } from '../../domain/services/GameRules';
+import { canPlayCard, shouldGameEndInDefeat, areAllHandsEmpty } from '../../domain/services/GameRules';
 import { Result, success, failure } from './Result';
 
 /**
@@ -78,12 +78,26 @@ export class PlayCardUseCase {
       const gameWithCardPlayed = gameWithUpdatedPlayer.addCardToPile(dto.pileId, dto.card);
 
       // Draw a new card from deck if available
-      const finalGame = gameWithCardPlayed.drawCardForPlayer(dto.playerId);
+      const gameAfterDraw = gameWithCardPlayed.drawCardForPlayer(dto.playerId);
+
+      // Check for automatic defeat condition: player cannot continue
+      if (shouldGameEndInDefeat(gameAfterDraw)) {
+        const defeatedGame = gameAfterDraw.updateStatus('finished');
+        await this.gameRepository.save(defeatedGame);
+        return success(defeatedGame);
+      }
+
+      // Check victory condition: all players have empty hands
+      if (areAllHandsEmpty(gameAfterDraw.players)) {
+        const victoriousGame = gameAfterDraw.updateStatus('finished');
+        await this.gameRepository.save(victoriousGame);
+        return success(victoriousGame);
+      }
 
       // Save updated game
-      await this.gameRepository.save(finalGame);
+      await this.gameRepository.save(gameAfterDraw);
 
-      return success(finalGame);
+      return success(gameAfterDraw);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return failure(`Failed to play card: ${errorMessage}`);

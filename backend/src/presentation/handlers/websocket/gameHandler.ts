@@ -140,13 +140,24 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
 
         const game = result.value;
         
+        // Check if game ended (victory or defeat)
+        const gameEnded = game.status === 'finished';
+        
         // Convert Game entity to message format
         const gameStateMessage = {
-          type: 'gameState',
+          type: gameEnded ? 'gameFinished' : 'gameState',
           game: formatGameForMessage(game),
+          ...(gameEnded && {
+            gameId: game.id,
+            message: areAllHandsEmpty(game.players) ? 'Vitória!' : 'Derrota!',
+            result: areAllHandsEmpty(game.players) ? 'victory' : 'defeat',
+          }),
         };
         
-        console.log(`Preparing to send game state to ${connectionId} for game ${gameId}`);
+        console.log(`Preparing to send game state to ${connectionId} for game ${gameId}`, {
+          gameEnded,
+          status: game.status,
+        });
         
         // Send game state via WebSocket (non-blocking - same pattern as testHandler)
         const domainName = event.requestContext.domainName;
@@ -251,13 +262,21 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
           });
         }
 
+        // Check if game ended (victory or defeat)
+        const gameEnded = result.value.status === 'finished';
+
         // Broadcast updated game state to all players
         const allConnections = await connectionRepository.findByGameId(gameId);
         const connectionIds = allConnections.map(c => c.connectionId);
 
         await webSocketService.sendToConnections(connectionIds, {
-          type: 'gameUpdated',
+          type: gameEnded ? 'gameFinished' : 'gameUpdated',
           game: formatGameForMessage(result.value),
+          ...(gameEnded && {
+            gameId: result.value.id,
+            message: areAllHandsEmpty(result.value.players) ? 'Vitória!' : 'Derrota!',
+            result: areAllHandsEmpty(result.value.players) ? 'victory' : 'defeat',
+          }),
         });
 
         // Send event to SQS asynchronously (fire-and-forget)

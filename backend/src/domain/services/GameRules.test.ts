@@ -1,5 +1,6 @@
 import { Card } from '../valueObjects/Card';
-import { canPlayCard, calculateScore } from './GameRules';
+import { canPlayCard, calculateScore, shouldGameEndInDefeat } from './GameRules';
+import { Player } from '../entities/Player';
 
 describe('GameRules', () => {
   describe('canPlayCard - Pilha crescente (1-99)', () => {
@@ -138,6 +139,174 @@ describe('GameRules', () => {
       const score = calculateScore(piles);
       
       expect(score).toBe(0);
+    });
+  });
+
+  describe('shouldGameEndInDefeat', () => {
+    it('deve retornar true quando jogador não pode jogar o mínimo necessário', () => {
+      const player = new Player({
+        id: 'player-1',
+        name: 'Player 1',
+        hand: [new Card(10, 'hearts')], // Tem cartas
+        isConnected: true,
+      });
+
+      // Pilhas bloqueadas - jogador não pode jogar
+      const piles = {
+        ascending1: [new Card(99, 'spades')],
+        ascending2: [new Card(99, 'hearts')],
+        descending1: [new Card(2, 'spades')],
+        descending2: [new Card(2, 'hearts')],
+      };
+
+      const game = {
+        currentTurn: 'player-1',
+        cardsPlayedThisTurn: 0, // Não jogou o mínimo (2 cartas)
+        deck: [new Card(50, 'hearts')], // Deck tem cartas, mínimo é 2
+        players: [player],
+        piles,
+      };
+
+      const result = shouldGameEndInDefeat(game);
+
+      expect(result).toBe(true);
+    });
+
+    it('deve retornar false quando jogador pode jogar cartas', () => {
+      const player = new Player({
+        id: 'player-1',
+        name: 'Player 1',
+        hand: [new Card(50, 'hearts')], // Tem cartas jogáveis
+        isConnected: true,
+      });
+
+      // Pilhas permitem jogar
+      const piles = {
+        ascending1: [new Card(40, 'spades')], // Pode jogar 50
+        ascending2: [],
+        descending1: [],
+        descending2: [],
+      };
+
+      const game = {
+        currentTurn: 'player-1',
+        cardsPlayedThisTurn: 0,
+        deck: [new Card(60, 'hearts')],
+        players: [player],
+        piles,
+      };
+
+      const result = shouldGameEndInDefeat(game);
+
+      expect(result).toBe(false);
+    });
+
+    it('deve retornar false quando jogador já jogou o mínimo necessário', () => {
+      const player = new Player({
+        id: 'player-1',
+        name: 'Player 1',
+        hand: [new Card(10, 'hearts')],
+        isConnected: true,
+      });
+
+      const piles = {
+        ascending1: [new Card(99, 'spades')],
+        ascending2: [new Card(99, 'hearts')],
+        descending1: [new Card(2, 'spades')],
+        descending2: [new Card(2, 'hearts')],
+      };
+
+      const game = {
+        currentTurn: 'player-1',
+        cardsPlayedThisTurn: 2, // Já jogou o mínimo
+        deck: [new Card(50, 'hearts')],
+        players: [player],
+        piles,
+      };
+
+      const result = shouldGameEndInDefeat(game);
+
+      expect(result).toBe(false);
+    });
+
+    it('deve retornar false quando não é a vez de ninguém', () => {
+      const player = new Player({
+        id: 'player-1',
+        name: 'Player 1',
+        hand: [new Card(10, 'hearts')],
+        isConnected: true,
+      });
+
+      const game = {
+        currentTurn: null,
+        cardsPlayedThisTurn: 0,
+        deck: [new Card(50, 'hearts')],
+        players: [player],
+        piles: {
+          ascending1: [],
+          ascending2: [],
+          descending1: [],
+          descending2: [],
+        },
+      };
+
+      const result = shouldGameEndInDefeat(game);
+
+      expect(result).toBe(false);
+    });
+
+    it('deve retornar false quando jogador não tem cartas (vitória é verificada separadamente)', () => {
+      const player = new Player({
+        id: 'player-1',
+        name: 'Player 1',
+        hand: [], // Sem cartas
+        isConnected: true,
+      });
+
+      const game = {
+        currentTurn: 'player-1',
+        cardsPlayedThisTurn: 0,
+        deck: [],
+        players: [player],
+        piles: {
+          ascending1: [],
+          ascending2: [],
+          descending1: [],
+          descending2: [],
+        },
+      };
+
+      const result = shouldGameEndInDefeat(game);
+
+      expect(result).toBe(false);
+    });
+
+    it('deve retornar true quando deck está vazio e jogador não pode jogar o mínimo (1 carta)', () => {
+      const player = new Player({
+        id: 'player-1',
+        name: 'Player 1',
+        hand: [new Card(10, 'hearts')],
+        isConnected: true,
+      });
+
+      const piles = {
+        ascending1: [new Card(99, 'spades')],
+        ascending2: [new Card(99, 'hearts')],
+        descending1: [new Card(2, 'spades')],
+        descending2: [new Card(2, 'hearts')],
+      };
+
+      const game = {
+        currentTurn: 'player-1',
+        cardsPlayedThisTurn: 0, // Não jogou o mínimo (1 carta quando deck vazio)
+        deck: [], // Deck vazio, mínimo é 1
+        players: [player],
+        piles,
+      };
+
+      const result = shouldGameEndInDefeat(game);
+
+      expect(result).toBe(true);
     });
   });
 });
