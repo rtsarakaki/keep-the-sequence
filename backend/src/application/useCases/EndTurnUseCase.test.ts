@@ -291,6 +291,63 @@ describe('EndTurnUseCase', () => {
       expect(mockGameRepository.save).toHaveBeenCalledTimes(1);
     });
 
+    it('should end game in defeat when passing turn to a player who cannot play', async () => {
+      const player1 = new Player({
+        id: 'player-1',
+        name: 'Player 1',
+        hand: [new Card(50, 'hearts')], // Has cards
+        isConnected: true,
+      });
+      const player2 = new Player({
+        id: 'player-2',
+        name: 'Player 2',
+        hand: [new Card(10, 'spades')], // Has cards but cannot play
+        isConnected: true,
+      });
+      
+      const game = GameInitializer.createGame('game-1', player1);
+      // Add high cards to all piles so player2 cannot play
+      const gameWithHighCards = game
+        .addCardToPile('ascending1', new Card(99, 'spades'))
+        .addCardToPile('ascending2', new Card(99, 'hearts'))
+        .addCardToPile('descending1', new Card(2, 'spades'))
+        .addCardToPile('descending2', new Card(2, 'hearts'));
+      
+      const playingGame = new Game({
+        ...gameWithHighCards,
+        players: Object.freeze([player1, player2]),
+        status: 'playing' as GameStatus,
+        currentTurn: 'player-1',
+        cardsPlayedThisTurn: 2, // Has played minimum (2 cards)
+        deck: [new Card(60, 'hearts')], // Deck has cards, so minimum is 2
+      });
+
+      // Mock getMinimumCardsToPlay to return 2
+      jest.spyOn(GameRules, 'getMinimumCardsToPlay').mockReturnValue(2);
+      jest.spyOn(GameRules, 'areAllHandsEmpty').mockReturnValue(false);
+      
+      // Mock shouldGameEndInDefeat to return true when it's player2's turn
+      // This simulates the scenario where player2 cannot play any card
+      jest.spyOn(GameRules, 'shouldGameEndInDefeat').mockImplementation((gameState) => {
+        return gameState.currentTurn === 'player-2';
+      });
+
+      mockGameRepository.findById.mockResolvedValue(playingGame);
+      mockGameRepository.save.mockResolvedValue(undefined);
+
+      const result = await endTurnUseCase.execute({
+        gameId: 'game-1',
+        playerId: 'player-1',
+      });
+
+      expect(result.isSuccess).toBe(true);
+      if (result.isSuccess) {
+        expect(result.value.status).toBe('finished');
+        expect(result.value.currentTurn).toBe('player-2'); // Turn was passed to player2
+      }
+      expect(mockGameRepository.save).toHaveBeenCalledTimes(1);
+    });
+
     it('should handle repository errors', async () => {
       const player = new Player({
         id: 'player-1',

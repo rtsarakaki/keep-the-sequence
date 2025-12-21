@@ -5,6 +5,7 @@ import {
   getMinimumCardsToPlay,
   canPlayerPlayAnyCard,
   areAllHandsEmpty,
+  shouldGameEndInDefeat,
 } from '../../domain/services/GameRules';
 
 export interface EndTurnDTO {
@@ -87,6 +88,14 @@ export class EndTurnUseCase {
       const nextPlayer = game.players[nextPlayerIndex];
 
       const gameWithNextTurn = game.updateTurn(nextPlayer.id);
+
+      // Check if next player can play (automatic defeat detection)
+      // This ensures the game ends immediately if the next player cannot make the minimum required plays
+      if (shouldGameEndInDefeat(gameWithNextTurn)) {
+        const defeatedGame = gameWithNextTurn.updateStatus('finished');
+        await this.gameRepository.save(defeatedGame);
+        return success(defeatedGame);
+      }
 
       // Save updated game
       await this.gameRepository.save(gameWithNextTurn);
