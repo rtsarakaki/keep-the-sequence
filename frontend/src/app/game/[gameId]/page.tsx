@@ -277,7 +277,8 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
       ) : (
         <>
           <GameBoard 
-            piles={gameState.piles} 
+            piles={gameState.piles}
+            deckLength={gameState.deck.length}
             onCardDrop={(cardIndex, pileId) => handlePlayCard(cardIndex, pileId)}
             isDroppable={wsStatus === 'connected' && isMyTurn}
           />

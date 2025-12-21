@@ -7,6 +7,7 @@ import styles from './GameBoard.module.css';
 
 interface GameBoardProps {
   piles: GameState['piles'];
+  deckLength?: number;
   onCardDrop?: (cardIndex: number, pileId: 'ascending1' | 'ascending2' | 'descending1' | 'descending2') => void;
   isDroppable?: boolean;
 }
@@ -18,7 +19,7 @@ const PILE_CONFIG = [
   { key: 'descending2' as const, title: 'Pilha Decrescente 2', icon: '↓' },
 ] as const;
 
-export function GameBoard({ piles, onCardDrop, isDroppable = true }: GameBoardProps) {
+export function GameBoard({ piles, deckLength = 0, onCardDrop, isDroppable = true }: GameBoardProps) {
   const [hoveredPile, setHoveredPile] = useState<string | null>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -57,7 +58,13 @@ export function GameBoard({ piles, onCardDrop, isDroppable = true }: GameBoardPr
 
   return (
     <div className={styles.gameBoard}>
-      <h2 className={styles.title}>Pilhas do Jogo</h2>
+      <div className={styles.header}>
+        <h2 className={styles.title}>Pilhas do Jogo</h2>
+        <div className={styles.deckInfo}>
+          <span className={styles.deckLabel}>Monte:</span>
+          <span className={styles.deckCount}>{deckLength} cartas</span>
+        </div>
+      </div>
       <div className={styles.piles}>
         {PILE_CONFIG.map(({ key, title, icon }) => (
           <Pile
