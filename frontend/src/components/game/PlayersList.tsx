@@ -78,7 +78,10 @@ export function PlayersList({
                 )}
               </div>
               <div className={styles.playerActions}>
-                <span className={styles.cardCount}>{player.hand.length} cartas</span>
+                <span className={styles.cardCount}>
+                  <span className={styles.cardNumber}>{player.hand.length}</span>
+                  <span className={styles.cardLabel}>cartas</span>
+                </span>
               </div>
             </li>
           );

@@ -68,6 +68,30 @@
   gap: 1rem;
   justify-content: center;
   min-height: 150px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #667eea #f5f5f5;
+}
+
+.handCards::-webkit-scrollbar {
+  height: 8px;
+}
+
+.handCards::-webkit-scrollbar-track {
+  background: #f5f5f5;
+  border-radius: 4px;
+}
+
+.handCards::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 4px;
+}
+
+.handCards::-webkit-scrollbar-thumb:hover {
+  background: #5568d3;
 }
 
 .handCardWrapper {
@@ -245,7 +269,20 @@
   }
 
   .handCards {
+    display: flex;
+    flex-wrap: nowrap;
     gap: 0.75rem;
+    justify-content: flex-start;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 0.5rem;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .handCardWrapper {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
   }
 
   .handCard {

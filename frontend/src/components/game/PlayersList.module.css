@@ -156,6 +156,17 @@
   background-color: #f5f5f5;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.cardNumber {
+  font-weight: 700;
+}
+
+.cardLabel {
+  font-weight: normal;
 }
 
 .hint {
@@ -209,9 +220,27 @@
     flex-shrink: 0;
   }
 
+  .statusIndicator {
+    display: none; /* Hide icon on mobile */
+  }
+
   .cardCount {
-    font-size: 0.8rem;
-    padding: 0.2rem 0.4rem;
+    font-size: 1.25rem;
+    padding: 0.4rem 0.8rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px;
+    font-weight: 700;
+  }
+
+  .cardNumber {
+    font-size: 1.5rem;
+    font-weight: 800;
+  }
+
+  .cardLabel {
+    font-size: 0.9rem;
+    font-weight: 500;
   }
 }
 
