@@ -64,16 +64,16 @@
 
 .handCards {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 1rem;
-  justify-content: center;
-  min-height: 150px;
+  justify-content: flex-start;
   overflow-x: auto;
   overflow-y: hidden;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: #667eea #f5f5f5;
+  padding-bottom: 0.5rem;
 }
 
 .handCards::-webkit-scrollbar {
@@ -96,6 +96,7 @@
 
 .handCardWrapper {
   position: relative;
+  flex: 0 0 auto;
 }
 
 .handCard {
