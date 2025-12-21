@@ -36,28 +36,24 @@
 
 .statusBadge {
   padding: 0.5rem;
-  border-radius: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: help;
-  transition: background-color 0.2s;
+  transition: opacity 0.2s;
 }
 
 .statusBadge[data-status='connected'] {
-  background-color: #d4edda;
-  color: #155724;
+  color: #28a745;
 }
 
 .statusBadge[data-status='connecting'] {
-  background-color: #fff3cd;
-  color: #856404;
+  color: #ffc107;
 }
 
 .statusBadge[data-status='disconnected'],
 .statusBadge[data-status='error'] {
-  background-color: #f8d7da;
-  color: #721c24;
+  color: #dc3545;
 }
 
 .statusBadge .icon {
@@ -79,32 +75,27 @@
 
 .gameStatus {
   padding: 0.5rem;
-  border-radius: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: help;
-  transition: background-color 0.2s;
+  transition: opacity 0.2s;
 }
 
 .gameStatus[data-status='waiting'] {
-  background-color: #fff3cd;
-  color: #856404;
+  color: #ffc107;
 }
 
 .gameStatus[data-status='playing'] {
-  background-color: #d4edda;
-  color: #155724;
+  color: #28a745;
 }
 
 .gameStatus[data-status='finished'] {
-  background-color: #d1ecf1;
-  color: #0c5460;
+  color: #17a2b8;
 }
 
 .gameStatus[data-status='abandoned'] {
-  background-color: #f8d7da;
-  color: #721c24;
+  color: #dc3545;
 }
 
 .gameStatus .icon {
