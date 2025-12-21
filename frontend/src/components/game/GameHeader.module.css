@@ -172,6 +172,14 @@
   color: #dc3545;
 }
 
+.playerName {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+  padding: 0.25rem 0.5rem;
+}
+
 .endGameIcon:hover:not(:disabled) {
   background-color: rgba(220, 53, 69, 0.1);
   border-color: #dc3545;
@@ -236,6 +244,11 @@
 
   .endGameIcon .icon {
     font-size: 1.1rem;
+  }
+
+  .playerName {
+    font-size: 0.85rem;
+    padding: 0.2rem 0.4rem;
   }
 }
 

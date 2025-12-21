@@ -45,6 +45,7 @@ export function GameHeader({
   onEndGame
 }: GameHeaderProps) {
   const currentTurnPlayer = currentTurn ? players.find(p => p.id === currentTurn) : null;
+  const currentPlayer = currentPlayerId ? players.find(p => p.id === currentPlayerId) : null;
   const isMyTurn = currentTurn === currentPlayerId && gameStatus === 'playing';
   const shouldBlink = isMyTurn && cardsPlayedThisTurn === 0;
 
@@ -98,6 +99,11 @@ export function GameHeader({
           >
             <MdPowerSettingsNew className={styles.icon} />
           </button>
+        )}
+        {currentPlayer && (
+          <div className={styles.playerName}>
+            {currentPlayer.name}
+          </div>
         )}
         <div className={styles.statusBadge} data-status={wsStatus} title={getConnectionLabel()}>
           {getConnectionIcon()}
