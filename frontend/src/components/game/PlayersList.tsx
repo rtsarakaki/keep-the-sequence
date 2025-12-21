@@ -1,7 +1,7 @@
 'use client';
 
 import { GameState } from '@/hooks/useGameWebSocket';
-import { MdCheckCircle, MdCancel, MdPlayArrow } from 'react-icons/md';
+import { MdCheckCircle, MdPerson, MdPlayArrow } from 'react-icons/md';
 import styles from './PlayersList.module.css';
 
 interface PlayersListProps {
@@ -59,7 +59,7 @@ export function PlayersList({
                   {player.isConnected ? (
                     <MdCheckCircle className={styles.icon} />
                   ) : (
-                    <MdCancel className={styles.icon} />
+                    <MdPerson className={styles.icon} />
                   )}
                 </span>
                 <span className={styles.playerName}>
@@ -67,8 +67,6 @@ export function PlayersList({
                   {isCurrentPlayer && <span className={styles.youBadge}>Você</span>}
                   {isStartingPlayer && <span className={styles.startingBadge}>Começa</span>}
                 </span>
-              </div>
-              <div className={styles.playerActions}>
                 {canSetThisPlayer && onSetStartingPlayer && (
                   <button
                     className={styles.setStartingButton}
@@ -78,6 +76,8 @@ export function PlayersList({
                     <MdPlayArrow className={styles.icon} />
                   </button>
                 )}
+              </div>
+              <div className={styles.playerActions}>
                 <span className={styles.cardCount}>{player.hand.length} cartas</span>
               </div>
             </li>
