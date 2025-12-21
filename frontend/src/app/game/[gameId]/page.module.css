@@ -119,47 +119,7 @@
   cursor: not-allowed;
 }
 
-.turnInfo {
-  margin: 1rem 0;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 8px;
-  color: #333;
-  text-align: center;
-}
-
-.turnInfo p {
-  margin: 0;
-  font-size: 1rem;
-}
-
-.turnActions {
-  margin-top: 1.5rem;
-  text-align: center;
-}
-
-.endTurnButton {
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
-}
-
-.endTurnButton:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
-}
-
-.endTurnButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background: #6c757d;
-}
+/* Turn info and actions moved to PlayerHand component */
 
 .gameFinished {
   margin: 2rem 0;

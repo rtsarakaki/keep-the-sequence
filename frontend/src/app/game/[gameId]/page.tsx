@@ -274,15 +274,6 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
         </div>
       ) : (
         <>
-          {isMyTurn && (
-            <div className={styles.turnInfo}>
-              <p>
-                Sua vez! Você deve jogar pelo menos <strong>{minimumCards} carta{minimumCards > 1 ? 's' : ''}</strong>.
-                Cartas jogadas nesta vez: <strong>{gameState.cardsPlayedThisTurn}</strong>
-              </p>
-            </div>
-          )}
-          
           <GameBoard 
             piles={gameState.piles} 
             onCardDrop={(cardIndex, pileId) => handlePlayCard(cardIndex, pileId)}
@@ -294,26 +285,17 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
               player={currentPlayer}
               wsStatus={wsStatus}
               onPlayCard={handlePlayCard}
+              isMyTurn={isMyTurn}
+              cardsPlayedThisTurn={gameState.cardsPlayedThisTurn}
+              minimumCards={minimumCards}
+              onEndTurn={handleEndTurn}
+              canEndTurn={canEndTurn}
             />
           )}
         </>
       )}
 
       <PlayersList players={gameState.players} currentPlayerId={playerId} />
-
-      {!isGameFinished && (
-        <div className={styles.turnActions}>
-          {isMyTurn && (
-            <button
-              onClick={handleEndTurn}
-              className={styles.endTurnButton}
-              disabled={!canEndTurn || wsStatus !== 'connected'}
-            >
-              {canEndTurn ? 'Passar a Vez' : `Jogue pelo menos ${minimumCards} carta${minimumCards > 1 ? 's' : ''} primeiro`}
-            </button>
-          )}
-        </div>
-      )}
 
       {isGameCreator && (
         <div className={styles.endGameSection}>

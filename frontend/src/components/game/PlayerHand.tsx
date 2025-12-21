@@ -10,9 +10,23 @@ interface PlayerHandProps {
   player: GameState['players'][number];
   wsStatus: WebSocketStatus;
   onPlayCard: (cardIndex: number, pileId: 'ascending1' | 'ascending2' | 'descending1' | 'descending2') => void;
+  isMyTurn?: boolean;
+  cardsPlayedThisTurn?: number;
+  minimumCards?: number;
+  onEndTurn?: () => void;
+  canEndTurn?: boolean;
 }
 
-export function PlayerHand({ player, wsStatus, onPlayCard }: PlayerHandProps) {
+export function PlayerHand({ 
+  player, 
+  wsStatus, 
+  onPlayCard,
+  isMyTurn = false,
+  cardsPlayedThisTurn = 0,
+  minimumCards = 0,
+  onEndTurn,
+  canEndTurn = false,
+}: PlayerHandProps) {
   const [draggedCardIndex, setDraggedCardIndex] = useState<number | null>(null);
 
   const handleDragStart = (e: React.DragEvent, cardIndex: number) => {
@@ -97,6 +111,34 @@ export function PlayerHand({ player, wsStatus, onPlayCard }: PlayerHandProps) {
       {player.hand.length > 0 && (
         <div className={styles.dragHint}>
           💡 Dica: Arraste uma carta para uma pilha ou clique nos botões acima
+        </div>
+      )}
+
+      {isMyTurn && (
+        <div className={styles.turnSection}>
+          <div className={styles.turnInfo}>
+            <div className={styles.turnInfoItem}>
+              <span className={styles.turnInfoLabel}>Cartas jogadas:</span>
+              <span className={styles.turnInfoValue}>
+                {cardsPlayedThisTurn} / {minimumCards}
+              </span>
+            </div>
+            {cardsPlayedThisTurn < minimumCards && (
+              <div className={styles.turnInfoHint}>
+                Jogue pelo menos {minimumCards} carta{minimumCards > 1 ? 's' : ''} para passar a vez
+              </div>
+            )}
+          </div>
+          {onEndTurn && (
+            <button
+              onClick={onEndTurn}
+              className={styles.endTurnButton}
+              disabled={!canEndTurn || wsStatus !== 'connected'}
+              title={canEndTurn ? 'Passar a vez para o próximo jogador' : `Jogue pelo menos ${minimumCards} carta${minimumCards > 1 ? 's' : ''} primeiro`}
+            >
+              {canEndTurn ? '✓ Passar a Vez' : `Jogue ${minimumCards} carta${minimumCards > 1 ? 's' : ''} primeiro`}
+            </button>
+          )}
         </div>
       )}
     </div>
