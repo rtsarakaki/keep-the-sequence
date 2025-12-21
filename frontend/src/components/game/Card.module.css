@@ -61,10 +61,9 @@
 /* Mobile responsive */
 @media (max-width: 768px) {
   .card.small {
-    width: 100%;
-    aspect-ratio: 5/7; /* Maintain card proportions */
-    max-width: 100%;
-    font-size: 0.65rem;
+    width: 60px;
+    height: 85px;
+    font-size: 0.875rem;
   }
 
   .card.medium {
