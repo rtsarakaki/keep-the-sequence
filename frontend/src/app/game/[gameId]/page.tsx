@@ -10,6 +10,7 @@ import { PlayersList } from '@/components/game/PlayersList';
 import { PlayerHand } from '@/components/game/PlayerHand';
 import { WaitingForPlayers } from '@/components/game/WaitingForPlayers';
 import { GameNotification } from '@/components/game/GameNotification';
+import { MdEmojiEvents, MdSentimentDissatisfied } from 'react-icons/md';
 import styles from './page.module.css';
 
 export default function GamePage({ params }: { params: { gameId: string } }) {
@@ -265,36 +266,55 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
 
       {isWaitingForPlayers ? (
         <WaitingForPlayers gameState={gameState} currentPlayerId={playerId} />
-      ) : isGameFinished ? (
-        <div className={styles.gameFinished}>
-          <h2>Jogo Finalizado</h2>
-          <p>
-            {gameState.players.every(p => p.hand.length === 0)
-              ? 'Vitória! Todos os jogadores descartaram suas cartas!'
-              : 'Derrota! Um jogador não conseguiu jogar o número mínimo de cartas.'}
-          </p>
-        </div>
       ) : (
         <>
-          <GameBoard 
-            piles={gameState.piles}
-            deckLength={gameState.deck.length}
-            onCardDrop={(cardIndex, pileId) => handlePlayCard(cardIndex, pileId)}
-            isDroppable={wsStatus === 'connected' && isMyTurn}
-          />
-
-          {currentPlayer && (
-            <PlayerHand
-              player={currentPlayer}
-              wsStatus={wsStatus}
-              onPlayCard={handlePlayCard}
-              isMyTurn={isMyTurn}
-              cardsPlayedThisTurn={gameState.cardsPlayedThisTurn}
-              minimumCards={minimumCards}
-              onEndTurn={handleEndTurn}
-              canEndTurn={canEndTurn}
-            />
+          {isGameFinished && (
+            <div className={styles.gameFinished}>
+              <h2 className={gameState.players.every(p => p.hand.length === 0) ? styles.victory : styles.defeat}>
+                {gameState.players.every(p => p.hand.length === 0) ? (
+                  <>
+                    <MdEmojiEvents className={styles.resultIcon} />
+                    Vitória!
+                  </>
+                ) : (
+                  <>
+                    <MdSentimentDissatisfied className={styles.resultIcon} />
+                    Derrota!
+                  </>
+                )}
+              </h2>
+              <p>
+                {gameState.players.every(p => p.hand.length === 0)
+                  ? 'Parabéns! Todos os jogadores descartaram suas cartas!'
+                  : 'Um jogador não conseguiu jogar o número mínimo de cartas necessárias.'}
+              </p>
+              <p className={styles.gameFinishedHint}>
+                O jogo permanece visível para análise. Você pode revisar as cartas jogadas e entender o que aconteceu.
+              </p>
+            </div>
           )}
+          
+          <div className={isGameFinished ? styles.gameFinishedContainer : undefined}>
+            <GameBoard 
+              piles={gameState.piles}
+              deckLength={gameState.deck.length}
+              onCardDrop={isGameFinished ? undefined : (cardIndex, pileId) => handlePlayCard(cardIndex, pileId)}
+              isDroppable={!isGameFinished && wsStatus === 'connected' && isMyTurn}
+            />
+
+            {currentPlayer && (
+              <PlayerHand
+                player={currentPlayer}
+                wsStatus={isGameFinished ? 'disconnected' : wsStatus}
+                onPlayCard={isGameFinished ? () => {} : handlePlayCard}
+                isMyTurn={!isGameFinished && isMyTurn}
+                cardsPlayedThisTurn={gameState.cardsPlayedThisTurn}
+                minimumCards={minimumCards}
+                onEndTurn={isGameFinished ? undefined : handleEndTurn}
+                canEndTurn={!isGameFinished && canEndTurn}
+              />
+            )}
+          </div>
         </>
       )}
 

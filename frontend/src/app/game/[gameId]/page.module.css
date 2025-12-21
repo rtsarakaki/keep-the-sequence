@@ -129,16 +129,82 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
   text-align: center;
   color: #333;
+  animation: slideDown 0.5s ease-out;
 }
 
 .gameFinished h2 {
   margin: 0 0 1rem 0;
-  font-size: 2rem;
+  font-size: 2.5rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.gameFinished .resultIcon {
+  font-size: 2.5rem;
+}
+
+.gameFinished .victory {
+  color: #28a745;
+  text-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+}
+
+.gameFinished .victory .resultIcon {
+  color: #ffd700;
+  filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.4));
+}
+
+.gameFinished .defeat {
+  color: #dc3545;
+  text-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+}
+
+.gameFinished .defeat .resultIcon {
+  color: #dc3545;
 }
 
 .gameFinished p {
   margin: 0;
   font-size: 1.25rem;
+  line-height: 1.6;
+}
+
+.gameFinished .gameFinishedHint {
+  margin-top: 1rem;
+  font-size: 1rem;
+  color: #666;
+  font-style: italic;
+}
+
+.gameFinishedContainer {
+  opacity: 0.85;
+  pointer-events: none;
+  position: relative;
+}
+
+.gameFinishedContainer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Mobile responsive */
