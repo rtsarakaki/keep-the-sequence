@@ -36,10 +36,12 @@ interface UseGameWebSocketReturn {
   gameState: GameState | null;
   wsStatus: WebSocketStatus;
   error: string | null;
+  gameError: string | null; // Non-critical game errors (validation errors, etc.)
   retryCount: number;
   isRetrying: boolean;
   retry: () => void;
   sendMessage: (message: unknown) => void;
+  clearGameError: () => void;
 }
 
 /**
@@ -55,6 +57,7 @@ export function useGameWebSocket({
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [wsStatus, setWsStatus] = useState<WebSocketStatus>('disconnected');
   const [error, setError] = useState<string | null>(null);
+  const [gameError, setGameError] = useState<string | null>(null); // Non-critical game errors
   const [retryCount, setRetryCount] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
   const [ws, setWs] = useState<GameWebSocket | null>(null);
@@ -153,7 +156,29 @@ export function useGameWebSocket({
             );
           }
         } else if (message.type === 'error') {
-          handleError((message as { type: 'error'; error: string }).error);
+          const errorMessage = (message as { type: 'error'; error: string }).error;
+          // Check if it's a game validation error (non-critical) or a critical connection error
+          // Game validation errors: "Cannot play card", "Não é sua vez", "Game is not in playing status", etc.
+          const isGameValidationError = 
+            errorMessage.includes('Cannot play card') ||
+            errorMessage.includes('Não é sua vez') ||
+            errorMessage.includes('Game is not in playing status') ||
+            errorMessage.includes('Card not in player hand') ||
+            errorMessage.includes('Invalid pile ID') ||
+            errorMessage.includes('Você deve jogar pelo menos') ||
+            errorMessage.includes('Falha ao passar a vez') ||
+            errorMessage.includes('Player not found in game');
+          
+          if (isGameValidationError && gameState) {
+            // Non-critical error: show as notification, don't break the game
+            console.warn('Game validation error:', errorMessage);
+            setGameError(errorMessage);
+            // Auto-clear after 5 seconds
+            setTimeout(() => setGameError(null), 5000);
+          } else {
+            // Critical error: connection, authentication, etc.
+            handleError(errorMessage);
+          }
         } else {
           console.warn('Tipo de mensagem desconhecido:', (message as { type?: string }).type);
         }
@@ -291,14 +316,20 @@ export function useGameWebSocket({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameId, playerId, playerName]);
 
+  const clearGameError = useCallback(() => {
+    setGameError(null);
+  }, []);
+
   return {
     gameState,
     wsStatus,
     error,
+    gameError,
     retryCount,
     isRetrying,
     retry,
     sendMessage,
+    clearGameError,
   };
 }
 

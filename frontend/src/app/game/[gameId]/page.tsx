@@ -9,6 +9,7 @@ import { GameHeader } from '@/components/game/GameHeader';
 import { PlayersList } from '@/components/game/PlayersList';
 import { PlayerHand } from '@/components/game/PlayerHand';
 import { WaitingForPlayers } from '@/components/game/WaitingForPlayers';
+import { GameNotification } from '@/components/game/GameNotification';
 import styles from './page.module.css';
 
 export default function GamePage({ params }: { params: { gameId: string } }) {
@@ -22,7 +23,7 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
     router.push('/');
   };
 
-  const { gameState, wsStatus, error, retryCount, isRetrying, retry, sendMessage } = useGameWebSocket({
+  const { gameState, wsStatus, error, gameError, retryCount, isRetrying, retry, sendMessage, clearGameError } = useGameWebSocket({
     gameId: params.gameId,
     playerId: playerId || undefined,
     playerName: playerName || undefined,
@@ -242,6 +243,14 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
 
   return (
     <main className={styles.container}>
+      {gameError && (
+        <GameNotification
+          message={gameError}
+          type="error"
+          duration={5000}
+          onDismiss={clearGameError}
+        />
+      )}
       <GameHeader
         wsStatus={wsStatus}
         gameStatus={gameState.status}
