@@ -259,6 +259,8 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
         gameId={params.gameId}
         currentPlayerId={playerId}
         cardsPlayedThisTurn={gameState.cardsPlayedThisTurn}
+        isGameCreator={isGameCreator}
+        onEndGame={handleEndGame}
       />
 
       {isWaitingForPlayers ? (
@@ -296,18 +298,6 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
       )}
 
       <PlayersList players={gameState.players} currentPlayerId={playerId} />
-
-      {isGameCreator && (
-        <div className={styles.endGameSection}>
-          <button
-            onClick={handleEndGame}
-            className={styles.endGameButton}
-            disabled={wsStatus !== 'connected' || !playerId}
-          >
-            Encerrar Jogo
-          </button>
-        </div>
-      )}
     </main>
   );
 }

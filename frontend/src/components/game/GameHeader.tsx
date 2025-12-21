@@ -9,7 +9,8 @@ import {
   MdHourglassEmpty, 
   MdPlayArrow, 
   MdCheckCircleOutline,
-  MdCancel 
+  MdCancel,
+  MdPowerSettingsNew
 } from 'react-icons/md';
 import styles from './GameHeader.module.css';
 
@@ -21,6 +22,8 @@ interface GameHeaderProps {
   gameId: string;
   currentPlayerId: string | null;
   cardsPlayedThisTurn: number;
+  isGameCreator?: boolean;
+  onEndGame?: () => void;
 }
 
 const STATUS_LABELS: Record<GameState['status'], string> = {
@@ -37,7 +40,9 @@ export function GameHeader({
   players, 
   gameId,
   currentPlayerId,
-  cardsPlayedThisTurn 
+  cardsPlayedThisTurn,
+  isGameCreator = false,
+  onEndGame
 }: GameHeaderProps) {
   const currentTurnPlayer = currentTurn ? players.find(p => p.id === currentTurn) : null;
   const isMyTurn = currentTurn === currentPlayerId && gameStatus === 'playing';
@@ -99,6 +104,17 @@ export function GameHeader({
               {currentTurnPlayer?.name || 'Desconhecido'}
             </span>
           </div>
+        )}
+        {isGameCreator && onEndGame && (
+          <button
+            onClick={onEndGame}
+            className={styles.endGameIcon}
+            disabled={wsStatus !== 'connected'}
+            title="Encerrar Jogo"
+            aria-label="Encerrar Jogo"
+          >
+            <MdPowerSettingsNew className={styles.icon} />
+          </button>
         )}
       </div>
     </header>
