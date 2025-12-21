@@ -342,6 +342,7 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
         currentTurn={gameState.currentTurn}
         createdBy={gameState.createdBy}
         piles={gameState.piles}
+        gameStatus={gameState.status}
         onSetStartingPlayer={handleSetStartingPlayer}
       />
     </main>

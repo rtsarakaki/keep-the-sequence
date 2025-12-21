@@ -10,6 +10,7 @@ interface PlayersListProps {
   currentTurn: GameState['currentTurn'];
   createdBy: GameState['createdBy'];
   piles: GameState['piles'];
+  gameStatus: GameState['status'];
   onSetStartingPlayer?: (playerId: string) => void;
 }
 
@@ -29,10 +30,15 @@ export function PlayersList({
   currentTurn,
   createdBy,
   piles,
+  gameStatus,
   onSetStartingPlayer 
 }: PlayersListProps) {
   const isGameCreator = currentPlayerId === createdBy;
-  const canSetStartingPlayer = isGameCreator && !hasAnyCardsBeenPlayed(piles);
+  // Only allow setting starting player if:
+  // 1. User is the game creator
+  // 2. No cards have been played yet
+  // 3. Game is not finished
+  const canSetStartingPlayer = isGameCreator && !hasAnyCardsBeenPlayed(piles) && gameStatus !== 'finished';
 
   return (
     <div className={styles.playersList}>
