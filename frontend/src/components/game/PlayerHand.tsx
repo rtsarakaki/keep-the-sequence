@@ -52,10 +52,35 @@ export function PlayerHand({
 
   return (
     <div className={styles.playerHand}>
-      <h2 className={styles.title}>
-        Suas Cartas <span className={styles.playerName}>({player.name})</span>
-        {isDisabled && <span className={styles.disabledBadge}>Desconectado</span>}
-      </h2>
+      <div className={styles.header}>
+        <h2 className={styles.title}>
+          Suas Cartas <span className={styles.playerName}>({player.name})</span>
+          {isDisabled && <span className={styles.disabledBadge}>Desconectado</span>}
+        </h2>
+        {isMyTurn && onEndTurn && (
+          <button
+            onClick={onEndTurn}
+            className={styles.endTurnButton}
+            disabled={!canEndTurn || wsStatus !== 'connected'}
+            title={canEndTurn ? 'Passar a vez para o próximo jogador' : `Jogue pelo menos ${minimumCards} carta${minimumCards > 1 ? 's' : ''} primeiro`}
+          >
+            {canEndTurn ? '✓ Passar a Vez' : `Jogue ${minimumCards} carta${minimumCards > 1 ? 's' : ''} primeiro`}
+          </button>
+        )}
+      </div>
+      {isMyTurn && (
+        <div className={styles.turnInfoCompact}>
+          <span className={styles.turnInfoLabel}>Cartas jogadas:</span>
+          <span className={styles.turnInfoValue}>
+            {cardsPlayedThisTurn} / {minimumCards}
+          </span>
+          {cardsPlayedThisTurn < minimumCards && (
+            <span className={styles.turnInfoHint}>
+              (Jogue pelo menos {minimumCards} carta{minimumCards > 1 ? 's' : ''})
+            </span>
+          )}
+        </div>
+      )}
       <div className={styles.handCards}>
         {player.hand.length === 0 ? (
           <div className={styles.emptyHand}>Nenhuma carta na mão</div>
@@ -111,34 +136,6 @@ export function PlayerHand({
       {player.hand.length > 0 && (
         <div className={styles.dragHint}>
           💡 Dica: Arraste uma carta para uma pilha ou clique nos botões acima
-        </div>
-      )}
-
-      {isMyTurn && (
-        <div className={styles.turnSection}>
-          <div className={styles.turnInfo}>
-            <div className={styles.turnInfoItem}>
-              <span className={styles.turnInfoLabel}>Cartas jogadas:</span>
-              <span className={styles.turnInfoValue}>
-                {cardsPlayedThisTurn} / {minimumCards}
-              </span>
-            </div>
-            {cardsPlayedThisTurn < minimumCards && (
-              <div className={styles.turnInfoHint}>
-                Jogue pelo menos {minimumCards} carta{minimumCards > 1 ? 's' : ''} para passar a vez
-              </div>
-            )}
-          </div>
-          {onEndTurn && (
-            <button
-              onClick={onEndTurn}
-              className={styles.endTurnButton}
-              disabled={!canEndTurn || wsStatus !== 'connected'}
-              title={canEndTurn ? 'Passar a vez para o próximo jogador' : `Jogue pelo menos ${minimumCards} carta${minimumCards > 1 ? 's' : ''} primeiro`}
-            >
-              {canEndTurn ? '✓ Passar a Vez' : `Jogue ${minimumCards} carta${minimumCards > 1 ? 's' : ''} primeiro`}
-            </button>
-          )}
         </div>
       )}
     </div>
