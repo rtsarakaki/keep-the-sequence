@@ -88,10 +88,10 @@ export const handler = async (
       });
     }
 
-    // Find the player that was added
+    // Find the player that was added (case-insensitive name comparison)
     const playerName = body.playerName.trim();
     const player = result.value.players.find(p => 
-      p.name === playerName && 
+      p.name.toLowerCase() === playerName.toLowerCase() && 
       (!body.playerId || p.id === body.playerId)
     );
 

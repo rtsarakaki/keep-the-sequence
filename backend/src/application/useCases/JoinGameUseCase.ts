@@ -30,9 +30,9 @@ export class JoinGameUseCase {
       // Generate player ID if not provided
       const playerId = dto.playerId || randomUUID();
 
-      // Check if player already exists in the game
+      // Check if player already exists in the game (case-insensitive name comparison)
       const existingPlayer = existingGame.players.find(
-        p => p.id === playerId || p.name === dto.playerName
+        p => p.id === playerId || p.name.toLowerCase() === dto.playerName.toLowerCase()
       );
 
       // If player exists, allow reconnection even if game is in 'playing' status

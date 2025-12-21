@@ -530,6 +530,43 @@ describe('JoinGameUseCase', () => {
       }
     });
 
+    it('should allow existing player to reconnect using playerName with different case (case-insensitive)', async () => {
+      const existingPlayer = new Player({
+        id: 'player-1',
+        name: 'Player 1',
+        hand: [new Card(10, 'hearts')],
+        isConnected: false,
+      });
+      const game = GameInitializer.createGame('game-1', existingPlayer);
+      const playingGame = game
+        .addPlayer(new Player({
+          id: 'player-2',
+          name: 'Player 2',
+          hand: [new Card(30, 'hearts')],
+          isConnected: true,
+        }))
+        .updateStatus('playing')
+        .updateTurn('player-1');
+
+      mockGameRepository.findById = jest.fn().mockResolvedValue(playingGame);
+      mockGameRepository.save = jest.fn().mockResolvedValue(undefined);
+
+      const dto = {
+        gameId: 'game-1',
+        playerName: 'PLAYER 1', // Reconnecting using uppercase name
+        // No playerId provided
+      };
+
+      const result = await joinGameUseCase.execute(dto);
+
+      expect(result.isSuccess).toBe(true);
+      if (result.isSuccess) {
+        const reconnectedPlayer = result.value.players.find(p => p.name === 'Player 1');
+        expect(reconnectedPlayer?.isConnected).toBe(true);
+        expect(result.value.status).toBe('playing');
+      }
+    });
+
     it('should not allow new player to join when game is in playing status and cards have been played', async () => {
       const player1 = new Player({
         id: 'player-1',

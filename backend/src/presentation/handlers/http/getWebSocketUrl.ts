@@ -102,7 +102,9 @@ export const handler = async (
         });
       }
 
-      const player = game.players.find(p => p.name === playerName.trim());
+      // Case-insensitive name comparison
+      const normalizedPlayerName = playerName.trim().toLowerCase();
+      const player = game.players.find(p => p.name.toLowerCase() === normalizedPlayerName);
       if (!player) {
         return Promise.resolve({
           statusCode: 404,
