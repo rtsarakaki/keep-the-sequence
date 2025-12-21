@@ -1,5 +1,7 @@
 import { APIGatewayProxyWebsocketHandlerV2 } from 'aws-lambda';
 import { container } from '../../../infrastructure/di/container';
+import { formatGameForMessage } from '../websocket/gameMessageFormatter';
+import { areAllHandsEmpty } from '../../../domain/services/GameRules';
 
 /**
  * WebSocket sync handler.
@@ -43,11 +45,24 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
       });
     }
 
+    const game = result.value;
+    
+    // Check if game ended (victory or defeat)
+    const gameEnded = game.status === 'finished';
+    
+    // Convert Game entity to message format using formatGameForMessage
+    const gameStateMessage = {
+      type: gameEnded ? 'gameFinished' : 'gameState',
+      game: formatGameForMessage(game),
+      ...(gameEnded && {
+        gameId: game.id,
+        message: areAllHandsEmpty(game.players) ? 'Vitória!' : 'Derrota!',
+        result: areAllHandsEmpty(game.players) ? 'victory' : 'defeat',
+      }),
+    };
+
     // Send game state to connection
-    await webSocketService.sendToConnection(connectionId, {
-      type: 'gameState',
-      game: result.value,
-    });
+    await webSocketService.sendToConnection(connectionId, gameStateMessage);
 
     return Promise.resolve({
       statusCode: 200,
