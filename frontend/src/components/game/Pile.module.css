@@ -166,5 +166,19 @@
   .dropHint {
     display: none; /* Hide drop hint on mobile */
   }
+
+  .mobileTitle {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #667eea;
+    text-align: center;
+    margin-bottom: 0.25rem;
+    padding: 0.2rem 0;
+  }
+}
+
+.mobileTitle {
+  display: none; /* Hidden on desktop */
 }
 

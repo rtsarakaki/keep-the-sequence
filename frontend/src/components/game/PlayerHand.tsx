@@ -113,7 +113,7 @@ export function PlayerHand({
                     className={styles.playButton}
                     title="Jogar na Pilha Crescente 1"
                   >
-                    ↑1
+                    C1
                   </button>
                   <button
                     onClick={() => handlePileClick(originalIndex, 'ascending2')}
@@ -121,7 +121,7 @@ export function PlayerHand({
                     className={styles.playButton}
                     title="Jogar na Pilha Crescente 2"
                   >
-                    ↑2
+                    C2
                   </button>
                   <button
                     onClick={() => handlePileClick(originalIndex, 'descending1')}
@@ -129,7 +129,7 @@ export function PlayerHand({
                     className={styles.playButton}
                     title="Jogar na Pilha Decrescente 1"
                   >
-                    ↓1
+                    D1
                   </button>
                   <button
                     onClick={() => handlePileClick(originalIndex, 'descending2')}
@@ -137,7 +137,7 @@ export function PlayerHand({
                     className={styles.playButton}
                     title="Jogar na Pilha Decrescente 2"
                   >
-                    ↓2
+                    D2
                   </button>
                 </div>
               </div>

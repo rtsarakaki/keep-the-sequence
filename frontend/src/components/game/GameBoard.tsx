@@ -13,10 +13,10 @@ interface GameBoardProps {
 }
 
 const PILE_CONFIG = [
-  { key: 'ascending1' as const, title: 'Pilha Crescente 1', icon: '↑' },
-  { key: 'ascending2' as const, title: 'Pilha Crescente 2', icon: '↑' },
-  { key: 'descending1' as const, title: 'Pilha Decrescente 1', icon: '↓' },
-  { key: 'descending2' as const, title: 'Pilha Decrescente 2', icon: '↓' },
+  { key: 'ascending1' as const, title: 'Pilha Crescente 1', shortTitle: 'C1', icon: '↑' },
+  { key: 'ascending2' as const, title: 'Pilha Crescente 2', shortTitle: 'C2', icon: '↑' },
+  { key: 'descending1' as const, title: 'Pilha Decrescente 1', shortTitle: 'D1', icon: '↓' },
+  { key: 'descending2' as const, title: 'Pilha Decrescente 2', shortTitle: 'D2', icon: '↓' },
 ] as const;
 
 export function GameBoard({ piles, deckLength = 0, onCardDrop, isDroppable = true }: GameBoardProps) {
@@ -66,10 +66,11 @@ export function GameBoard({ piles, deckLength = 0, onCardDrop, isDroppable = tru
         </div>
       </div>
       <div className={styles.piles}>
-        {PILE_CONFIG.map(({ key, title, icon }) => (
+        {PILE_CONFIG.map(({ key, title, shortTitle, icon }) => (
           <Pile
             key={key}
             title={`${icon} ${title}`}
+            shortTitle={shortTitle}
             cards={piles[key]}
             onDrop={(e) => handleDrop(e, key)}
             onDragOver={handleDragOver}

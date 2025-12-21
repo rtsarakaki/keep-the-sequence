@@ -8,6 +8,7 @@ import styles from './Pile.module.css';
 
 interface PileProps {
   title: string;
+  shortTitle?: string;
   cards: Array<{ value: number; suit: string }>;
   onDrop?: (e: React.DragEvent) => void;
   onDragOver?: (e: React.DragEvent) => void;
@@ -19,6 +20,7 @@ interface PileProps {
 
 export function Pile({ 
   title, 
+  shortTitle,
   cards, 
   onDrop, 
   onDragOver, 
@@ -58,6 +60,9 @@ export function Pile({
             </button>
           )}
         </div>
+        {shortTitle && (
+          <div className={styles.mobileTitle}>{shortTitle}</div>
+        )}
         <div className={styles.pileCards}>
           {lastCard ? (
             <div className={styles.lastCard}>
