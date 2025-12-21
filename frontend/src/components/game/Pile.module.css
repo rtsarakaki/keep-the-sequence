@@ -168,7 +168,7 @@
   }
 
   .mobileTitle {
-    display: block;
+    display: block !important;
     font-size: 0.7rem;
     font-weight: 700;
     color: #667eea;
