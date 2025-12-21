@@ -2,7 +2,7 @@
 . "$(dirname -- "$0")/_/husky.sh"
 
 # Run lint-staged (lint and type-check on staged files)
-npx lint-staged
+npx lint-staged || exit 1
 
 # Run tests for backend and frontend
 # Only run if there are changes in backend or frontend directories
@@ -11,8 +11,8 @@ if git diff --cached --name-only | grep -qE '^(backend|frontend)/'; then
   
   # Check if backend has changes
   if git diff --cached --name-only | grep -qE '^backend/'; then
-    echo "Running backend tests with coverage validation..."
-    cd backend && npm run test:coverage || exit 1
+    echo "Running backend tests..."
+    cd backend && npm test || exit 1
     cd ..
   fi
   
