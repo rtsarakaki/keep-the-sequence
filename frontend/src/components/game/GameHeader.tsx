@@ -19,6 +19,8 @@ interface GameHeaderProps {
   currentTurn: GameState['currentTurn'];
   players: GameState['players'];
   gameId: string;
+  currentPlayerId: string | null;
+  cardsPlayedThisTurn: number;
 }
 
 const STATUS_LABELS: Record<GameState['status'], string> = {
@@ -28,8 +30,18 @@ const STATUS_LABELS: Record<GameState['status'], string> = {
   abandoned: 'Abandonado',
 };
 
-export function GameHeader({ wsStatus, gameStatus, currentTurn, players, gameId }: GameHeaderProps) {
+export function GameHeader({ 
+  wsStatus, 
+  gameStatus, 
+  currentTurn, 
+  players, 
+  gameId,
+  currentPlayerId,
+  cardsPlayedThisTurn 
+}: GameHeaderProps) {
   const currentTurnPlayer = currentTurn ? players.find(p => p.id === currentTurn) : null;
+  const isMyTurn = currentTurn === currentPlayerId && gameStatus === 'playing';
+  const shouldBlink = isMyTurn && cardsPlayedThisTurn === 0;
 
   const getConnectionIcon = () => {
     switch (wsStatus) {
@@ -78,9 +90,15 @@ export function GameHeader({ wsStatus, gameStatus, currentTurn, players, gameId 
           {getGameStatusIcon()}
         </div>
         {currentTurn && (
-          <span className={styles.turnInfo} title={`Vez de ${currentTurnPlayer?.name || 'Desconhecido'}`}>
-            <strong>{currentTurnPlayer?.name || 'Desconhecido'}</strong>
-          </span>
+          <div 
+            className={`${styles.turnChip} ${isMyTurn ? styles.myTurn : ''} ${shouldBlink ? styles.blinking : ''}`}
+            title={isMyTurn ? 'Sua vez!' : `Vez de ${currentTurnPlayer?.name || 'Desconhecido'}`}
+          >
+            <span className={styles.turnLabel}>Vez:</span>
+            <span className={styles.turnPlayerName}>
+              {currentTurnPlayer?.name || 'Desconhecido'}
+            </span>
+          </div>
         )}
       </div>
     </header>

@@ -248,6 +248,8 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
         currentTurn={gameState.currentTurn}
         players={gameState.players}
         gameId={params.gameId}
+        currentPlayerId={playerId}
+        cardsPlayedThisTurn={gameState.cardsPlayedThisTurn}
       />
 
       {isWaitingForPlayers ? (

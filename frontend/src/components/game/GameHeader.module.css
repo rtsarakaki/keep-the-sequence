@@ -111,17 +111,62 @@
   font-size: 1.25rem;
 }
 
-.turnInfo {
+.turnChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
   font-size: 0.875rem;
+  background-color: #f5f5f5;
   color: #666;
   margin-left: auto;
   white-space: nowrap;
-  cursor: help;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
 }
 
-.turnInfo strong {
-  color: #333;
+.turnChip.myTurn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
   font-weight: 600;
+}
+
+.turnChip.myTurn .turnLabel {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.turnChip.myTurn .turnPlayerName {
+  color: white;
+  font-weight: 700;
+}
+
+.turnChip.blinking {
+  animation: blink 1.5s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}
+
+.turnLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #999;
+}
+
+.turnPlayerName {
+  font-weight: 600;
+  color: #333;
 }
 
 /* Mobile responsive */
@@ -154,9 +199,14 @@
     font-size: 1.1rem;
   }
 
-  .turnInfo {
+  .turnChip {
     font-size: 0.75rem;
+    padding: 0.4rem 0.75rem;
     margin-left: 0;
+  }
+
+  .turnLabel {
+    font-size: 0.7rem;
   }
 }
 
