@@ -50,6 +50,17 @@ export function PlayerHand({
 
   const isDisabled = wsStatus !== 'connected';
 
+  // Sort cards by value in ascending order, preserving original indices
+  const handWithIndices = player.hand.map((card, index) => ({ card, originalIndex: index }));
+  const sortedHand = [...handWithIndices].sort((a, b) => {
+    // First sort by value
+    if (a.card.value !== b.card.value) {
+      return a.card.value - b.card.value;
+    }
+    // If values are equal, sort by suit (for consistency)
+    return a.card.suit.localeCompare(b.card.suit);
+  });
+
   return (
     <div className={styles.playerHand}>
       <div className={styles.header}>
@@ -83,21 +94,21 @@ export function PlayerHand({
         )}
       </div>
       <div className={styles.handCards}>
-        {player.hand.length === 0 ? (
+        {sortedHand.length === 0 ? (
           <div className={styles.emptyHand}>Nenhuma carta na mão</div>
         ) : (
-          player.hand.map((card, index) => (
-            <div key={index} className={styles.handCardWrapper}>
+          sortedHand.map(({ card, originalIndex }, sortedIndex) => (
+            <div key={`${card.value}-${card.suit}-${originalIndex}-${sortedIndex}`} className={styles.handCardWrapper}>
               <div
                 draggable={!isDisabled}
-                onDragStart={(e) => handleDragStart(e, index)}
+                onDragStart={(e) => handleDragStart(e, originalIndex)}
                 onDragEnd={handleDragEnd}
-                className={`${styles.handCard} ${draggedCardIndex === index ? styles.dragging : ''} ${isDisabled ? styles.disabled : ''}`}
+                className={`${styles.handCard} ${draggedCardIndex === originalIndex ? styles.dragging : ''} ${isDisabled ? styles.disabled : ''}`}
               >
                 <Card card={card} size="medium" />
                 <div className={styles.cardActions}>
                   <button
-                    onClick={() => handlePileClick(index, 'ascending1')}
+                    onClick={() => handlePileClick(originalIndex, 'ascending1')}
                     disabled={isDisabled}
                     className={styles.playButton}
                     title="Jogar na Pilha Crescente 1"
@@ -105,7 +116,7 @@ export function PlayerHand({
                     ↑1
                   </button>
                   <button
-                    onClick={() => handlePileClick(index, 'ascending2')}
+                    onClick={() => handlePileClick(originalIndex, 'ascending2')}
                     disabled={isDisabled}
                     className={styles.playButton}
                     title="Jogar na Pilha Crescente 2"
@@ -113,7 +124,7 @@ export function PlayerHand({
                     ↑2
                   </button>
                   <button
-                    onClick={() => handlePileClick(index, 'descending1')}
+                    onClick={() => handlePileClick(originalIndex, 'descending1')}
                     disabled={isDisabled}
                     className={styles.playButton}
                     title="Jogar na Pilha Decrescente 1"
@@ -121,7 +132,7 @@ export function PlayerHand({
                     ↓1
                   </button>
                   <button
-                    onClick={() => handlePileClick(index, 'descending2')}
+                    onClick={() => handlePileClick(originalIndex, 'descending2')}
                     disabled={isDisabled}
                     className={styles.playButton}
                     title="Jogar na Pilha Decrescente 2"
