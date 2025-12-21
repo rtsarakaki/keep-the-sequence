@@ -99,11 +99,6 @@ export function GameHeader({
             <MdPowerSettingsNew className={styles.icon} />
           </button>
         )}
-        {currentTurn && currentTurnPlayer && (
-          <div className={styles.playerName}>
-            {currentTurnPlayer.name}
-          </div>
-        )}
         <div className={styles.statusBadge} data-status={wsStatus} title={getConnectionLabel()}>
           {getConnectionIcon()}
         </div>
