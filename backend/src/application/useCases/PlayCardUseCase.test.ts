@@ -315,10 +315,12 @@ describe('PlayCardUseCase', () => {
       });
       const game = GameInitializer.createGame('game-1', player);
       
-      // Ensure deck has cards
+      // Create a specific card to add to deck (will be drawn after playing)
+      const cardToDraw = new Card(50, 'hearts');
+      // Ensure deck has cards - add the card at the beginning so it will be drawn first
       const gameWithDeck = new Game({
         ...game,
-        deck: [new Card(50, 'hearts'), new Card(60, 'spades')],
+        deck: Object.freeze([cardToDraw, ...game.deck]),
       });
       
       const cardToPlay = gameWithDeck.players[0].hand[0];
@@ -352,10 +354,12 @@ describe('PlayCardUseCase', () => {
         expect(playerAfter?.hand.length).toBe(originalHandSize);
         // Deck should have one less card
         expect(result.value.deck.length).toBe(originalDeckSize - 1);
-        // Player should have a new card from deck
+        // Player should not have the played card
         expect(playerAfter?.hand).not.toContainEqual(cardToPlay);
         // The new card should be from the deck (first card in original deck)
-        expect(playerAfter?.hand).toContainEqual(new Card(50, 'hearts'));
+        expect(playerAfter?.hand).toContainEqual(cardToDraw);
+        // Verify the card was removed from deck
+        expect(result.value.deck).not.toContainEqual(cardToDraw);
       }
     });
 
@@ -368,9 +372,18 @@ describe('PlayCardUseCase', () => {
       });
       const game = GameInitializer.createGame('game-1', player);
       
+      // Add a second player to avoid victory condition when first player plays last card
+      const secondPlayer = new Player({
+        id: 'player-2',
+        name: 'Player 2',
+        hand: [new Card(20, 'hearts'), new Card(30, 'spades')],
+        isConnected: true,
+      });
+      const gameWithTwoPlayers = game.addPlayer(secondPlayer);
+      
       // Set deck to empty
       const gameWithEmptyDeck = new Game({
-        ...game,
+        ...gameWithTwoPlayers,
         deck: [],
       });
       
