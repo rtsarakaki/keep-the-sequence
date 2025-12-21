@@ -66,10 +66,10 @@ export function GameBoard({ piles, deckLength = 0, onCardDrop, isDroppable = tru
         </div>
       </div>
       <div className={styles.piles}>
-        {PILE_CONFIG.map(({ key, title, shortTitle, icon }) => (
+        {PILE_CONFIG.map(({ key, shortTitle }) => (
           <Pile
             key={key}
-            title={`${icon} ${title}`}
+            title={shortTitle}
             shortTitle={shortTitle}
             cards={piles[key]}
             onDrop={(e) => handleDrop(e, key)}
