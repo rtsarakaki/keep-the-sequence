@@ -53,10 +53,24 @@ export function PlayerHand({
   return (
     <div className={styles.playerHand}>
       <div className={styles.header}>
-        <h2 className={styles.title}>
-          Suas Cartas <span className={styles.playerName}>({player.name})</span>
-          {isDisabled && <span className={styles.disabledBadge}>Desconectado</span>}
-        </h2>
+        <div className={styles.titleSection}>
+          <h2 className={styles.title}>
+            Suas Cartas <span className={styles.playerName}>({player.name})</span>
+            {isDisabled && <span className={styles.disabledBadge}>Desconectado</span>}
+          </h2>
+          {isMyTurn && (
+            <div className={styles.turnInfoInline}>
+              <span className={styles.turnInfoValue}>
+                {cardsPlayedThisTurn} / {minimumCards}
+              </span>
+              {cardsPlayedThisTurn < minimumCards && (
+                <span className={styles.turnInfoHint}>
+                  (mín. {minimumCards})
+                </span>
+              )}
+            </div>
+          )}
+        </div>
         {isMyTurn && onEndTurn && (
           <button
             onClick={onEndTurn}
@@ -68,19 +82,6 @@ export function PlayerHand({
           </button>
         )}
       </div>
-      {isMyTurn && (
-        <div className={styles.turnInfoCompact}>
-          <span className={styles.turnInfoLabel}>Cartas jogadas:</span>
-          <span className={styles.turnInfoValue}>
-            {cardsPlayedThisTurn} / {minimumCards}
-          </span>
-          {cardsPlayedThisTurn < minimumCards && (
-            <span className={styles.turnInfoHint}>
-              (Jogue pelo menos {minimumCards} carta{minimumCards > 1 ? 's' : ''})
-            </span>
-          )}
-        </div>
-      )}
       <div className={styles.handCards}>
         {player.hand.length === 0 ? (
           <div className={styles.emptyHand}>Nenhuma carta na mão</div>
