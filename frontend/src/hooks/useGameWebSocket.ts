@@ -157,26 +157,56 @@ export function useGameWebSocket({
           }
         } else if (message.type === 'error') {
           const errorMessage = (message as { type: 'error'; error: string }).error;
-          // Check if it's a game validation error (non-critical) or a critical connection error
-          // Game validation errors: "Cannot play card", "Não é sua vez", "Game is not in playing status", etc.
-          const isGameValidationError = 
-            errorMessage.includes('Cannot play card') ||
-            errorMessage.includes('Não é sua vez') ||
-            errorMessage.includes('Game is not in playing status') ||
-            errorMessage.includes('Card not in player hand') ||
-            errorMessage.includes('Invalid pile ID') ||
-            errorMessage.includes('Você deve jogar pelo menos') ||
-            errorMessage.includes('Falha ao passar a vez') ||
-            errorMessage.includes('Player not found in game');
           
-          if (isGameValidationError && gameState) {
-            // Non-critical error: show as notification, don't break the game
-            console.warn('Game validation error:', errorMessage);
+          // Define game validation errors that should NEVER break the game view
+          // These are user action errors that should be shown as notifications
+          const gameValidationErrorPatterns = [
+            'Cannot play card',
+            'Não é sua vez',
+            'Game is not in playing status',
+            'Card not in player hand',
+            'Invalid pile ID',
+            'Você deve jogar pelo menos',
+            'Falha ao passar a vez',
+            'Player not found in game',
+            'Failed to play card',
+            'pile', // Any error mentioning "pile" is likely a game validation error
+          ];
+          
+          const isGameValidationError = gameValidationErrorPatterns.some(pattern => 
+            errorMessage.includes(pattern)
+          );
+          
+          // If we have a gameState, we're definitely in the game view
+          // In this case, ALL errors should be notifications unless they're truly critical
+          if (gameState) {
+            // We're in the game - treat most errors as notifications
+            const isTrulyCritical = 
+              errorMessage.includes('Connection lost') ||
+              errorMessage.includes('Connection closed') ||
+              errorMessage.includes('Authentication failed') ||
+              errorMessage.includes('WebSocket error') ||
+              (errorMessage.includes('Game not found') && gameState.id); // Game not found when we have state is critical
+            
+            if (isTrulyCritical) {
+              // Only break the view for truly critical connection/auth errors
+              console.error('Critical error during game (breaking view):', errorMessage);
+              handleError(errorMessage);
+            } else {
+              // Everything else is a notification - keep the game view
+              console.warn('Game error (showing as notification):', errorMessage);
+              setGameError(errorMessage);
+              setTimeout(() => setGameError(null), 5000);
+            }
+          } else if (isGameValidationError) {
+            // No gameState yet, but it's a game validation error
+            // Show as notification anyway - we might be loading
+            console.warn('Game validation error (showing as notification):', errorMessage);
             setGameError(errorMessage);
-            // Auto-clear after 5 seconds
             setTimeout(() => setGameError(null), 5000);
           } else {
-            // Critical error: connection, authentication, etc.
+            // No gameState and not a game validation error
+            // This is likely a connection/auth error during initial load
             handleError(errorMessage);
           }
         } else {
