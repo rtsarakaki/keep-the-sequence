@@ -61,9 +61,10 @@
 /* Mobile responsive */
 @media (max-width: 768px) {
   .card.small {
-    width: 45px;
-    height: 63px;
-    font-size: 0.75rem;
+    width: 100%;
+    aspect-ratio: 5/7; /* Maintain card proportions */
+    max-width: 100%;
+    font-size: 0.65rem;
   }
 
   .card.medium {
@@ -79,11 +80,12 @@
   }
 
   .cardValue {
-    font-size: 1em;
+    font-size: 0.9em;
+    margin-bottom: 0.15rem;
   }
 
   .cardSuit {
-    font-size: 1.25em;
+    font-size: 1.1em;
   }
 }
 

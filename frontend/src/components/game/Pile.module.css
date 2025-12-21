@@ -124,34 +124,52 @@
 /* Mobile responsive */
 @media (max-width: 768px) {
   .pile {
-    padding: 0.75rem;
-    min-height: 150px;
+    padding: 0.3rem;
+    min-height: auto;
+    min-width: 0;
+    flex: 1 1 0;
+    max-width: calc(25% - 0.3rem); /* 4 piles in a row with gaps */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-radius: 8px;
   }
 
+  /* Hide header (title and history button) on mobile */
   .header {
-    margin-bottom: 0.5rem;
+    display: none;
   }
 
-  .title {
-    font-size: 0.875rem;
+  .pileCards {
+    min-height: auto;
+    padding: 0;
+    width: 100%;
   }
 
-  .historyButton {
-    padding: 0.3rem 0.5rem;
-    font-size: 0.75rem;
+  .lastCard {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
   }
 
-  .historyButton svg {
-    font-size: 0.875rem;
-  }
-
-  .historyCount {
-    font-size: 0.75rem;
+  .mobileCard {
+    width: 100% !important;
+    max-width: 100% !important;
   }
 
   .emptyPile {
-    padding: 1.5rem 0.75rem;
-    min-height: 100px;
+    padding: 0.4rem 0.2rem;
+    min-height: auto;
+    width: 100%;
+  }
+
+  .emptyText {
+    font-size: 0.6rem;
+  }
+
+  .dropHint {
+    display: none; /* Hide drop hint on mobile */
   }
 }
 

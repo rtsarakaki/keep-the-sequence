@@ -61,7 +61,7 @@ export function Pile({
         <div className={styles.pileCards}>
           {lastCard ? (
             <div className={styles.lastCard}>
-              <Card card={lastCard} size="medium" />
+              <Card card={lastCard} size="small" className={styles.mobileCard} />
             </div>
           ) : (
             <div className={styles.emptyPile}>
