@@ -209,6 +209,10 @@
 
 /* Mobile responsive */
 @media (max-width: 768px) {
+  .container {
+    padding: 0.5rem;
+  }
+
   .piles {
     grid-template-columns: 1fr;
   }
