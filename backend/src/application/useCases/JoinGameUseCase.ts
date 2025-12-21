@@ -3,6 +3,7 @@ import { JoinGameDTO } from '../dto/JoinGameDTO';
 import { Game } from '../../domain/entities/Game';
 import { Player } from '../../domain/entities/Player';
 import { GameInitializer } from '../../domain/services/GameInitializer';
+import { hasAnyCardsBeenPlayed } from '../../domain/services/GameRules';
 import { Result, success, failure } from './Result';
 import { randomUUID } from 'crypto';
 
@@ -45,8 +46,14 @@ export class JoinGameUseCase {
         return success(updatedGame);
       }
 
-      // New player joining - only allow if game is in 'waiting' status
-      if (existingGame.status !== 'waiting') {
+      // New player joining - allow if:
+      // 1. Game is in 'waiting' status, OR
+      // 2. Game is in 'playing' status but no cards have been played yet
+      const canJoinNewPlayer = 
+        existingGame.status === 'waiting' || 
+        (existingGame.status === 'playing' && !hasAnyCardsBeenPlayed(existingGame.piles));
+      
+      if (!canJoinNewPlayer) {
         return failure('Game is not accepting new players');
       }
 

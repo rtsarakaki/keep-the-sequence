@@ -112,7 +112,43 @@ describe('JoinGameUseCase', () => {
       }
     });
 
-    it('should return error if game is not in waiting status', async () => {
+    it('should allow new player to join when game is in playing status but no cards have been played', async () => {
+      const firstPlayer = new Player({
+        id: 'player-1',
+        name: 'Player 1',
+        hand: [new Card(10, 'hearts')],
+        isConnected: false,
+      });
+      const game = GameInitializer.createGame('game-1', firstPlayer);
+      const playingGame = game
+        .addPlayer(new Player({
+          id: 'player-2',
+          name: 'Player 2',
+          hand: [new Card(20, 'hearts')],
+          isConnected: true,
+        }))
+        .updateStatus('playing')
+        .updateTurn('player-1');
+      // No cards have been played yet (all piles are empty)
+
+      mockGameRepository.findById = jest.fn().mockResolvedValue(playingGame);
+      mockGameRepository.save = jest.fn().mockResolvedValue(undefined);
+
+      const dto = {
+        gameId: 'game-1',
+        playerName: 'Player 3',
+      };
+
+      const result = await joinGameUseCase.execute(dto);
+
+      expect(result.isSuccess).toBe(true);
+      if (result.isSuccess) {
+        expect(result.value.players).toHaveLength(3);
+        expect(result.value.players[2].name).toBe('Player 3');
+      }
+    });
+
+    it('should return error if game is in playing status and cards have been played', async () => {
       const firstPlayer = new Player({
         id: 'player-1',
         name: 'Player 1',
@@ -120,13 +156,23 @@ describe('JoinGameUseCase', () => {
         isConnected: false,
       });
       const game = GameInitializer.createGame('game-1', firstPlayer);
-      const playingGame = game.updateStatus('playing');
+      // Add a card to a pile to simulate that a card has been played
+      const gameWithCardPlayed = game.addCardToPile('ascending1', new Card(10, 'hearts'));
+      const playingGame = gameWithCardPlayed
+        .addPlayer(new Player({
+          id: 'player-2',
+          name: 'Player 2',
+          hand: [new Card(20, 'hearts')],
+          isConnected: true,
+        }))
+        .updateStatus('playing')
+        .updateTurn('player-1');
 
       mockGameRepository.findById = jest.fn().mockResolvedValue(playingGame);
 
       const dto = {
         gameId: 'game-1',
-        playerName: 'Player 2',
+        playerName: 'Player 3',
       };
 
       const result = await joinGameUseCase.execute(dto);
@@ -295,24 +341,20 @@ describe('JoinGameUseCase', () => {
       }
     });
 
-    it('should not start game if only one player after join (shouldStartGame = false)', async () => {
-      // This scenario shouldn't happen in practice, but tests the branch
-      // Actually, when we join, we always add a player, so we'll have at least 2
-      // But we can test the branch where status is not 'waiting' even with 2+ players
+    it('should allow new player to join when game is in playing status but no cards played (single player)', async () => {
+      // Game has 1 player, status is 'playing' but no cards have been played
+      // This should allow a second player to join
       const firstPlayer = new Player({
         id: 'player-1',
         name: 'Player 1',
-        hand: [],
+        hand: [new Card(10, 'hearts')],
         isConnected: false,
       });
       const existingGame = GameInitializer.createGame('game-1', firstPlayer);
-      // Game has 1 player, status is 'waiting'
-      // When we join, we'll have 2 players, so shouldStartGame should be true
-      // To test shouldStartGame = false, we need status != 'waiting' OR numPlayers < 2
-      // But we can't have numPlayers < 2 after join, so we test with status != 'waiting'
       const gameNotWaiting = existingGame.updateStatus('playing');
 
       mockGameRepository.findById = jest.fn().mockResolvedValue(gameNotWaiting);
+      mockGameRepository.save = jest.fn().mockResolvedValue(undefined);
 
       const dto = {
         gameId: 'game-1',
@@ -321,30 +363,33 @@ describe('JoinGameUseCase', () => {
 
       const result = await joinGameUseCase.execute(dto);
 
-      expect(result.isSuccess).toBe(false);
-      if (!result.isSuccess) {
-        expect(result.error).toContain('Game is not accepting new players');
+      // Should succeed because no cards have been played yet
+      expect(result.isSuccess).toBe(true);
+      if (result.isSuccess) {
+        expect(result.value.players).toHaveLength(2);
       }
     });
 
-    it('should not start game if status is not waiting', async () => {
+    it('should allow new player to join when game is in playing status but no cards played (two players)', async () => {
       const firstPlayer = new Player({
         id: 'player-1',
         name: 'Player 1',
-        hand: [],
+        hand: [new Card(10, 'hearts')],
         isConnected: false,
       });
       const existingGame = GameInitializer.createGame('game-1', firstPlayer);
       // Add a second player manually and set status to playing
+      // But no cards have been played yet (all piles are empty)
       const secondPlayer = new Player({
         id: 'player-2',
         name: 'Player 2',
-        hand: [],
+        hand: [new Card(20, 'hearts')],
         isConnected: false,
       });
-      const gameWithTwoPlayers = existingGame.addPlayer(secondPlayer).updateStatus('playing');
+      const gameWithTwoPlayers = existingGame.addPlayer(secondPlayer).updateStatus('playing').updateTurn('player-1');
 
       mockGameRepository.findById = jest.fn().mockResolvedValue(gameWithTwoPlayers);
+      mockGameRepository.save = jest.fn().mockResolvedValue(undefined);
 
       const dto = {
         gameId: 'game-1',
@@ -353,9 +398,10 @@ describe('JoinGameUseCase', () => {
 
       const result = await joinGameUseCase.execute(dto);
 
-      expect(result.isSuccess).toBe(false);
-      if (!result.isSuccess) {
-        expect(result.error).toContain('Game is not accepting new players');
+      // Should succeed because no cards have been played yet
+      expect(result.isSuccess).toBe(true);
+      if (result.isSuccess) {
+        expect(result.value.players).toHaveLength(3);
       }
     });
 
@@ -382,12 +428,12 @@ describe('JoinGameUseCase', () => {
         isConnected: false,
       });
       const gameWithTwoPlayers = existingGame.addPlayer(secondPlayer);
-      // Keep status as 'waiting' but test the branch where shouldStartGame is false
-      // Actually, if status is 'waiting' and we have 2 players, shouldStartGame should be true
-      // So we need a different scenario - when status is not 'waiting' but we have 2+ players
-      const gameNotWaiting = gameWithTwoPlayers.updateStatus('playing');
+      // Game is in 'playing' status but no cards have been played yet
+      // This should allow a third player to join
+      const gameNotWaiting = gameWithTwoPlayers.updateStatus('playing').updateTurn('player-1');
 
       mockGameRepository.findById = jest.fn().mockResolvedValue(gameNotWaiting);
+      mockGameRepository.save = jest.fn().mockResolvedValue(undefined);
 
       const dto = {
         gameId: 'game-1',
@@ -396,9 +442,10 @@ describe('JoinGameUseCase', () => {
 
       const result = await joinGameUseCase.execute(dto);
 
-      expect(result.isSuccess).toBe(false);
-      if (!result.isSuccess) {
-        expect(result.error).toContain('Game is not accepting new players');
+      // Should succeed because no cards have been played yet
+      expect(result.isSuccess).toBe(true);
+      if (result.isSuccess) {
+        expect(result.value.players).toHaveLength(3);
       }
     });
 
@@ -483,7 +530,7 @@ describe('JoinGameUseCase', () => {
       }
     });
 
-    it('should not allow new player to join when game is in playing status', async () => {
+    it('should not allow new player to join when game is in playing status and cards have been played', async () => {
       const player1 = new Player({
         id: 'player-1',
         name: 'Player 1',
@@ -491,7 +538,9 @@ describe('JoinGameUseCase', () => {
         isConnected: true,
       });
       const game = GameInitializer.createGame('game-1', player1);
-      const playingGame = game
+      // Add a card to a pile to simulate that a card has been played
+      const gameWithCardPlayed = game.addCardToPile('ascending1', new Card(10, 'hearts'));
+      const playingGame = gameWithCardPlayed
         .addPlayer(new Player({
           id: 'player-2',
           name: 'Player 2',

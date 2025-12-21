@@ -1,5 +1,5 @@
 import { Card } from '../valueObjects/Card';
-import { canPlayCard, calculateScore, shouldGameEndInDefeat } from './GameRules';
+import { canPlayCard, calculateScore, shouldGameEndInDefeat, hasAnyCardsBeenPlayed } from './GameRules';
 import { Player } from '../entities/Player';
 
 describe('GameRules', () => {
@@ -305,6 +305,47 @@ describe('GameRules', () => {
       };
 
       const result = shouldGameEndInDefeat(game);
+
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('hasAnyCardsBeenPlayed', () => {
+    it('deve retornar false quando nenhuma carta foi jogada', () => {
+      const piles = {
+        ascending1: [],
+        ascending2: [],
+        descending1: [],
+        descending2: [],
+      };
+
+      const result = hasAnyCardsBeenPlayed(piles);
+
+      expect(result).toBe(false);
+    });
+
+    it('deve retornar true quando pelo menos uma carta foi jogada em qualquer pilha', () => {
+      const piles = {
+        ascending1: [new Card(10, 'hearts')],
+        ascending2: [],
+        descending1: [],
+        descending2: [],
+      };
+
+      const result = hasAnyCardsBeenPlayed(piles);
+
+      expect(result).toBe(true);
+    });
+
+    it('deve retornar true quando cartas foram jogadas em múltiplas pilhas', () => {
+      const piles = {
+        ascending1: [new Card(10, 'hearts')],
+        ascending2: [new Card(20, 'spades')],
+        descending1: [new Card(90, 'clubs')],
+        descending2: [],
+      };
+
+      const result = hasAnyCardsBeenPlayed(piles);
 
       expect(result).toBe(true);
     });

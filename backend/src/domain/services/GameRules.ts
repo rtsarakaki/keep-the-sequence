@@ -86,6 +86,19 @@ export const areAllHandsEmpty = (players: ReadonlyArray<{ hand: readonly Card[] 
 };
 
 /**
+ * Check if any cards have been played in the game piles
+ * Used to determine if new players can still join (only before first card is played)
+ */
+export const hasAnyCardsBeenPlayed = (piles: GamePiles): boolean => {
+  return (
+    piles.ascending1.length > 0 ||
+    piles.ascending2.length > 0 ||
+    piles.descending1.length > 0 ||
+    piles.descending2.length > 0
+  );
+};
+
+/**
  * Check if the current player cannot continue (defeat condition)
  * This happens when:
  * 1. It's the player's turn
