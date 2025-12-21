@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+      - 'package.json'
+      - 'package-lock.json'
   workflow_dispatch:
     inputs:
       approve:
