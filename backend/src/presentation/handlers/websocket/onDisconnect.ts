@@ -15,7 +15,6 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
   const connectionId = event.requestContext.connectionId;
   
   if (!connectionId) {
-    console.warn('onDisconnect: Missing connectionId');
     return Promise.resolve({
       statusCode: 400,
     });
@@ -28,7 +27,6 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
     const connection = await connectionRepository.findByConnectionId(connectionId);
     
     if (!connection) {
-      console.warn(`onDisconnect: Connection ${connectionId} not found, skipping cleanup`);
       return Promise.resolve({
         statusCode: 200,
       });
@@ -53,8 +51,6 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
         // Save updated game
         await gameRepository.save(updatedGame);
         
-        console.log(`Player ${playerId} disconnected from game ${gameId}`);
-        
         // Send event to SQS asynchronously (fire-and-forget)
         const sqsEventService = container.getSQSEventService();
         sqsEventService.sendEvent({
@@ -65,12 +61,8 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
             playerName: player.name,
           },
           timestamp: Date.now(),
-        }).catch((error) => {
-          console.error('Failed to send playerDisconnected event to SQS (non-blocking):', {
-            errorMessage: error instanceof Error ? error.message : String(error),
-            gameId,
-            playerId,
-          });
+        }).catch(() => {
+          // Silently handle SQS send errors
         });
         
         // Get all other connections for this game to notify them
@@ -89,15 +81,8 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
           const connectionIds = otherConnections.map(c => c.connectionId);
           
           webSocketService.sendToConnections(connectionIds, gameStateMessage)
-            .then(() => {
-              console.log(`Notified ${connectionIds.length} players about disconnection of ${playerId}`);
-            })
-            .catch((error) => {
-              console.error('Failed to notify other players about disconnection:', {
-                errorMessage: error instanceof Error ? error.message : String(error),
-                gameId,
-                playerId,
-              });
+            .catch(() => {
+              // Silently handle notification errors
             });
         }
       }
@@ -105,19 +90,11 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
     
     // Delete connection (do this last, after we've used the connection info)
     await connectionRepository.delete(connectionId);
-    console.log(`Connection ${connectionId} removed from database`);
 
     return Promise.resolve({
       statusCode: 200,
     });
-  } catch (error) {
-    console.error('Error in onDisconnect handler:', error);
-    console.error('Error details:', {
-      errorMessage: error instanceof Error ? error.message : String(error),
-      errorName: error instanceof Error ? error.name : undefined,
-      errorStack: error instanceof Error ? error.stack : undefined,
-      connectionId,
-    });
+  } catch {
     // Don't fail the disconnect - connection is already closed
     // Return 200 to avoid API Gateway retrying
     return Promise.resolve({

@@ -23,7 +23,6 @@ export const handler: SQSHandler = async (event: SQSEvent) => {
       
       // Validate event structure
       if (!messageBody || typeof messageBody !== 'object') {
-        console.error('Invalid event structure:', messageBody);
         continue; // Skip invalid events, don't throw to avoid DLQ
       }
 
@@ -42,7 +41,6 @@ export const handler: SQSHandler = async (event: SQSEvent) => {
 
       // Validate required fields
       if (!eventData.gameId || !eventData.eventType) {
-        console.warn('Event missing required fields (gameId or eventType):', eventData);
         continue; // Skip invalid events
       }
 
@@ -63,18 +61,10 @@ export const handler: SQSHandler = async (event: SQSEvent) => {
         })
       );
 
-      console.log(`Saved event: ${eventData.eventType} for game ${eventData.gameId}`);
-
       // Handle critical events
       handleCriticalEvent(eventData.gameId, eventData.eventType as GameEventType, eventData.eventData);
       
-    } catch (error) {
-      console.error('Error processing SQS message:', error);
-      console.error('Error details:', {
-        errorMessage: error instanceof Error ? error.message : String(error),
-        errorName: error instanceof Error ? error.name : undefined,
-        errorStack: error instanceof Error ? error.stack : undefined,
-      });
+    } catch {
       // Don't throw - let the message be retried or sent to DLQ by SQS
       // Throwing would cause the entire batch to fail
     }
@@ -87,9 +77,9 @@ export const handler: SQSHandler = async (event: SQSEvent) => {
  * Handles critical game events that require special processing.
  */
 function handleCriticalEvent(
-  gameId: string,
+  _gameId: string,
   eventType: GameEventType,
-  eventData?: {
+  _eventData?: {
     playerId?: string;
     playerName?: string;
     [key: string]: unknown;
@@ -99,8 +89,6 @@ function handleCriticalEvent(
     switch (eventType) {
       case 'playerDisconnected': {
         // Player disconnected - could trigger game abandonment logic
-        // For now, just log it
-        console.log(`Critical event: Player ${eventData?.playerId} disconnected from game ${gameId}`);
         // Future: Check if all players disconnected, mark game as abandoned
         // Future: Notify remaining players
         break;
@@ -108,7 +96,6 @@ function handleCriticalEvent(
 
       case 'gameEnded': {
         // Game ended - could trigger cleanup or analytics
-        console.log(`Critical event: Game ${gameId} ended`);
         // Future: Calculate final statistics
         // Future: Send to analytics service
         break;
@@ -117,14 +104,12 @@ function handleCriticalEvent(
       case 'playCard': {
         // Card played - could check for win/loss conditions
         // This is handled in the PlayCardUseCase, but we could add analytics here
-        console.log(`Event: Card played in game ${gameId} by player ${eventData?.playerId}`);
         // Future: Check if game should end (all cards played or no valid moves)
         break;
       }
 
       case 'joinGame': {
         // Player joined - could check if game should start
-        console.log(`Event: Player ${eventData?.playerId} joined game ${gameId}`);
         // Future: Auto-start game when minimum players reached
         break;
       }
@@ -133,13 +118,8 @@ function handleCriticalEvent(
         // Other events don't require special handling
         break;
     }
-  } catch (error) {
-    // Log error but don't throw - critical event handling should not block event saving
-    console.error('Error handling critical event:', {
-      errorMessage: error instanceof Error ? error.message : String(error),
-      gameId,
-      eventType,
-    });
+  } catch {
+    // Silently handle critical event errors - don't block event saving
   }
 }
 

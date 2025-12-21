@@ -17,18 +17,9 @@ import { SetStartingPlayerDTO } from '../../../application/useCases/SetStartingP
  * After processing, broadcasts the result to all connected players.
  */
 export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
-  console.log('gameHandler invoked', {
-    connectionId: event.requestContext.connectionId,
-    routeKey: event.requestContext.routeKey,
-    hasBody: !!event.body,
-    bodyLength: event.body?.length || 0,
-    bodyPreview: event.body?.substring(0, 200) || 'no body',
-  });
-
   const connectionId = event.requestContext.connectionId;
 
   if (!connectionId) {
-    console.error('Missing connectionId in gameHandler');
     return Promise.resolve({
       statusCode: 400,
       body: JSON.stringify({ error: 'Missing connectionId' }),
@@ -37,10 +28,6 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
 
   // Parse message body
   if (!event.body) {
-    console.error('Missing message body in gameHandler', {
-      connectionId,
-      routeKey: event.requestContext.routeKey,
-    });
     return Promise.resolve({
       statusCode: 400,
       body: JSON.stringify({ error: 'Missing message body' }),
@@ -66,11 +53,6 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
   }
 
   const action = (messageBody as { action: string }).action;
-  console.log(`Processing action: ${action}`, {
-    connectionId,
-    action,
-    hasGameId: 'gameId' in messageBody,
-  });
 
   try {
     const connectionRepository = container.getConnectionRepository();
@@ -88,15 +70,12 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
 
     // Handle sync action
     if (action === 'sync') {
-      console.log(`Sync action detected for game ${gameId}, player ${playerId}`);
-      
       try {
         // Get game state using SyncGameUseCase
         const syncGameUseCase = container.getSyncGameUseCase();
         const result = await syncGameUseCase.execute(gameId);
 
         if (!result.isSuccess) {
-          console.error(`Failed to sync game ${gameId}:`, result.error);
           
           // Send error to the player
           const domainName = event.requestContext.domainName;
@@ -118,18 +97,12 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
                     error: result.error || 'Failed to sync game',
                   }),
                 }))
-                  .catch((error) => {
-                    console.error(`Failed to send error message (non-blocking):`, {
-                      errorMessage: error instanceof Error ? error.message : String(error),
-                      connectionId,
-                    });
+                  .catch(() => {
+                    // Silently handle error sending errors
                   })
               );
-            } catch (error) {
-              console.error(`Failed to create WebSocket client for error:`, {
-                errorMessage: error instanceof Error ? error.message : String(error),
-                connectionId,
-              });
+            } catch {
+              // Silently handle WebSocket client creation errors
             }
           }
           
@@ -155,11 +128,6 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
           }),
         };
         
-        console.log(`Preparing to send game state to ${connectionId} for game ${gameId}`, {
-          gameEnded,
-          status: game.status,
-        });
-        
         // Send game state via WebSocket (non-blocking - same pattern as testHandler)
         const domainName = event.requestContext.domainName;
         const stage = event.requestContext.stage;
@@ -174,7 +142,6 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
             });
 
             const messageString = JSON.stringify(gameStateMessage);
-            console.log(`Sending game state (non-blocking):`, messageString.substring(0, 100));
 
             // Send asynchronously - start the promise but don't wait for it
             await Promise.resolve(
@@ -182,45 +149,20 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
                 ConnectionId: connectionId,
                 Data: messageString,
               }))
-                .then(() => {
-                  console.log(`Game state sent successfully to ${connectionId}`);
-                })
-                .catch((error) => {
-                  console.error(`Failed to send game state (non-blocking):`, {
-                    errorMessage: error instanceof Error ? error.message : String(error),
-                    connectionId,
-                  });
+                .catch(() => {
+                  // Silently handle send errors
                 })
             );
-          } catch (error) {
-            console.error(`Failed to create WebSocket client:`, {
-              errorMessage: error instanceof Error ? error.message : String(error),
-              connectionId,
-              domainName,
-              stage,
-            });
+          } catch {
+            // Silently handle WebSocket client creation errors
           }
-        } else {
-          console.warn(`Missing domainName or stage, skipping WebSocket send`, {
-            domainName: !!domainName,
-            stage: !!stage,
-          });
         }
         
         // Return success immediately - don't wait for WebSocket send
         return Promise.resolve({
           statusCode: 200,
         });
-      } catch (error) {
-        console.error('Unexpected error in sync action:', error);
-        console.error('Error details:', {
-          errorMessage: error instanceof Error ? error.message : String(error),
-          errorName: error instanceof Error ? error.name : undefined,
-          errorStack: error instanceof Error ? error.stack : undefined,
-          connectionId,
-          gameId,
-        });
-        
+      } catch {
         return Promise.resolve({
           statusCode: 500,
           body: JSON.stringify({ error: 'Internal server error during sync' }),
@@ -291,12 +233,8 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
             pileId: playCardData.pileId,
           },
           timestamp: Date.now(),
-        }).catch((error) => {
-          console.error('Failed to send playCard event to SQS (non-blocking):', {
-            errorMessage: error instanceof Error ? error.message : String(error),
-            gameId,
-            playerId,
-          });
+        }).catch(() => {
+          // Silently handle SQS send errors
         });
 
         return Promise.resolve({
@@ -305,7 +243,6 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
       }
 
       case 'joinGame': {
-        console.log('joinGame action received', { gameId, playerId, connectionId });
         const joinGameUseCase = container.getJoinGameUseCase();
         const joinGameData = messageBody as {
           action: 'joinGame';
@@ -321,7 +258,6 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
         const result = await joinGameUseCase.execute(dto);
 
         if (!result.isSuccess) {
-          console.error('Failed to join game', { error: result.error, gameId, playerId });
           await webSocketService.sendToConnection(connectionId, {
             type: 'error',
             error: result.error || 'Failed to join game',
@@ -332,32 +268,16 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
           });
         }
 
-        console.log('Game joined successfully', { 
-          gameId, 
-          newPlayerId: playerId, 
-          gameStatus: result.value.status,
-          numPlayers: result.value.players.length 
-        });
-
         // Broadcast updated game state to all players
         const allConnections = await connectionRepository.findByGameId(gameId);
         const connectionIds = allConnections.map(c => c.connectionId);
-        console.log('Found connections to notify', { 
-          count: connectionIds.length, 
-          connectionIds,
-          gameStatus: result.value.status 
-        });
 
         await webSocketService.sendToConnections(connectionIds, {
           type: 'gameUpdated',
           game: formatGameForMessage(result.value),
-        }).catch((error) => {
-          console.error('Error sending gameUpdated notifications (non-blocking):', {
-            errorMessage: error instanceof Error ? error.message : String(error),
-            connectionIds,
-          });
+        }).catch(() => {
+          // Silently handle notification errors
         });
-        console.log('gameUpdated notifications sent to all players');
 
         // Send event to SQS asynchronously (fire-and-forget)
         const sqsEventService = container.getSQSEventService();
@@ -369,12 +289,8 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
             playerName: joinGameData.playerName,
           },
           timestamp: Date.now(),
-        }).catch((error) => {
-          console.error('Failed to send joinGame event to SQS (non-blocking):', {
-            errorMessage: error instanceof Error ? error.message : String(error),
-            gameId,
-            playerId,
-          });
+        }).catch(() => {
+          // Silently handle SQS send errors
         });
 
         return Promise.resolve({
@@ -383,7 +299,6 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
       }
 
       case 'endTurn': {
-        console.log('endTurn action received', { gameId, playerId, connectionId });
         const endTurnUseCase = container.getEndTurnUseCase();
 
         const result = await endTurnUseCase.execute({
@@ -392,7 +307,6 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
         });
 
         if (!result.isSuccess) {
-          console.error('Failed to end vez', { error: result.error, gameId, playerId });
           await webSocketService.sendToConnection(connectionId, {
             type: 'error',
             error: result.error || 'Falha ao passar a vez',
@@ -414,13 +328,9 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
           type: gameEnded ? 'gameFinished' : 'gameUpdated',
           game: formatGameForMessage(result.value),
           result: gameEnded ? (areAllHandsEmpty(result.value.players) ? 'victory' : 'defeat') : undefined,
-        }).catch((error) => {
-          console.error('Error sending gameUpdated/gameFinished notifications (non-blocking):', {
-            errorMessage: error instanceof Error ? error.message : String(error),
-            connectionIds,
-          });
+        }).catch(() => {
+          // Silently handle notification errors
         });
-        console.log('Vez finalizada com sucesso, estado do jogo transmitido');
 
         // Send event to SQS asynchronously (fire-and-forget)
         const sqsEventService = container.getSQSEventService();
@@ -433,12 +343,8 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
             result: gameEnded ? (areAllHandsEmpty(result.value.players) ? 'victory' : 'defeat') : undefined,
           },
           timestamp: Date.now(),
-        }).catch((error) => {
-          console.error('Failed to send endTurn event to SQS (non-blocking):', {
-            errorMessage: error instanceof Error ? error.message : String(error),
-            gameId,
-            playerId,
-          });
+        }).catch(() => {
+          // Silently handle SQS send errors
         });
 
         return Promise.resolve({
@@ -447,13 +353,10 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
       }
 
       case 'endGame': {
-        console.log('endGame action received', { gameId, playerId, connectionId });
-        
         // IMPORTANT: Get connections BEFORE deleting them (EndGameUseCase deletes connections)
         // We need to get them before calling the use case so we can notify players
         const allConnections = await connectionRepository.findByGameId(gameId);
         const connectionIds = allConnections.map(c => c.connectionId);
-        console.log('Found connections to notify (before deletion)', { count: connectionIds.length, connectionIds });
 
         const endGameUseCase = container.getEndGameUseCase();
 
@@ -462,10 +365,7 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
           playerId,
         });
 
-        console.log('endGameUseCase result', { isSuccess: result.isSuccess, error: result.isSuccess ? undefined : result.error });
-
         if (!result.isSuccess) {
-          console.error('Failed to end game', { error: result.error, gameId, playerId });
           await webSocketService.sendToConnection(connectionId, {
             type: 'error',
             error: result.error || 'Failed to end game',
@@ -476,8 +376,6 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
           });
         }
 
-        console.log('Game ended successfully, notifying all players', { gameId, connectionIds });
-        
         // Notify all players that the game has ended
         // Note: Connections may have been deleted, but WebSocket connections are still active
         // until the client disconnects, so we can still send messages
@@ -485,13 +383,9 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
           type: 'gameEnded',
           gameId,
           message: 'O jogo foi encerrado por um dos jogadores.',
-        }).catch((error) => {
-          console.error('Error sending gameEnded notifications (non-blocking):', {
-            errorMessage: error instanceof Error ? error.message : String(error),
-            connectionIds,
-          });
+        }).catch(() => {
+          // Silently handle notification errors
         });
-        console.log('gameEnded notifications sent to all players');
 
         // Send event to SQS asynchronously (fire-and-forget)
         const sqsEventService = container.getSQSEventService();
@@ -503,12 +397,8 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
             reason: 'ended_by_player',
           },
           timestamp: Date.now(),
-        }).catch((error) => {
-          console.error('Failed to send gameEnded event to SQS (non-blocking):', {
-            errorMessage: error instanceof Error ? error.message : String(error),
-            gameId,
-            playerId,
-          });
+        }).catch(() => {
+          // Silently handle SQS send errors
         });
 
         return Promise.resolve({
@@ -517,7 +407,6 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
       }
 
       case 'setStartingPlayer': {
-        console.log('setStartingPlayer action received', { gameId, playerId, connectionId });
         const setStartingPlayerUseCase = container.getSetStartingPlayerUseCase();
         const setStartingPlayerData = messageBody as {
           action: 'setStartingPlayer';
@@ -550,12 +439,9 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
         await webSocketService.sendToConnections(connectionIds, {
           type: 'gameUpdated',
           game: formatGameForMessage(result.value),
-        }).catch((error) => {
-          console.error('Error sending gameUpdated notification (non-blocking):', {
-            errorMessage: error instanceof Error ? error.message : String(error),
-            connectionIds,
+          }).catch(() => {
+            // Silently handle notification errors
           });
-        });
 
         return Promise.resolve({
           statusCode: 200,
@@ -569,7 +455,6 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
         });
     }
   } catch (error) {
-    console.error('Error in gameHandler:', error);
     return Promise.resolve({
       statusCode: 500,
       body: JSON.stringify({ error: 'Internal server error' }),

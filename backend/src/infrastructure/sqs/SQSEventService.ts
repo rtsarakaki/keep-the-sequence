@@ -47,26 +47,18 @@ export class SQSEventService {
       return this.queueUrl;
     }
 
-    try {
-      const command = new GetQueueUrlCommand({
-        QueueName: this.queueName,
-      });
-      
-      const response = await this.client.send(command);
-      
-      if (!response.QueueUrl) {
-        throw new Error(`Queue URL not found for queue: ${this.queueName}`);
-      }
-      
-      this.queueUrl = response.QueueUrl;
-      return this.queueUrl;
-    } catch (error) {
-      console.error('Failed to get queue URL:', {
-        errorMessage: error instanceof Error ? error.message : String(error),
-        queueName: this.queueName,
-      });
-      throw error;
+    const command = new GetQueueUrlCommand({
+      QueueName: this.queueName,
+    });
+    
+    const response = await this.client.send(command);
+    
+    if (!response.QueueUrl) {
+      throw new Error(`Queue URL not found for queue: ${this.queueName}`);
     }
+    
+    this.queueUrl = response.QueueUrl;
+    return this.queueUrl;
   }
 
   /**
@@ -94,15 +86,8 @@ export class SQSEventService {
       });
 
       await this.client.send(command);
-      console.log(`Event sent to SQS: ${event.eventType} for game ${event.gameId}`);
-    } catch (error) {
-      // Log error but don't throw - event sending should not block main flow
-      console.error('Failed to send event to SQS:', {
-        errorMessage: error instanceof Error ? error.message : String(error),
-        errorName: error instanceof Error ? error.name : undefined,
-        eventType: event.eventType,
-        gameId: event.gameId,
-      });
+    } catch {
+      // Silently handle SQS send errors - event sending should not block main flow
     }
   }
 

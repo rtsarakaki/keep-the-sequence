@@ -43,7 +43,6 @@ export class GameWebSocket {
     options?: { useName?: boolean }
   ): Promise<void> {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      console.log('WebSocket já está conectado');
       return;
     }
 
@@ -68,7 +67,6 @@ export class GameWebSocket {
       this.ws = new WebSocket(wsUrl);
 
       this.ws.onopen = () => {
-        console.log('WebSocket conectado');
         this.setStatus('connected');
         this.reconnectAttempts = 0;
         this.reconnectDelay = 1000;
@@ -79,12 +77,11 @@ export class GameWebSocket {
           const message = JSON.parse(event.data) as WebSocketMessage;
           this.callbacks.onMessage?.(message);
         } catch (error) {
-          console.error('Erro ao parsear mensagem WebSocket:', error);
+          // Silently handle parse errors
         }
       };
 
-      this.ws.onerror = (error) => {
-        console.error('Erro no WebSocket:', error);
+      this.ws.onerror = () => {
         // Error details will be in onclose event
         this.setStatus('error');
       };
@@ -94,13 +91,6 @@ export class GameWebSocket {
         const storedGameId = (this as { _currentGameId?: string })._currentGameId || gameId;
         const storedPlayerIdOrName = (this as { _currentPlayerIdOrName?: string })._currentPlayerIdOrName || playerIdOrName;
         
-        console.log('WebSocket desconectado:', {
-          code: event.code,
-          reason: event.reason,
-          wasClean: event.wasClean,
-          gameId: storedGameId,
-          playerIdOrName: storedPlayerIdOrName,
-        });
         this.setStatus('disconnected');
 
         // Provide detailed error message based on close code
@@ -192,11 +182,9 @@ export class GameWebSocket {
     this.reconnectAttempts++;
     const delay = Math.min(this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1), 30000);
     
-    console.log(`Tentando reconectar em ${delay}ms (tentativa ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
-    
     setTimeout(() => {
-      this.connect(gameId, playerIdOrName, options).catch((error) => {
-        console.error('Erro ao reconectar:', error);
+      this.connect(gameId, playerIdOrName, options).catch(() => {
+        // Silently handle reconnect errors
       });
     }, delay);
   }
@@ -210,7 +198,6 @@ export class GameWebSocket {
     }
 
     const messageString = JSON.stringify(message);
-    console.log('Enviando mensagem via WebSocket:', messageString);
     this.ws.send(messageString);
   }
 

@@ -111,32 +111,15 @@ export const handler = async (
         const endpoint = wsEndpoint.replace(/^wss?:\/\//, 'https://').split('?')[0];
         const webSocketService = new WebSocketService(endpoint);
       
-        console.log('Notifying players about game update after joinGame', {
-          gameId: result.value.id,
-          gameStatus: result.value.status,
-          numPlayers: result.value.players.length,
-          connectionCount: connectionIds.length,
-        });
-
         await webSocketService.sendToConnections(connectionIds, {
           type: 'gameUpdated',
           game: formatGameForMessage(result.value),
-        }).catch((error) => {
-          console.error('Error sending gameUpdated notifications after joinGame (non-blocking):', {
-            errorMessage: error instanceof Error ? error.message : String(error),
-            connectionIds,
-          });
+        }).catch(() => {
+          // Silently handle notification errors
         });
-        console.log('gameUpdated notifications sent to all players after joinGame');
-      } else if (!wsEndpoint) {
-        console.warn('WEBSOCKET_API_URL not configured, skipping WebSocket notifications');
       }
-    } catch (error) {
-      // Log error but don't fail the HTTP request - notification is best-effort
-      console.error('Error notifying players after joinGame (non-blocking):', {
-        errorMessage: error instanceof Error ? error.message : String(error),
-        gameId: result.value.id,
-      });
+    } catch {
+      // Silently handle notification errors - don't fail the HTTP request
     }
 
     // Send event to SQS asynchronously (fire-and-forget)
@@ -150,18 +133,11 @@ export const handler = async (
           playerName: body.playerName.trim(),
         },
         timestamp: Date.now(),
-      }).catch((error) => {
-        console.error('Failed to send joinGame event to SQS (non-blocking):', {
-          errorMessage: error instanceof Error ? error.message : String(error),
-          gameId: result.value.id,
-          playerId: player?.id,
-        });
+      }).catch(() => {
+        // Silently handle SQS send errors
       });
-    } catch (error) {
-      console.error('Error sending joinGame event to SQS (non-blocking):', {
-        errorMessage: error instanceof Error ? error.message : String(error),
-        gameId: result.value.id,
-      });
+    } catch {
+      // Silently handle SQS send errors
     }
 
     return Promise.resolve({
@@ -177,7 +153,6 @@ export const handler = async (
       }),
     });
   } catch (error) {
-    console.error('Error in joinGame handler:', error);
     return Promise.resolve({
       statusCode: 500,
       headers: {

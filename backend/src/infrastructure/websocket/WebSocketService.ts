@@ -52,27 +52,14 @@ export class WebSocketService implements IWebSocketService {
 
     try {
       const messageString = JSON.stringify(message);
-      console.log(`Sending message to connection ${connectionId}:`, messageString.substring(0, 200));
       
       const command = new PostToConnectionCommand({
         ConnectionId: connectionId,
         Data: messageString,
       });
 
-      const response = await this.client.send(command);
-      console.log(`Message sent successfully to ${connectionId}`, {
-        responseMetadata: response.$metadata,
-        connectionId,
-      });
+      await this.client.send(command);
     } catch (error: unknown) {
-      console.error(`Error sending message to ${connectionId}:`, error);
-      console.error('Error details:', {
-        errorMessage: error instanceof Error ? error.message : String(error),
-        errorName: error instanceof Error ? error.name : undefined,
-        errorStack: error instanceof Error ? error.stack : undefined,
-        connectionId,
-        endpoint: this.client.config?.endpoint || 'unknown',
-      });
       
       // Handle specific AWS errors
       if (error && typeof error === 'object' && 'statusCode' in error) {
@@ -103,23 +90,13 @@ export class WebSocketService implements IWebSocketService {
     }
 
     const promises = connectionIds.map((connectionId) =>
-      this.sendToConnection(connectionId, message).catch((error: unknown) => {
-        // Log error but don't throw - continue with other connections
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error(`Failed to send to connection ${connectionId}:`, errorMessage);
-        
-        // Return null to indicate failure (will be filtered by Promise.allSettled)
+      this.sendToConnection(connectionId, message).catch(() => {
+        // Silently handle errors - continue with other connections
         return null;
       })
     );
 
-    const results = await Promise.allSettled(promises);
-    
-    // Count failures for logging
-    const failures = results.filter((result) => result.status === 'rejected');
-    if (failures.length > 0) {
-      console.warn(`Failed to send to ${failures.length} out of ${connectionIds.length} connections`);
-    }
+    await Promise.allSettled(promises);
   }
 }
 

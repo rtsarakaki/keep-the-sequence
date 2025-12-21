@@ -46,12 +46,6 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
   const authResult = authService.validateToken(token, origin);
   
   if (!authResult.isValid || !authResult.token) {
-    console.error('Invalid token', {
-      connectionId,
-      error: authResult.error,
-      hasToken: !!token,
-      origin,
-    });
     return Promise.resolve({
       statusCode: 401,
       body: JSON.stringify({ 
@@ -71,11 +65,6 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
     // Validate game exists and player is part of it
     const game = await gameRepository.findById(gameId);
     if (!game) {
-      console.error(`Game not found: ${gameId}`, {
-        gameId,
-        playerId,
-        connectionId,
-      });
       return Promise.resolve({
         statusCode: 403,
         body: JSON.stringify({ 
@@ -87,12 +76,6 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
 
     const playerExists = game.players.some(p => p.id === playerId);
     if (!playerExists) {
-      console.error(`Player not in game: ${playerId}`, {
-        gameId,
-        playerId,
-        connectionId,
-        gamePlayers: game.players.map(p => ({ id: p.id, name: p.name })),
-      });
       return Promise.resolve({
         statusCode: 403,
         body: JSON.stringify({ 
@@ -116,7 +99,6 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
 
     // Return 200 immediately to establish connection
     // API Gateway will close connection with code 1006 if we don't return 200 quickly
-    console.log(`Connection established successfully: ${connectionId} for game ${gameId}, player ${playerId}`);
     
     // Prepare game state message
     const gameStateMessage = {
@@ -124,39 +106,18 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
       game: formatGameForMessage(game),
     };
     
-    console.log(`Preparing to send game state to ${connectionId}:`, JSON.stringify(gameStateMessage, null, 2));
-    
     // Send initial game state asynchronously (don't await - connection is already established)
     // Serialize Game entity properly (convert Date objects to ISO strings)
     const webSocketService = container.getWebSocketService(event);
     webSocketService.sendToConnection(connectionId, gameStateMessage)
-      .then(() => {
-        console.log(`Successfully sent game state to ${connectionId}`);
-      })
-      .catch((sendError) => {
-        // Log error but don't fail the connection - player can request sync later
-        console.error(`Failed to send initial game state to ${connectionId}:`, sendError);
-        console.error('Error details:', {
-          errorMessage: sendError instanceof Error ? sendError.message : String(sendError),
-          errorStack: sendError instanceof Error ? sendError.stack : undefined,
-          connectionId,
-          gameId,
-          playerId,
-        });
+      .catch(() => {
+        // Silently handle send errors - player can request sync later
       });
 
     return Promise.resolve({
       statusCode: 200,
     });
   } catch (error) {
-    console.error('Error in onConnect handler:', error, {
-      connectionId,
-      gameId: authResult.token?.gameId,
-      playerId: authResult.token?.playerId,
-      errorMessage: error instanceof Error ? error.message : String(error),
-      errorStack: error instanceof Error ? error.stack : undefined,
-    });
-    
     // Return 403 instead of 500 to provide better error message
     // API Gateway will close the connection with code 1006 if we return non-200
     return Promise.resolve({

@@ -76,16 +76,9 @@ export function useGameWebSocket({
       return;
     }
 
-    console.log('Conectando ao jogo:', { gameId, playerId, playerName });
-
     const gameWs = new GameWebSocket({
       onMessage: (message) => {
-        console.log('Mensagem recebida:', message);
-        console.log('Tipo da mensagem:', message.type);
-        console.log('Conteúdo completo:', JSON.stringify(message, null, 2));
-
         if (message.type === 'gameState' || message.type === 'gameUpdated') {
-          console.log('Atualizando estado do jogo:', message.game);
           try {
             const newGameState = message.game as GameState;
             
@@ -103,7 +96,6 @@ export function useGameWebSocket({
                 const newTime = new Date(newGameState.updatedAt).getTime();
                 
                 if (newTime < currentTime) {
-                  console.log('Ignorando estado mais antigo do sync (já temos estado mais recente)');
                   return currentState;
                 }
               }
@@ -111,16 +103,13 @@ export function useGameWebSocket({
               // If it's a gameUpdated message, always accept it (it's a real-time update)
               // If it's a gameState message (from sync), only accept if we don't have a state or if it's newer
               if (message.type === 'gameUpdated') {
-                console.log('Aceitando gameUpdated (atualização em tempo real)');
                 return newGameState;
               } else if (message.type === 'gameState') {
                 // For sync responses, only update if status changed or if we don't have a playing state
                 // This prevents sync from overwriting a 'playing' state with an old 'waiting' state
                 if (currentState.status === 'playing' && newGameState.status === 'waiting') {
-                  console.log('Ignorando sync que tentaria voltar de playing para waiting');
                   return currentState;
                 }
-                console.log('Aceitando gameState do sync');
                 return newGameState;
               }
               
@@ -130,27 +119,21 @@ export function useGameWebSocket({
             setError(null);
             setRetryCount(0);
             setIsRetrying(false);
-            console.log('Estado do jogo atualizado com sucesso');
           } catch (err) {
-            console.error('Erro ao atualizar estado do jogo:', err);
             handleError(
               `Erro ao processar estado do jogo: ${err instanceof Error ? err.message : 'Erro desconhecido'}`
             );
           }
         } else if (message.type === 'gameEnded') {
-          console.log('Jogo encerrado:', message);
           if (onGameEnded) {
             onGameEnded();
           }
         } else if (message.type === 'gameFinished') {
-          console.log('Jogo finalizado:', message);
           const finishedMessage = message as { type: 'gameFinished'; game: unknown; result?: 'victory' | 'defeat' };
           try {
             setGameState(finishedMessage.game as GameState);
             setError(null);
-            console.log('Estado final do jogo atualizado', { result: finishedMessage.result });
           } catch (err) {
-            console.error('Erro ao atualizar estado final do jogo:', err);
             handleError(
               `Erro ao processar fim do jogo: ${err instanceof Error ? err.message : 'Erro desconhecido'}`
             );
@@ -190,18 +173,15 @@ export function useGameWebSocket({
             
             if (isTrulyCritical) {
               // Only break the view for truly critical connection/auth errors
-              console.error('Critical error during game (breaking view):', errorMessage);
               handleError(errorMessage);
             } else {
               // Everything else is a notification - keep the game view
-              console.warn('Game error (showing as notification):', errorMessage);
               setGameError(errorMessage);
               setTimeout(() => setGameError(null), 5000);
             }
           } else if (isGameValidationError) {
             // No gameState yet, but it's a game validation error
             // Show as notification anyway - we might be loading
-            console.warn('Game validation error (showing as notification):', errorMessage);
             setGameError(errorMessage);
             setTimeout(() => setGameError(null), 5000);
           } else {
@@ -209,17 +189,13 @@ export function useGameWebSocket({
             // This is likely a connection/auth error during initial load
             handleError(errorMessage);
           }
-        } else {
-          console.warn('Tipo de mensagem desconhecido:', (message as { type?: string }).type);
         }
       },
       onStatusChange: (status) => {
-        console.log('Status WebSocket:', status);
         setWsStatus(status);
         if (status === 'connected') {
           setError(null);
           setIsRetrying(false);
-          console.log('WebSocket conectado, solicitando estado do jogo...');
 
           // Request game state after connection is established
           // Only sync if we don't have a game state yet
@@ -229,18 +205,16 @@ export function useGameWebSocket({
               // This prevents overwriting a more recent gameUpdated message
               setGameState((currentState) => {
                 if (currentState) {
-                  console.log('Já temos estado do jogo, pulando sincronização para evitar sobrescrever estado mais recente');
                   return currentState;
                 }
                 
-                console.log('Solicitando sincronização do jogo...');
                 try {
                   gameWs.send({
                     action: 'sync',
                     gameId,
                   });
                 } catch (err) {
-                  console.error('Erro ao solicitar sincronização:', err);
+                  // Silently handle sync errors
                 }
                 return currentState;
               });
@@ -254,7 +228,6 @@ export function useGameWebSocket({
           setTimeout(() => {
             setGameState((currentState) => {
               if (!currentState && gameWs && gameWs.getStatus() === 'connected' && retryCount < 3) {
-                console.log(`Retry ${retryCount + 1}/3: solicitando sincronização novamente...`);
                 setRetryCount((prev) => prev + 1);
                 requestSync();
               }
@@ -264,7 +237,6 @@ export function useGameWebSocket({
         }
       },
       onError: (err) => {
-        console.error('Erro WebSocket:', err);
         handleError(`Erro na conexão: ${err.message}`);
       },
     });
@@ -286,19 +258,14 @@ export function useGameWebSocket({
           await gameWs.connect(gameId, playerName, { useName: true });
         }
       } catch (err) {
-        console.error('Erro ao conectar WebSocket:', err);
-
         if (err instanceof Error && err.message.includes('obter URL do WebSocket')) {
-          const debugInfo = `\n\nInformações para diagnóstico:\nGame ID: ${gameId}\nPlayer ID: ${playerId || 'N/A'}\nPlayer Nome: ${playerName || 'N/A'}`;
           handleError(
-            `Erro ao obter URL do WebSocket: ${err.message}\n\nPossíveis causas:\n1. O jogo "${gameId}" não existe\n2. Você não faz parte deste jogo\n3. O playerId/nome está incorreto\n4. Problema de conexão com a API${debugInfo}`
+            `Erro ao obter URL do WebSocket: ${err.message}\n\nPossíveis causas:\n1. O jogo não existe\n2. Você não faz parte deste jogo\n3. O playerId/nome está incorreto\n4. Problema de conexão com a API`
           );
         } else if (playerId && playerName && err instanceof Error && err.message.includes('not found')) {
-          console.log('Tentando reconectar usando nome do jogador...');
           try {
             await gameWs.connect(gameId, playerName, { useName: true });
           } catch (nameErr) {
-            console.error('Erro ao conectar com nome:', nameErr);
             handleError(
               `Erro ao conectar: ${nameErr instanceof Error ? nameErr.message : 'Erro desconhecido'}\n\nVerifique:\n1. Se o jogo existe\n2. Se você faz parte do jogo\n3. Se o nome está correto`
             );
