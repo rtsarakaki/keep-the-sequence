@@ -1,6 +1,7 @@
 'use client';
 
 import { GameState } from '@/hooks/useGameWebSocket';
+import { MdCheckCircle, MdCancel } from 'react-icons/md';
 import styles from './PlayersList.module.css';
 
 interface PlayersListProps {
@@ -23,8 +24,16 @@ export function PlayersList({ players, currentPlayerId }: PlayersListProps) {
               className={`${styles.playerItem} ${isCurrentPlayer ? styles.currentPlayer : ''} ${!player.isConnected ? styles.disconnected : ''}`}
             >
               <div className={styles.playerInfo}>
-                <span className={styles.statusIndicator} data-connected={player.isConnected}>
-                  {player.isConnected ? '🟢' : '🔴'}
+                <span 
+                  className={styles.statusIndicator} 
+                  data-connected={player.isConnected}
+                  title={player.isConnected ? 'Conectado' : 'Desconectado'}
+                >
+                  {player.isConnected ? (
+                    <MdCheckCircle className={styles.icon} />
+                  ) : (
+                    <MdCancel className={styles.icon} />
+                  )}
                 </span>
                 <span className={styles.playerName}>
                   {player.name}

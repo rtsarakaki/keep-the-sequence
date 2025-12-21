@@ -27,6 +27,15 @@
   font-size: 4rem;
   margin-bottom: 1rem;
   animation: pulse 2s ease-in-out infinite;
+  color: #667eea;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.copyIcon {
+  margin-right: 0.5rem;
+  font-size: 1rem;
 }
 
 @keyframes pulse {

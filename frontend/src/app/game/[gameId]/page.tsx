@@ -257,8 +257,8 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
           <h2>Jogo Finalizado</h2>
           <p>
             {gameState.players.every(p => p.hand.length === 0)
-              ? '🎉 Vitória! Todos os jogadores descartaram suas cartas!'
-              : '😔 Derrota! Um jogador não conseguiu jogar o número mínimo de cartas.'}
+              ? 'Vitória! Todos os jogadores descartaram suas cartas!'
+              : 'Derrota! Um jogador não conseguiu jogar o número mínimo de cartas.'}
           </p>
         </div>
       ) : (

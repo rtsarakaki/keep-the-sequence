@@ -15,13 +15,13 @@ export default function Home() {
     checkApiHealth().then((status) => {
       if (!status.configured) {
         setError(
-          '⚠️ API não configurada: Por favor, configure NEXT_PUBLIC_API_URL nas variáveis de ambiente da Vercel.'
+          'API não configurada: Por favor, configure NEXT_PUBLIC_API_URL nas variáveis de ambiente da Vercel.'
         );
       } else if (!status.accessible) {
         // Show detailed error for debugging (will be generic message later)
         const errorMsg = status.error || 'Erro desconhecido';
         const detailsMsg = status.details ? `\n\nDetalhes: ${status.details}` : '';
-        setError(`⚠️ API não acessível: ${errorMsg}${detailsMsg}`);
+        setError(`API não acessível: ${errorMsg}${detailsMsg}`);
       }
     });
   }, []);

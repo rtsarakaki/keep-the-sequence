@@ -1,6 +1,7 @@
 'use client';
 
 import { GameState } from '@/hooks/useGameWebSocket';
+import { MdHourglassEmpty, MdContentCopy } from 'react-icons/md';
 import styles from './WaitingForPlayers.module.css';
 
 interface WaitingForPlayersProps {
@@ -15,7 +16,9 @@ export function WaitingForPlayers({ gameState, currentPlayerId }: WaitingForPlay
   return (
     <div className={styles.waitingContainer}>
       <div className={styles.waitingCard}>
-        <div className={styles.icon}>⏳</div>
+        <div className={styles.icon}>
+          <MdHourglassEmpty />
+        </div>
         <h2 className={styles.title}>Aguardando Jogadores</h2>
         <p className={styles.message}>
           O jogo precisa de pelo menos <strong>2 jogadores</strong> para começar.
@@ -44,7 +47,8 @@ export function WaitingForPlayers({ gameState, currentPlayerId }: WaitingForPlay
               }}
               title="Copiar ID do jogo"
             >
-              📋 Copiar
+              <MdContentCopy className={styles.copyIcon} />
+              Copiar
             </button>
           </div>
         </div>

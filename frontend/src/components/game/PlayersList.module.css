@@ -67,8 +67,22 @@
 }
 
 .statusIndicator {
-  font-size: 1rem;
-  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+}
+
+.statusIndicator .icon {
+  font-size: 1.25rem;
+}
+
+.statusIndicator[data-connected='true'] .icon {
+  color: #28a745;
+}
+
+.statusIndicator[data-connected='false'] .icon {
+  color: #dc3545;
 }
 
 .playerName {
