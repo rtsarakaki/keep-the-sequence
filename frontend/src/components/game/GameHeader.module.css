@@ -234,11 +234,18 @@
   .turnChip {
     font-size: 0.75rem;
     padding: 0.4rem 0.75rem;
-    margin-left: 0;
   }
 
   .turnLabel {
     font-size: 0.7rem;
+  }
+
+  .endGameIcon {
+    padding: 0.4rem;
+  }
+
+  .endGameIcon .icon {
+    font-size: 1.1rem;
   }
 }
 
