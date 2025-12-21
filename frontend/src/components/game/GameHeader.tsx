@@ -88,6 +88,17 @@ export function GameHeader({
       <div className={styles.singleRow}>
         <h1 className={styles.title}>The Game</h1>
         <div className={styles.gameId}>ID: {gameId}</div>
+        {isGameCreator && onEndGame && (
+          <button
+            onClick={onEndGame}
+            className={styles.endGameIcon}
+            disabled={wsStatus !== 'connected'}
+            title="Encerrar Jogo"
+            aria-label="Encerrar Jogo"
+          >
+            <MdPowerSettingsNew className={styles.icon} />
+          </button>
+        )}
         <div className={styles.statusBadge} data-status={wsStatus} title={getConnectionLabel()}>
           {getConnectionIcon()}
         </div>
@@ -104,17 +115,6 @@ export function GameHeader({
               {currentTurnPlayer?.name || 'Desconhecido'}
             </span>
           </div>
-        )}
-        {isGameCreator && onEndGame && (
-          <button
-            onClick={onEndGame}
-            className={styles.endGameIcon}
-            disabled={wsStatus !== 'connected'}
-            title="Encerrar Jogo"
-            aria-label="Encerrar Jogo"
-          >
-            <MdPowerSettingsNew className={styles.icon} />
-          </button>
         )}
       </div>
     </header>

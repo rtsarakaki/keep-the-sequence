@@ -170,7 +170,6 @@
   background-color: transparent;
   border: 2px solid transparent;
   color: #dc3545;
-  margin-left: auto;
 }
 
 .endGameIcon:hover:not(:disabled) {
