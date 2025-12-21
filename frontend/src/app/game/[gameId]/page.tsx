@@ -95,6 +95,33 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
     });
   };
 
+  const handleSetStartingPlayer = (startingPlayerId: string) => {
+    if (wsStatus !== 'connected' || !playerId) {
+      return;
+    }
+
+    if (!gameState) {
+      return;
+    }
+
+    // Check if any cards have been played
+    const hasCardsBeenPlayed = 
+      gameState.piles.ascending1.length > 0 ||
+      gameState.piles.ascending2.length > 0 ||
+      gameState.piles.descending1.length > 0 ||
+      gameState.piles.descending2.length > 0;
+
+    if (hasCardsBeenPlayed) {
+      // This should not happen as the button should be hidden, but just in case
+      return;
+    }
+
+    sendMessage({
+      action: 'setStartingPlayer',
+      startingPlayerId,
+    });
+  };
+
   const handleEndGame = () => {
     console.log('handleEndGame chamado', { wsStatus, playerId, gameId: params.gameId });
     
@@ -318,7 +345,14 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
         </>
       )}
 
-      <PlayersList players={gameState.players} currentPlayerId={playerId} />
+      <PlayersList 
+        players={gameState.players} 
+        currentPlayerId={playerId}
+        currentTurn={gameState.currentTurn}
+        createdBy={gameState.createdBy}
+        piles={gameState.piles}
+        onSetStartingPlayer={handleSetStartingPlayer}
+      />
     </main>
   );
 }

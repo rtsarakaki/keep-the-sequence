@@ -5,6 +5,7 @@ import { JoinGameDTO } from '../../../application/dto/JoinGameDTO';
 import { Card } from '../../../domain/valueObjects/Card';
 import { formatGameForMessage } from './gameMessageFormatter';
 import { areAllHandsEmpty } from '../../../domain/services/GameRules';
+import { SetStartingPlayerDTO } from '../../../application/useCases/SetStartingPlayerUseCase';
 
 /**
  * WebSocket game handler for processing game actions.
@@ -507,6 +508,52 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
             errorMessage: error instanceof Error ? error.message : String(error),
             gameId,
             playerId,
+          });
+        });
+
+        return Promise.resolve({
+          statusCode: 200,
+        });
+      }
+
+      case 'setStartingPlayer': {
+        console.log('setStartingPlayer action received', { gameId, playerId, connectionId });
+        const setStartingPlayerUseCase = container.getSetStartingPlayerUseCase();
+        const setStartingPlayerData = messageBody as {
+          action: 'setStartingPlayer';
+          startingPlayerId: string;
+        };
+
+        const dto: SetStartingPlayerDTO = {
+          gameId,
+          playerId,
+          startingPlayerId: setStartingPlayerData.startingPlayerId,
+        };
+
+        const result = await setStartingPlayerUseCase.execute(dto);
+
+        if (!result.isSuccess) {
+          await webSocketService.sendToConnection(connectionId, {
+            type: 'error',
+            error: result.error || 'Failed to set starting player',
+          });
+          return Promise.resolve({
+            statusCode: 400,
+            body: JSON.stringify({ error: result.error }),
+          });
+        }
+
+        // Broadcast updated game state to all players
+        const allConnections = await connectionRepository.findByGameId(gameId);
+        const connectionIds = allConnections.map(c => c.connectionId);
+
+        await webSocketService.sendToConnections(connectionIds, {
+          type: 'gameUpdated',
+          game: formatGameForMessage(result.value),
+        }).catch((error) => {
+          console.error('Error sending gameUpdated notification (non-blocking):', {
+            errorMessage: error instanceof Error ? error.message : String(error),
+            connectionIds,
           });
         });
 

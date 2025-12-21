@@ -1,15 +1,39 @@
 'use client';
 
 import { GameState } from '@/hooks/useGameWebSocket';
-import { MdCheckCircle, MdCancel } from 'react-icons/md';
+import { MdCheckCircle, MdCancel, MdPlayArrow } from 'react-icons/md';
 import styles from './PlayersList.module.css';
 
 interface PlayersListProps {
   players: GameState['players'];
   currentPlayerId: string | null;
+  currentTurn: GameState['currentTurn'];
+  createdBy: GameState['createdBy'];
+  piles: GameState['piles'];
+  onSetStartingPlayer?: (playerId: string) => void;
 }
 
-export function PlayersList({ players, currentPlayerId }: PlayersListProps) {
+// Helper to check if any cards have been played
+const hasAnyCardsBeenPlayed = (piles: GameState['piles']): boolean => {
+  return (
+    piles.ascending1.length > 0 ||
+    piles.ascending2.length > 0 ||
+    piles.descending1.length > 0 ||
+    piles.descending2.length > 0
+  );
+};
+
+export function PlayersList({ 
+  players, 
+  currentPlayerId, 
+  currentTurn,
+  createdBy,
+  piles,
+  onSetStartingPlayer 
+}: PlayersListProps) {
+  const isGameCreator = currentPlayerId === createdBy;
+  const canSetStartingPlayer = isGameCreator && !hasAnyCardsBeenPlayed(piles);
+
   return (
     <div className={styles.playersList}>
       <h2 className={styles.title}>
@@ -18,10 +42,13 @@ export function PlayersList({ players, currentPlayerId }: PlayersListProps) {
       <ul className={styles.list}>
         {players.map((player) => {
           const isCurrentPlayer = player.id === currentPlayerId;
+          const isStartingPlayer = player.id === currentTurn;
+          const canSetThisPlayer = canSetStartingPlayer && player.id !== currentTurn;
+
           return (
             <li 
               key={player.id} 
-              className={`${styles.playerItem} ${isCurrentPlayer ? styles.currentPlayer : ''} ${!player.isConnected ? styles.disconnected : ''}`}
+              className={`${styles.playerItem} ${isCurrentPlayer ? styles.currentPlayer : ''} ${!player.isConnected ? styles.disconnected : ''} ${isStartingPlayer ? styles.startingPlayer : ''}`}
             >
               <div className={styles.playerInfo}>
                 <span 
@@ -38,15 +65,30 @@ export function PlayersList({ players, currentPlayerId }: PlayersListProps) {
                 <span className={styles.playerName}>
                   {player.name}
                   {isCurrentPlayer && <span className={styles.youBadge}>Você</span>}
+                  {isStartingPlayer && <span className={styles.startingBadge}>Começa</span>}
                 </span>
               </div>
-              <div className={styles.playerStats}>
+              <div className={styles.playerActions}>
+                {canSetThisPlayer && onSetStartingPlayer && (
+                  <button
+                    className={styles.setStartingButton}
+                    onClick={() => onSetStartingPlayer(player.id)}
+                    title="Definir como jogador inicial"
+                  >
+                    <MdPlayArrow className={styles.icon} />
+                  </button>
+                )}
                 <span className={styles.cardCount}>{player.hand.length} cartas</span>
               </div>
             </li>
           );
         })}
       </ul>
+      {canSetStartingPlayer && (
+        <p className={styles.hint}>
+          Você pode escolher quem começa clicando no ícone ao lado do jogador
+        </p>
+      )}
     </div>
   );
 }
