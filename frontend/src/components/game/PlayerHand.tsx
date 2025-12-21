@@ -55,7 +55,7 @@ export function PlayerHand({
       <div className={styles.header}>
         <div className={styles.titleSection}>
           <h2 className={styles.title}>
-            Suas Cartas <span className={styles.playerName}>({player.name})</span>
+            Suas Cartas
             {isDisabled && <span className={styles.disabledBadge}>Desconectado</span>}
           </h2>
           {isMyTurn && (
