@@ -1,0 +1,19 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="32" height="32" rx="6" fill="url(#gradient)"/>
+  <defs>
+    <linearGradient id="gradient" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#667eea"/>
+      <stop offset="100%" stop-color="#764ba2"/>
+    </linearGradient>
+  </defs>
+  <!-- Card 1 -->
+  <rect x="6" y="8" width="8" height="12" rx="2" fill="white" opacity="0.9"/>
+  <text x="10" y="16" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#667eea" text-anchor="middle">7</text>
+  <!-- Card 2 -->
+  <rect x="12" y="10" width="8" height="12" rx="2" fill="white" opacity="0.9"/>
+  <text x="16" y="18" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#764ba2" text-anchor="middle">8</text>
+  <!-- Card 3 -->
+  <rect x="18" y="12" width="8" height="12" rx="2" fill="white" opacity="0.9"/>
+  <text x="22" y="20" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#667eea" text-anchor="middle">9</text>
+</svg>
+

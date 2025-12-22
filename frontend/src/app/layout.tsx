@@ -5,6 +5,10 @@ export const metadata: Metadata = {
   title: 'The Game - Cooperative Card Game',
   description: 'Play The Game online with friends',
   viewport: 'width=device-width, initial-scale=1',
+  icons: {
+    icon: '/icon.svg',
+    apple: '/icon.svg',
+  },
 };
 
 export default function RootLayout({
