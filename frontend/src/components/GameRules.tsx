@@ -18,7 +18,7 @@ export default function GameRules() {
   return (
     <div className={styles.rules}>
       <h2 className={styles.rulesTitle}>Como Jogar</h2>
-      <Carousel items={carouselItems} />
+      <Carousel items={carouselItems} showIndicators={true} />
     </div>
   );
 }
