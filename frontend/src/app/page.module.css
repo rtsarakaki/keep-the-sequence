@@ -116,59 +116,6 @@
   cursor: not-allowed;
 }
 
-.rules {
-  max-width: 1000px;
-  margin: 0 auto;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 2rem;
-  border-radius: 16px;
-  backdrop-filter: blur(10px);
-}
-
-.rulesTitle {
-  font-size: 2rem;
-  font-weight: 700;
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.rulesGrid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem;
-}
-
-.ruleCard {
-  background: rgba(255, 255, 255, 0.15);
-  padding: 1.5rem;
-  border-radius: 12px;
-  backdrop-filter: blur(5px);
-}
-
-.ruleNumber {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  font-weight: 700;
-  font-size: 1.25rem;
-  margin-bottom: 1rem;
-}
-
-.ruleCard h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-
-.ruleCard p {
-  line-height: 1.6;
-  opacity: 0.95;
-}
-
 /* Tablet */
 @media (min-width: 768px) {
   .actions {
@@ -200,10 +147,6 @@
 
   .subtitle {
     font-size: 1.75rem;
-  }
-
-  .rulesGrid {
-    grid-template-columns: repeat(4, 1fr);
   }
 }
 

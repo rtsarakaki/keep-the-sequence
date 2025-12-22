@@ -1,0 +1,13 @@
+.errorContainer {
+  padding: 1rem;
+  margin: 1rem auto;
+  max-width: 600px;
+  background-color: #fee;
+  border: 1px solid #fcc;
+  border-radius: 8px;
+  color: #c33;
+  white-space: pre-line; /* Allow line breaks */
+  font-family: monospace;
+  font-size: 0.9rem;
+}
+
