@@ -106,13 +106,20 @@ describe('GameInitializer', () => {
   });
 
   describe('createInitialPiles', () => {
-    it('should create empty piles', () => {
+    it('should create piles with starting cards', () => {
       const piles = GameInitializer.createInitialPiles();
       
-      expect(piles.ascending1).toEqual([]);
-      expect(piles.ascending2).toEqual([]);
-      expect(piles.descending1).toEqual([]);
-      expect(piles.descending2).toEqual([]);
+      // Ascending piles should start with card 1
+      expect(piles.ascending1).toHaveLength(1);
+      expect(piles.ascending1[0].value).toBe(1);
+      expect(piles.ascending2).toHaveLength(1);
+      expect(piles.ascending2[0].value).toBe(1);
+      
+      // Descending piles should start with card 100
+      expect(piles.descending1).toHaveLength(1);
+      expect(piles.descending1[0].value).toBe(100);
+      expect(piles.descending2).toHaveLength(1);
+      expect(piles.descending2[0].value).toBe(100);
     });
   });
 
@@ -163,7 +170,7 @@ describe('GameInitializer', () => {
       expect(game.deck.length).toBe(92);
     });
 
-    it('should initialize empty piles', () => {
+    it('should initialize piles with starting cards', () => {
       const player = new Player({
         id: 'player-1',
         name: 'Alice',
@@ -173,10 +180,17 @@ describe('GameInitializer', () => {
       
       const game = GameInitializer.createGame('game-1', player);
       
-      expect(game.piles.ascending1).toEqual([]);
-      expect(game.piles.ascending2).toEqual([]);
-      expect(game.piles.descending1).toEqual([]);
-      expect(game.piles.descending2).toEqual([]);
+      // Ascending piles should start with card 1
+      expect(game.piles.ascending1).toHaveLength(1);
+      expect(game.piles.ascending1[0].value).toBe(1);
+      expect(game.piles.ascending2).toHaveLength(1);
+      expect(game.piles.ascending2[0].value).toBe(1);
+      
+      // Descending piles should start with card 100
+      expect(game.piles.descending1).toHaveLength(1);
+      expect(game.piles.descending1[0].value).toBe(100);
+      expect(game.piles.descending2).toHaveLength(1);
+      expect(game.piles.descending2[0].value).toBe(100);
     });
 
     it('should set createdAt and updatedAt', () => {

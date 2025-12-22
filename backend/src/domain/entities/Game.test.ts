@@ -4,14 +4,18 @@ import { Card } from '../valueObjects/Card';
 
 describe('Game', () => {
   const createGame = (): Game => {
+    // Create initial piles with starting cards
+    const startingCardAscending = new Card(1, 'hearts');
+    const startingCardDescending = new Card(100, 'hearts');
+    
     return new Game({
       id: 'game1',
       players: [],
       piles: {
-        ascending1: [],
-        ascending2: [],
-        descending1: [],
-        descending2: [],
+        ascending1: [startingCardAscending],
+        ascending2: [startingCardAscending],
+        descending1: [startingCardDescending],
+        descending2: [startingCardDescending],
       },
       deck: [],
       discardPile: [],
@@ -48,9 +52,10 @@ describe('Game', () => {
       
       const updatedGame = game.addCardToPile('ascending1', card);
       
-      expect(updatedGame.piles.ascending1).toHaveLength(1);
-      expect(updatedGame.piles.ascending1[0]).toEqual(card);
-      expect(game.piles.ascending1).toHaveLength(0); // Original não foi modificado
+      expect(updatedGame.piles.ascending1).toHaveLength(2); // Starting card + new card
+      expect(updatedGame.piles.ascending1[0].value).toBe(1); // Starting card
+      expect(updatedGame.piles.ascending1[1]).toEqual(card); // New card
+      expect(game.piles.ascending1).toHaveLength(1); // Original não foi modificado (still has starting card)
     });
 
     it('não deve modificar o jogo original', () => {
@@ -59,8 +64,8 @@ describe('Game', () => {
       
       const updatedGame = game.addCardToPile('ascending1', card);
       
-      expect(game.piles.ascending1).toHaveLength(0);
-      expect(updatedGame.piles.ascending1).toHaveLength(1);
+      expect(game.piles.ascending1).toHaveLength(1); // Original still has starting card
+      expect(updatedGame.piles.ascending1).toHaveLength(2); // Updated has starting card + new card
     });
 
     it('deve adicionar carta a pilha que já tem cartas', () => {
@@ -71,25 +76,27 @@ describe('Game', () => {
       const gameWithOneCard = game.addCardToPile('ascending1', card1);
       const gameWithTwoCards = gameWithOneCard.addCardToPile('ascending1', card2);
       
-      expect(gameWithTwoCards.piles.ascending1).toHaveLength(2);
-      expect(gameWithTwoCards.piles.ascending1[0]).toEqual(card1);
-      expect(gameWithTwoCards.piles.ascending1[1]).toEqual(card2);
+      expect(gameWithTwoCards.piles.ascending1).toHaveLength(3); // Starting card (1) + card1 (10) + card2 (20)
+      expect(gameWithTwoCards.piles.ascending1[0].value).toBe(1); // Starting card
+      expect(gameWithTwoCards.piles.ascending1[1]).toEqual(card1);
+      expect(gameWithTwoCards.piles.ascending1[2]).toEqual(card2);
     });
 
-    it('deve lidar com pilha inexistente usando array vazio', () => {
+    it('deve adicionar cartas a todas as pilhas corretamente', () => {
       const game = createGame();
       const card = new Card(10, 'hearts');
       
       // Test all pile types to ensure they work
+      // Each pile starts with 1 card (initial card), so after adding one more, should have 2
       const game1 = game.addCardToPile('ascending1', card);
       const game2 = game.addCardToPile('ascending2', card);
       const game3 = game.addCardToPile('descending1', card);
       const game4 = game.addCardToPile('descending2', card);
       
-      expect(game1.piles.ascending1).toHaveLength(1);
-      expect(game2.piles.ascending2).toHaveLength(1);
-      expect(game3.piles.descending1).toHaveLength(1);
-      expect(game4.piles.descending2).toHaveLength(1);
+      expect(game1.piles.ascending1).toHaveLength(2); // Starting card (1) + new card (10)
+      expect(game2.piles.ascending2).toHaveLength(2); // Starting card (1) + new card (10)
+      expect(game3.piles.descending1).toHaveLength(2); // Starting card (100) + new card (10)
+      expect(game4.piles.descending2).toHaveLength(2); // Starting card (100) + new card (10)
     });
 
   });

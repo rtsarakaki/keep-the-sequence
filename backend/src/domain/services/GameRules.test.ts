@@ -311,12 +311,13 @@ describe('GameRules', () => {
   });
 
   describe('hasAnyCardsBeenPlayed', () => {
-    it('deve retornar false quando nenhuma carta foi jogada', () => {
+    it('deve retornar false quando apenas as cartas iniciais estão nas pilhas', () => {
+      // Piles start with initial cards: 1 for ascending, 100 for descending
       const piles = {
-        ascending1: [],
-        ascending2: [],
-        descending1: [],
-        descending2: [],
+        ascending1: [new Card(1, 'hearts')],
+        ascending2: [new Card(1, 'hearts')],
+        descending1: [new Card(100, 'hearts')],
+        descending2: [new Card(100, 'hearts')],
       };
 
       const result = hasAnyCardsBeenPlayed(piles);
@@ -325,11 +326,12 @@ describe('GameRules', () => {
     });
 
     it('deve retornar true quando pelo menos uma carta foi jogada em qualquer pilha', () => {
+      // Starting card (1) + played card (10)
       const piles = {
-        ascending1: [new Card(10, 'hearts')],
-        ascending2: [],
-        descending1: [],
-        descending2: [],
+        ascending1: [new Card(1, 'hearts'), new Card(10, 'hearts')],
+        ascending2: [new Card(1, 'hearts')],
+        descending1: [new Card(100, 'hearts')],
+        descending2: [new Card(100, 'hearts')],
       };
 
       const result = hasAnyCardsBeenPlayed(piles);
@@ -339,10 +341,10 @@ describe('GameRules', () => {
 
     it('deve retornar true quando cartas foram jogadas em múltiplas pilhas', () => {
       const piles = {
-        ascending1: [new Card(10, 'hearts')],
-        ascending2: [new Card(20, 'spades')],
-        descending1: [new Card(90, 'clubs')],
-        descending2: [],
+        ascending1: [new Card(1, 'hearts'), new Card(10, 'hearts')],
+        ascending2: [new Card(1, 'hearts'), new Card(20, 'spades')],
+        descending1: [new Card(100, 'hearts'), new Card(90, 'clubs')],
+        descending2: [new Card(100, 'hearts')],
       };
 
       const result = hasAnyCardsBeenPlayed(piles);

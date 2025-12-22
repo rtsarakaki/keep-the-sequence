@@ -86,15 +86,18 @@ export const areAllHandsEmpty = (players: ReadonlyArray<{ hand: readonly Card[] 
 };
 
 /**
- * Check if any cards have been played in the game piles
+ * Check if any cards have been played in the game piles (beyond the initial starting cards).
  * Used to determine if new players can still join (only before first card is played)
+ * 
+ * Note: Piles start with initial cards (1 for ascending, 100 for descending),
+ * so we check if any pile has more than 1 card (initial + at least one played card).
  */
 export const hasAnyCardsBeenPlayed = (piles: GamePiles): boolean => {
   return (
-    piles.ascending1.length > 0 ||
-    piles.ascending2.length > 0 ||
-    piles.descending1.length > 0 ||
-    piles.descending2.length > 0
+    piles.ascending1.length > 1 ||
+    piles.ascending2.length > 1 ||
+    piles.descending1.length > 1 ||
+    piles.descending2.length > 1
   );
 };
 

@@ -80,14 +80,20 @@ export class GameInitializer {
   }
 
   /**
-   * Creates initial empty piles
+   * Creates initial piles with starting cards:
+   * - Ascending piles start with card 1
+   * - Descending piles start with card 100
    */
   static createInitialPiles(): GamePiles {
+    // Starting cards for piles (cards 1 and 100 are not in the regular deck)
+    const startingCardAscending = new Card(1, 'hearts');
+    const startingCardDescending = new Card(100, 'hearts');
+    
     return {
-      ascending1: Object.freeze([]),
-      ascending2: Object.freeze([]),
-      descending1: Object.freeze([]),
-      descending2: Object.freeze([]),
+      ascending1: Object.freeze([startingCardAscending]),
+      ascending2: Object.freeze([startingCardAscending]),
+      descending1: Object.freeze([startingCardDescending]),
+      descending2: Object.freeze([startingCardDescending]),
     };
   }
 

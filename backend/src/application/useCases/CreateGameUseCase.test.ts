@@ -34,10 +34,15 @@ describe('CreateGameUseCase', () => {
         expect(result.value.players).toHaveLength(1);
         expect(result.value.players[0].name).toBe('Player 1');
         expect(result.value.status).toBe('waiting');
-        expect(result.value.piles.ascending1).toEqual([]);
-        expect(result.value.piles.ascending2).toEqual([]);
-        expect(result.value.piles.descending1).toEqual([]);
-        expect(result.value.piles.descending2).toEqual([]);
+        // Piles should start with initial cards
+        expect(result.value.piles.ascending1).toHaveLength(1);
+        expect(result.value.piles.ascending1[0].value).toBe(1);
+        expect(result.value.piles.ascending2).toHaveLength(1);
+        expect(result.value.piles.ascending2[0].value).toBe(1);
+        expect(result.value.piles.descending1).toHaveLength(1);
+        expect(result.value.piles.descending1[0].value).toBe(100);
+        expect(result.value.piles.descending2).toHaveLength(1);
+        expect(result.value.piles.descending2[0].value).toBe(100);
         expect(mockGameRepository.save).toHaveBeenCalledTimes(1);
       }
     });
