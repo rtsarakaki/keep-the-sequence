@@ -1,0 +1,121 @@
+.actions {
+  max-width: 600px;
+  margin: 0 auto 2rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.4rem;
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+}
+
+.tab {
+  flex: 1;
+  padding: 0.6rem 1.2rem;
+  background: transparent;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  opacity: 0.7;
+}
+
+.tab:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.tabActive {
+  background: rgba(255, 255, 255, 0.2);
+  opacity: 1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.95);
+  color: #333;
+  padding: 1.5rem;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+}
+
+.cardTitle {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+  color: #667eea;
+}
+
+.cardDescription {
+  font-size: 0.95rem;
+  color: #666;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.input {
+  padding: 0.65rem 0.9rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.button {
+  padding: 0.65rem 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Tablet */
+@media (min-width: 768px) {
+  .tabs {
+    gap: 1rem;
+  }
+}
+

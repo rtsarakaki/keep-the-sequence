@@ -1,35 +1,35 @@
 .container {
   min-height: 100vh;
-  padding: 2rem 1rem;
+  padding: 1.5rem 1rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
 }
 
 .hero {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
   max-width: 800px;
   margin-left: auto;
   margin-right: auto;
 }
 
 .title {
-  font-size: 3.5rem;
+  font-size: 3rem;
   font-weight: 800;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .subtitle {
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: 300;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   opacity: 0.95;
 }
 
 .description {
-  font-size: 1.1rem;
-  line-height: 1.6;
+  font-size: 1rem;
+  line-height: 1.5;
   max-width: 600px;
   margin: 0 auto;
   opacity: 0.9;
@@ -138,15 +138,15 @@
 /* Desktop */
 @media (min-width: 1024px) {
   .container {
-    padding: 3rem 2rem;
+    padding: 2rem 2rem;
   }
 
   .title {
-    font-size: 4.5rem;
+    font-size: 3.5rem;
   }
 
   .subtitle {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
   }
 }
 

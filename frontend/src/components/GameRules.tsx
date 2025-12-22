@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import styles from './GameRules.module.css';
 
 export default function GameRules() {
@@ -24,19 +27,71 @@ export default function GameRules() {
     },
   ];
 
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const goToPrevious = () => {
+    setCurrentIndex((prev) => (prev === 0 ? rules.length - 1 : prev - 1));
+  };
+
+  const goToNext = () => {
+    setCurrentIndex((prev) => (prev === rules.length - 1 ? 0 : prev + 1));
+  };
+
+  const goToSlide = (index: number) => {
+    setCurrentIndex(index);
+  };
+
   return (
     <div className={styles.rules}>
       <h2 className={styles.rulesTitle}>Como Jogar</h2>
-      <div className={styles.rulesGrid}>
-        {rules.map((rule) => (
-          <div key={rule.number} className={styles.ruleCard}>
-            <div className={styles.ruleNumber}>{rule.number}</div>
-            <h3>{rule.title}</h3>
-            <p>{rule.description}</p>
+      
+      <div className={styles.carousel}>
+        <button
+          className={styles.carouselButton}
+          onClick={goToPrevious}
+          aria-label="Regra anterior"
+        >
+          ‹
+        </button>
+
+        <div className={styles.carouselContainer}>
+          <div
+            className={styles.carouselTrack}
+            style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+          >
+            {rules.map((rule) => (
+              <div key={rule.number} className={styles.carouselSlide}>
+                <div className={styles.ruleCard}>
+                  <div className={styles.ruleNumber}>{rule.number}</div>
+                  <h3>{rule.title}</h3>
+                  <p>{rule.description}</p>
+                </div>
+              </div>
+            ))}
           </div>
+        </div>
+
+        <button
+          className={styles.carouselButton}
+          onClick={goToNext}
+          aria-label="Próxima regra"
+        >
+          ›
+        </button>
+      </div>
+
+      <div className={styles.carouselIndicators}>
+        {rules.map((_, index) => (
+          <button
+            key={index}
+            className={`${styles.indicator} ${
+              index === currentIndex ? styles.indicatorActive : ''
+            }`}
+            onClick={() => goToSlide(index)}
+            aria-label={`Ir para regra ${index + 1}`}
+          />
         ))}
       </div>
     </div>
   );
 }
-
