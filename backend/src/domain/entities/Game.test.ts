@@ -99,6 +99,41 @@ describe('Game', () => {
       expect(game4.piles.descending2).toHaveLength(2); // Starting card (100) + new card (10)
     });
 
+    it('deve remover preferências de pilha quando uma carta é jogada nela', () => {
+      const game = createGame();
+      const card = new Card(10, 'hearts');
+      
+      // Mark a preference for a pile
+      const gameWithPreference = game.markPilePreference('player-1', 'ascending1');
+      expect(gameWithPreference.pilePreferences['player-1']).toBe('ascending1');
+      
+      // Play a card on the marked pile
+      const gameAfterPlay = gameWithPreference.addCardToPile('ascending1', card);
+      
+      // Preference should be removed
+      expect(gameAfterPlay.pilePreferences['player-1']).toBeNull();
+    });
+
+    it('deve manter preferências de outras pilhas quando uma carta é jogada', () => {
+      const game = createGame();
+      const card = new Card(10, 'hearts');
+      
+      // Mark preferences for multiple piles
+      const gameWithPreferences = game
+        .markPilePreference('player-1', 'ascending1')
+        .markPilePreference('player-2', 'descending1');
+      
+      expect(gameWithPreferences.pilePreferences['player-1']).toBe('ascending1');
+      expect(gameWithPreferences.pilePreferences['player-2']).toBe('descending1');
+      
+      // Play a card on ascending1 (player-1's preference)
+      const gameAfterPlay = gameWithPreferences.addCardToPile('ascending1', card);
+      
+      // player-1's preference should be removed, but player-2's should remain
+      expect(gameAfterPlay.pilePreferences['player-1']).toBeNull();
+      expect(gameAfterPlay.pilePreferences['player-2']).toBe('descending1');
+    });
+
   });
 
   describe('updateTurn', () => {
@@ -235,6 +270,50 @@ describe('Game', () => {
       expect(updatedGame.players[0].isConnected).toBe(false);
       expect(updatedGame.players[1].isConnected).toBe(false); // player2 não foi modificado
       expect(game.players[0].isConnected).toBe(true); // Original não foi modificado
+    });
+  });
+
+  describe('markPilePreference', () => {
+    it('deve marcar preferência de pilha para um jogador', () => {
+      const game = createGame();
+      
+      const updatedGame = game.markPilePreference('player-1', 'ascending1');
+      
+      expect(updatedGame.pilePreferences['player-1']).toBe('ascending1');
+      expect(game.pilePreferences['player-1']).toBeUndefined(); // Original não foi modificado
+    });
+
+    it('deve substituir preferência existente quando jogador marca nova pilha', () => {
+      const game = createGame();
+      
+      const gameWithFirstPreference = game.markPilePreference('player-1', 'ascending1');
+      expect(gameWithFirstPreference.pilePreferences['player-1']).toBe('ascending1');
+      
+      const gameWithSecondPreference = gameWithFirstPreference.markPilePreference('player-1', 'descending1');
+      expect(gameWithSecondPreference.pilePreferences['player-1']).toBe('descending1');
+    });
+
+    it('deve remover preferência quando pileId é null', () => {
+      const game = createGame();
+      
+      const gameWithPreference = game.markPilePreference('player-1', 'ascending1');
+      expect(gameWithPreference.pilePreferences['player-1']).toBe('ascending1');
+      
+      const gameWithoutPreference = gameWithPreference.markPilePreference('player-1', null);
+      expect(gameWithoutPreference.pilePreferences['player-1']).toBeNull();
+    });
+
+    it('deve permitir múltiplos jogadores terem preferências diferentes', () => {
+      const game = createGame();
+      
+      const gameWithPreferences = game
+        .markPilePreference('player-1', 'ascending1')
+        .markPilePreference('player-2', 'descending1')
+        .markPilePreference('player-3', 'ascending2');
+      
+      expect(gameWithPreferences.pilePreferences['player-1']).toBe('ascending1');
+      expect(gameWithPreferences.pilePreferences['player-2']).toBe('descending1');
+      expect(gameWithPreferences.pilePreferences['player-3']).toBe('ascending2');
     });
   });
 });
