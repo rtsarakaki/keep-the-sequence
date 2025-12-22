@@ -63,16 +63,18 @@ export function Pile({
     setIsHistoryOpen(true);
   };
 
-  // Find all players who marked this pile
+  // Find all players who marked this pile (excluding current player)
   const markedByPlayerIds = Object.entries(pilePreferences)
-    .filter(([, preferredPile]) => preferredPile === pileId)
+    .filter(([playerId, preferredPile]) => 
+      preferredPile === pileId && playerId !== currentPlayerId
+    )
     .map(([playerId]) => playerId);
   
   const markedByPlayers = markedByPlayerIds
     .map(playerId => players.find(p => p.id === playerId))
     .filter((player): player is { id: string; name: string } => player !== undefined);
 
-  // Check if this pile is marked by any player
+  // Check if this pile is marked by any other player (not current player)
   const isPileMarked = markedByPlayers.length > 0;
 
   // Check if current player can mark preferences (not their turn)
@@ -149,6 +151,26 @@ export function Pile({
           <div className={styles.mobileTitle}>{shortTitle}</div>
         )}
         <div className={styles.pileCards}>
+          {/* Show warning icon if pile is marked by any player */}
+          {isPileMarked && (
+            <>
+              <div 
+                className={styles.warningIcon} 
+                title={warningMessage}
+                onClick={handleWarningClick}
+              >
+                <MdWarning />
+                {markedByPlayers.length > 1 && (
+                  <span className={styles.warningCount}>{markedByPlayers.length}</span>
+                )}
+              </div>
+              {showWarningMessage && (
+                <div className={styles.warningMessage}>
+                  {warningMessage}
+                </div>
+              )}
+            </>
+          )}
           {lastCard ? (
             <div className={styles.lastCard}>
               <Card card={lastCard} size="medium" />
@@ -160,26 +182,6 @@ export function Pile({
             </div>
           )}
         </div>
-        {/* Show warning icon if pile is marked by any player */}
-        {isPileMarked && (
-          <>
-            <div 
-              className={styles.warningIcon} 
-              title={warningMessage}
-              onClick={handleWarningClick}
-            >
-              <MdWarning />
-              {markedByPlayers.length > 1 && (
-                <span className={styles.warningCount}>{markedByPlayers.length}</span>
-              )}
-            </div>
-            {showWarningMessage && (
-              <div className={styles.warningMessage}>
-                {warningMessage}
-              </div>
-            )}
-          </>
-        )}
         {/* Show "Don't play here" button if not current player's turn */}
         {canMarkPreference && (
           <button
