@@ -157,101 +157,10 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
     }
   };
 
-  const handleDebugTest = async (testType: 'check-game' | 'reconnect-playerId' | 'reconnect-playerName' | 'get-token') => {
-    if (!params.gameId) return;
-
-    try {
-      switch (testType) {
-        case 'check-game': {
-          // Try to get WebSocket URL to check if game/player exists
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-          if (!apiUrl) {
-            alert('API URL não configurada');
-            return;
-          }
-
-          const testPlayerId = playerId || 'test';
-          const response = await fetch(
-            `${apiUrl}/api/websocket-url?gameId=${params.gameId}&playerId=${testPlayerId}`,
-            {
-              method: 'GET',
-              headers: { 'Content-Type': 'application/json' },
-              mode: 'cors',
-            }
-          );
-
-          const data = await response.json();
-          if (response.ok) {
-            alert(`✅ Jogo existe!\n\nGame ID: ${params.gameId}\nPlayer ID: ${testPlayerId}\nToken gerado com sucesso.`);
-          } else {
-            alert(`❌ Erro: ${data.error || 'Erro desconhecido'}\n\nStatus: ${response.status}`);
-          }
-          break;
-        }
-
-        case 'reconnect-playerId': {
-          if (!playerId) {
-            alert('Player ID não disponível');
-            return;
-          }
-          retry();
-          break;
-        }
-
-        case 'reconnect-playerName': {
-          if (!playerName) {
-            alert('Nome do jogador não disponível');
-            return;
-          }
-          retry();
-          break;
-        }
-
-        case 'get-token': {
-          const { getApiUrl } = await import('@/services/api');
-          let apiUrl: string;
-          try {
-            apiUrl = getApiUrl();
-          } catch (err) {
-            alert(`API URL não configurada: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
-            return;
-          }
-
-          const testPlayerId = playerId || playerName || 'test';
-          const useName = !playerId && !!playerName;
-          const param = useName ? 'playerName' : 'playerId';
-          
-          const response = await fetch(
-            `${apiUrl}/api/websocket-url?gameId=${params.gameId}&${param}=${encodeURIComponent(testPlayerId)}`,
-            {
-              method: 'GET',
-              headers: { 'Content-Type': 'application/json' },
-              mode: 'cors',
-            }
-          );
-
-          const data = await response.json();
-          if (response.ok) {
-            alert(`✅ Token obtido com sucesso!\n\nURL: ${data.wsUrl.substring(0, 100)}...`);
-          } else {
-            alert(`❌ Erro ao obter token: ${data.error || 'Erro desconhecido'}\n\nStatus: ${response.status}`);
-          }
-          break;
-        }
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
-      alert(`❌ Erro no teste: ${errorMessage}`);
-    }
-  };
-
   if (error) {
     return (
       <GameError
         error={error}
-        playerId={playerId}
-        playerName={playerName}
-        onDebugTest={handleDebugTest}
         onRetry={retry}
       />
     );
