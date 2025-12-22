@@ -81,7 +81,14 @@ export class PlayCardUseCase {
       const gameAfterDraw = gameWithCardPlayed.drawCardForPlayer(dto.playerId);
 
       // Check for automatic defeat condition: player cannot continue
-      if (shouldGameEndInDefeat(gameAfterDraw)) {
+      if (shouldGameEndInDefeat({
+        currentTurn: gameAfterDraw.currentTurn,
+        cardsPlayedThisTurn: gameAfterDraw.cardsPlayedThisTurn,
+        deck: gameAfterDraw.deck,
+        players: gameAfterDraw.players,
+        piles: gameAfterDraw.piles,
+        pilePreferences: gameAfterDraw.pilePreferences,
+      })) {
         const defeatedGame = gameAfterDraw.updateStatus('finished');
         await this.gameRepository.save(defeatedGame);
         return success(defeatedGame);

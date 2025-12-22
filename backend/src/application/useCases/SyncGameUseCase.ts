@@ -27,7 +27,14 @@ export class SyncGameUseCase {
       }
 
       // Check for automatic defeat condition: current player cannot continue
-      if (shouldGameEndInDefeat(game)) {
+      if (shouldGameEndInDefeat({
+        currentTurn: game.currentTurn,
+        cardsPlayedThisTurn: game.cardsPlayedThisTurn,
+        deck: game.deck,
+        players: game.players,
+        piles: game.piles,
+        pilePreferences: game.pilePreferences,
+      })) {
         const defeatedGame = game.updateStatus('finished');
         await this.gameRepository.save(defeatedGame);
         return success(defeatedGame);

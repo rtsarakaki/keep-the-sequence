@@ -79,6 +79,55 @@ export const canPlayerPlayAnyCard = (
 };
 
 /**
+ * Check if a player can play at least one card from their hand on piles that are NOT marked
+ * (i.e., piles where other players have requested not to play)
+ * 
+ * @param playerHand - The player's hand
+ * @param piles - The game piles
+ * @param pilePreferences - Map of playerId -> pileId (null if no preference)
+ * @param currentPlayerId - The ID of the current player (to ignore their own preferences)
+ * @returns true if player can play on at least one non-marked pile
+ */
+export const canPlayerPlayOnNonMarkedPiles = (
+  playerHand: readonly Card[],
+  piles: GamePiles,
+  pilePreferences: Readonly<Record<string, keyof GamePiles | null>>,
+  currentPlayerId: string
+): boolean => {
+  if (playerHand.length === 0) {
+    return false;
+  }
+
+  // Get all marked piles (excluding current player's own marks)
+  const markedPiles = new Set<keyof GamePiles>();
+  for (const [playerId, pileId] of Object.entries(pilePreferences)) {
+    if (playerId !== currentPlayerId && pileId !== null) {
+      markedPiles.add(pileId);
+    }
+  }
+
+  // Check each card in hand against each non-marked pile
+  for (const card of playerHand) {
+    // Check ascending piles
+    if (!markedPiles.has('ascending1') && canPlayCard(card, piles.ascending1, 'ascending')) {
+      return true;
+    }
+    if (!markedPiles.has('ascending2') && canPlayCard(card, piles.ascending2, 'ascending')) {
+      return true;
+    }
+    // Check descending piles
+    if (!markedPiles.has('descending1') && canPlayCard(card, piles.descending1, 'descending')) {
+      return true;
+    }
+    if (!markedPiles.has('descending2') && canPlayCard(card, piles.descending2, 'descending')) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+/**
  * Check if all players have empty hands (victory condition)
  */
 export const areAllHandsEmpty = (players: ReadonlyArray<{ hand: readonly Card[] }>): boolean => {
@@ -108,6 +157,9 @@ export const hasAnyCardsBeenPlayed = (piles: GamePiles): boolean => {
  * 2. The player has cards in hand
  * 3. The player has played less than the minimum required cards
  * 4. The player cannot play any card from their hand
+ * 
+ * Note: The game does NOT end in defeat if the player can only play on marked piles.
+ * Marked piles are suggestions, not restrictions. The player can still play on them.
  */
 export const shouldGameEndInDefeat = (
   game: {
@@ -116,6 +168,7 @@ export const shouldGameEndInDefeat = (
     deck: readonly Card[];
     players: ReadonlyArray<{ id: string; hand: readonly Card[] }>;
     piles: GamePiles;
+    pilePreferences?: Readonly<Record<string, keyof GamePiles | null>>;
   }
 ): boolean => {
   // Game must be in progress
@@ -139,7 +192,8 @@ export const shouldGameEndInDefeat = (
 
   // Check if player has played less than minimum
   if (game.cardsPlayedThisTurn < minimumCards) {
-    // Check if player can play any card
+    // Check if player can play any card (including on marked piles)
+    // Marked piles are suggestions, not restrictions - player can still play on them
     const canPlayAny = canPlayerPlayAnyCard(currentPlayer.hand, game.piles);
     
     // If player cannot play any card and hasn't met minimum, game ends in defeat

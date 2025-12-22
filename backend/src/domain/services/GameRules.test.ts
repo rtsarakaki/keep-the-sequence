@@ -1,5 +1,5 @@
 import { Card } from '../valueObjects/Card';
-import { canPlayCard, calculateScore, shouldGameEndInDefeat, hasAnyCardsBeenPlayed } from './GameRules';
+import { canPlayCard, calculateScore, shouldGameEndInDefeat, hasAnyCardsBeenPlayed, canPlayerPlayOnNonMarkedPiles } from './GameRules';
 import { Player } from '../entities/Player';
 
 describe('GameRules', () => {
@@ -165,6 +165,7 @@ describe('GameRules', () => {
         deck: [new Card(50, 'hearts')], // Deck tem cartas, mínimo é 2
         players: [player],
         piles,
+        pilePreferences: {},
       };
 
       const result = shouldGameEndInDefeat(game);
@@ -194,6 +195,7 @@ describe('GameRules', () => {
         deck: [new Card(60, 'hearts')],
         players: [player],
         piles,
+        pilePreferences: {},
       };
 
       const result = shouldGameEndInDefeat(game);
@@ -222,6 +224,7 @@ describe('GameRules', () => {
         deck: [new Card(50, 'hearts')],
         players: [player],
         piles,
+        pilePreferences: {},
       };
 
       const result = shouldGameEndInDefeat(game);
@@ -248,6 +251,7 @@ describe('GameRules', () => {
           descending1: [],
           descending2: [],
         },
+        pilePreferences: {},
       };
 
       const result = shouldGameEndInDefeat(game);
@@ -274,6 +278,7 @@ describe('GameRules', () => {
           descending1: [],
           descending2: [],
         },
+        pilePreferences: {},
       };
 
       const result = shouldGameEndInDefeat(game);
@@ -302,6 +307,7 @@ describe('GameRules', () => {
         deck: [], // Deck vazio, mínimo é 1
         players: [player],
         piles,
+        pilePreferences: {},
       };
 
       const result = shouldGameEndInDefeat(game);
@@ -348,6 +354,121 @@ describe('GameRules', () => {
       };
 
       const result = hasAnyCardsBeenPlayed(piles);
+
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('canPlayerPlayOnNonMarkedPiles', () => {
+    it('deve retornar true quando jogador pode jogar em pilha não marcada', () => {
+      const playerHand = [new Card(50, 'hearts')];
+      const piles = {
+        ascending1: [new Card(40, 'spades')], // Pode jogar aqui
+        ascending2: [new Card(1, 'hearts')],
+        descending1: [new Card(100, 'hearts')],
+        descending2: [new Card(100, 'hearts')],
+      };
+      const pilePreferences: Record<string, 'ascending1' | 'ascending2' | 'descending1' | 'descending2' | null> = {
+        'player-2': 'ascending2', // Outro jogador marcou ascending2
+      };
+      const currentPlayerId = 'player-1';
+
+      const result = canPlayerPlayOnNonMarkedPiles(
+        playerHand,
+        piles,
+        pilePreferences,
+        currentPlayerId
+      );
+
+      expect(result).toBe(true); // Pode jogar em ascending1 (não marcada)
+    });
+
+    it('deve retornar false quando todas as pilhas jogáveis estão marcadas', () => {
+      const playerHand = [new Card(50, 'hearts')];
+      const piles = {
+        ascending1: [new Card(40, 'spades')], // Pode jogar aqui (50 > 40), mas está marcada
+        ascending2: [new Card(99, 'hearts')], // Não pode jogar (50 não é > 99)
+        descending1: [new Card(100, 'hearts')], // Pode jogar aqui (50 < 100), mas está marcada
+        descending2: [new Card(100, 'hearts')], // Pode jogar aqui (50 < 100), mas está marcada
+      };
+      const pilePreferences: Record<string, 'ascending1' | 'ascending2' | 'descending1' | 'descending2' | null> = {
+        'player-2': 'ascending1', // Outro jogador marcou ascending1
+        'player-3': 'descending1', // Outro jogador marcou descending1
+        'player-4': 'descending2', // Outro jogador marcou descending2
+      };
+      const currentPlayerId = 'player-1';
+
+      const result = canPlayerPlayOnNonMarkedPiles(
+        playerHand,
+        piles,
+        pilePreferences,
+        currentPlayerId
+      );
+
+      expect(result).toBe(false); // Todas as pilhas jogáveis estão marcadas
+    });
+
+    it('deve ignorar marcações do próprio jogador', () => {
+      const playerHand = [new Card(50, 'hearts')];
+      const piles = {
+        ascending1: [new Card(40, 'spades')], // Pode jogar aqui
+        ascending2: [new Card(1, 'hearts')],
+        descending1: [new Card(100, 'hearts')],
+        descending2: [new Card(100, 'hearts')],
+      };
+      const pilePreferences: Record<string, 'ascending1' | 'ascending2' | 'descending1' | 'descending2' | null> = {
+        'player-1': 'ascending1', // Próprio jogador marcou, mas deve ser ignorado
+      };
+      const currentPlayerId = 'player-1';
+
+      const result = canPlayerPlayOnNonMarkedPiles(
+        playerHand,
+        piles,
+        pilePreferences,
+        currentPlayerId
+      );
+
+      expect(result).toBe(true); // Pode jogar em ascending1 (própria marcação ignorada)
+    });
+
+    it('deve retornar false quando jogador não tem cartas', () => {
+      const playerHand: readonly Card[] = [];
+      const piles = {
+        ascending1: [new Card(40, 'spades')],
+        ascending2: [new Card(1, 'hearts')],
+        descending1: [new Card(100, 'hearts')],
+        descending2: [new Card(100, 'hearts')],
+      };
+      const pilePreferences: Record<string, 'ascending1' | 'ascending2' | 'descending1' | 'descending2' | null> = {};
+      const currentPlayerId = 'player-1';
+
+      const result = canPlayerPlayOnNonMarkedPiles(
+        playerHand,
+        piles,
+        pilePreferences,
+        currentPlayerId
+      );
+
+      expect(result).toBe(false);
+    });
+
+    it('deve retornar true quando não há marcações', () => {
+      const playerHand = [new Card(50, 'hearts')];
+      const piles = {
+        ascending1: [new Card(40, 'spades')], // Pode jogar aqui
+        ascending2: [new Card(1, 'hearts')],
+        descending1: [new Card(100, 'hearts')],
+        descending2: [new Card(100, 'hearts')],
+      };
+      const pilePreferences: Record<string, 'ascending1' | 'ascending2' | 'descending1' | 'descending2' | null> = {};
+      const currentPlayerId = 'player-1';
+
+      const result = canPlayerPlayOnNonMarkedPiles(
+        playerHand,
+        piles,
+        pilePreferences,
+        currentPlayerId
+      );
 
       expect(result).toBe(true);
     });

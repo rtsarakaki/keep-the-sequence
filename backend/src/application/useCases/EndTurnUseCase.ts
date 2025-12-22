@@ -91,7 +91,14 @@ export class EndTurnUseCase {
 
       // Check if next player can play (automatic defeat detection)
       // This ensures the game ends immediately if the next player cannot make the minimum required plays
-      if (shouldGameEndInDefeat(gameWithNextTurn)) {
+      if (shouldGameEndInDefeat({
+        currentTurn: gameWithNextTurn.currentTurn,
+        cardsPlayedThisTurn: gameWithNextTurn.cardsPlayedThisTurn,
+        deck: gameWithNextTurn.deck,
+        players: gameWithNextTurn.players,
+        piles: gameWithNextTurn.piles,
+        pilePreferences: gameWithNextTurn.pilePreferences,
+      })) {
         const defeatedGame = gameWithNextTurn.updateStatus('finished');
         await this.gameRepository.save(defeatedGame);
         return success(defeatedGame);
