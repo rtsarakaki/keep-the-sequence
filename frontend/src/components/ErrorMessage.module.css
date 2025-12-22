@@ -11,3 +11,10 @@
   font-size: 0.9rem;
 }
 
+/* Desktop */
+@media (min-width: 1024px) {
+  .errorContainer {
+    max-width: 700px;
+  }
+}
+

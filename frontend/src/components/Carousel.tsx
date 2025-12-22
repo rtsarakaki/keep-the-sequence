@@ -20,6 +20,18 @@ export default function Carousel({
   const [scrollLeft, setScrollLeft] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Initialize scroll to first slide
+  useEffect(() => {
+    if (containerRef.current) {
+      // Use requestAnimationFrame to ensure DOM is ready
+      requestAnimationFrame(() => {
+        if (containerRef.current) {
+          containerRef.current.scrollLeft = 0;
+        }
+      });
+    }
+  }, []);
+
   const goToSlide = (index: number) => {
     if (containerRef.current) {
       const slideWidth = containerRef.current.offsetWidth;
@@ -37,6 +49,7 @@ export default function Carousel({
     setStartX(e.pageX - containerRef.current.offsetLeft);
     setScrollLeft(containerRef.current.scrollLeft);
     containerRef.current.style.cursor = 'grabbing';
+    containerRef.current.style.scrollSnapType = 'none';
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -51,11 +64,14 @@ export default function Carousel({
     if (!containerRef.current) return;
     setIsDragging(false);
     containerRef.current.style.cursor = 'grab';
+    containerRef.current.style.scrollSnapType = 'x mandatory';
     
-    // Snap to nearest slide
+    // Snap to nearest slide (tudo ou nada)
     const slideWidth = containerRef.current.offsetWidth;
-    const newIndex = Math.round(containerRef.current.scrollLeft / slideWidth);
-    goToSlide(newIndex);
+    const scrollPosition = containerRef.current.scrollLeft;
+    const newIndex = Math.round(scrollPosition / slideWidth);
+    const clampedIndex = Math.max(0, Math.min(newIndex, items.length - 1));
+    goToSlide(clampedIndex);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -63,6 +79,7 @@ export default function Carousel({
     setIsDragging(true);
     setStartX(e.touches[0].pageX - containerRef.current.offsetLeft);
     setScrollLeft(containerRef.current.scrollLeft);
+    containerRef.current.style.scrollSnapType = 'none';
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -75,11 +92,14 @@ export default function Carousel({
   const handleTouchEnd = () => {
     if (!containerRef.current) return;
     setIsDragging(false);
+    containerRef.current.style.scrollSnapType = 'x mandatory';
     
-    // Snap to nearest slide
+    // Snap to nearest slide (tudo ou nada)
     const slideWidth = containerRef.current.offsetWidth;
-    const newIndex = Math.round(containerRef.current.scrollLeft / slideWidth);
-    goToSlide(newIndex);
+    const scrollPosition = containerRef.current.scrollLeft;
+    const newIndex = Math.round(scrollPosition / slideWidth);
+    const clampedIndex = Math.max(0, Math.min(newIndex, items.length - 1));
+    goToSlide(clampedIndex);
   };
 
   useEffect(() => {
@@ -87,16 +107,19 @@ export default function Carousel({
     if (!container) return;
 
     const handleScroll = () => {
+      if (isDragging) return; // Don't update during drag
       const slideWidth = container.offsetWidth;
-      const newIndex = Math.round(container.scrollLeft / slideWidth);
-      if (newIndex !== currentIndex && newIndex >= 0 && newIndex < items.length) {
-        setCurrentIndex(newIndex);
+      const scrollPosition = container.scrollLeft;
+      const newIndex = Math.round(scrollPosition / slideWidth);
+      const clampedIndex = Math.max(0, Math.min(newIndex, items.length - 1));
+      if (clampedIndex !== currentIndex) {
+        setCurrentIndex(clampedIndex);
       }
     };
 
     container.addEventListener('scroll', handleScroll);
     return () => container.removeEventListener('scroll', handleScroll);
-  }, [currentIndex, items.length]);
+  }, [currentIndex, items.length, isDragging]);
 
   if (items.length === 0) {
     return null;
