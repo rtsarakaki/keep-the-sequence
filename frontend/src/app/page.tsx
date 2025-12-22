@@ -20,29 +20,31 @@ export default function Home() {
 
   return (
     <main className={styles.container}>
-      <div className={styles.hero}>
-        <h1 className={styles.title}>The Game</h1>
-        <p className={styles.subtitle}>
-          Um jogo cooperativo de cartas online
-        </p>
-        <p className={styles.description}>
-          Trabalhe em equipe para vencer o jogo. Jogue cartas nas pilhas
-          crescentes e decrescentes, mas cuidado: vocês só podem se comunicar
-          através das jogadas!
-        </p>
-      </div>
-
       <ErrorMessage message={error || ''} />
 
-      <LobbyActions
-        playerName={playerName}
-        gameId={gameId}
-        isCreating={isCreating}
-        onPlayerNameChange={setPlayerName}
-        onGameIdChange={setGameId}
-        onCreateGame={handleCreateGame}
-        onJoinGame={handleJoinGame}
-      />
+      <div className={styles.mainContent}>
+        <div className={styles.hero}>
+          <h1 className={styles.title}>The Game</h1>
+          <p className={styles.subtitle}>
+            Um jogo cooperativo de cartas online
+          </p>
+          <p className={styles.description}>
+            Trabalhe em equipe para vencer o jogo. Jogue cartas nas pilhas
+            crescentes e decrescentes, mas cuidado: vocês só podem se comunicar
+            através das jogadas!
+          </p>
+        </div>
+
+        <LobbyActions
+          playerName={playerName}
+          gameId={gameId}
+          isCreating={isCreating}
+          onPlayerNameChange={setPlayerName}
+          onGameIdChange={setGameId}
+          onCreateGame={handleCreateGame}
+          onJoinGame={handleJoinGame}
+        />
+      </div>
 
       <GameRules />
     </main>

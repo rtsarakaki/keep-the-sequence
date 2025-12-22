@@ -1,12 +1,15 @@
 .actions {
   max-width: 600px;
   margin: 0 auto 2rem;
+  width: 100%;
 }
 
 /* Desktop */
 @media (min-width: 1024px) {
   .actions {
-    max-width: 700px;
+    max-width: 500px;
+    margin: 0;
+    flex-shrink: 0;
   }
 }
 
