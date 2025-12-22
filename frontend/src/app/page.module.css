@@ -17,22 +17,22 @@
 }
 
 .title {
-  font-size: 3rem;
+  font-size: 3.5rem;
   font-weight: 800;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .subtitle {
-  font-size: 1.3rem;
+  font-size: 1.6rem;
   font-weight: 300;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
   opacity: 0.95;
 }
 
 .description {
-  font-size: 1rem;
-  line-height: 1.5;
+  font-size: 1.15rem;
+  line-height: 1.7;
   opacity: 0.9;
 }
 
@@ -157,13 +157,17 @@
   }
 
   .title {
-    font-size: 3.5rem;
+    font-size: 4.5rem;
     text-align: left;
   }
 
   .subtitle {
-    font-size: 1.5rem;
+    font-size: 2rem;
     text-align: left;
+  }
+
+  .description {
+    font-size: 1.3rem;
   }
 
   .description {
