@@ -23,52 +23,59 @@ export default function Carousel({
   // Initialize scroll to first slide
   useEffect(() => {
     if (containerRef.current) {
-      // Use requestAnimationFrame to ensure DOM is ready
-      requestAnimationFrame(() => {
+      const timer = setTimeout(() => {
         if (containerRef.current) {
           containerRef.current.scrollLeft = 0;
         }
-      });
+      }, 100);
+      return () => clearTimeout(timer);
     }
+    return undefined;
   }, []);
 
   const goToSlide = (index: number) => {
-    if (containerRef.current) {
-      const slideWidth = containerRef.current.offsetWidth;
-      containerRef.current.scrollTo({
-        left: index * slideWidth,
-        behavior: 'smooth',
-      });
-      setCurrentIndex(index);
-    }
+    if (!containerRef.current) return;
+    const container = containerRef.current;
+    const slideWidth = container.offsetWidth || container.clientWidth;
+    const targetScroll = index * slideWidth;
+    
+    container.scrollTo({
+      left: targetScroll,
+      behavior: 'smooth',
+    });
+    setCurrentIndex(index);
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!containerRef.current) return;
+    e.preventDefault();
     setIsDragging(true);
-    setStartX(e.pageX - containerRef.current.offsetLeft);
-    setScrollLeft(containerRef.current.scrollLeft);
-    containerRef.current.style.cursor = 'grabbing';
-    containerRef.current.style.scrollSnapType = 'none';
+    const container = containerRef.current;
+    setStartX(e.pageX - container.offsetLeft);
+    setScrollLeft(container.scrollLeft);
+    container.style.cursor = 'grabbing';
+    container.style.scrollSnapType = 'none';
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging || !containerRef.current) return;
     e.preventDefault();
-    const x = e.pageX - containerRef.current.offsetLeft;
+    const container = containerRef.current;
+    const x = e.pageX - container.offsetLeft;
     const walk = (x - startX) * 2;
-    containerRef.current.scrollLeft = scrollLeft - walk;
+    container.scrollLeft = scrollLeft - walk;
   };
 
   const handleMouseUp = () => {
     if (!containerRef.current) return;
+    const container = containerRef.current;
     setIsDragging(false);
-    containerRef.current.style.cursor = 'grab';
-    containerRef.current.style.scrollSnapType = 'x mandatory';
+    container.style.cursor = 'grab';
+    container.style.scrollSnapType = 'x mandatory';
     
-    // Snap to nearest slide (tudo ou nada)
-    const slideWidth = containerRef.current.offsetWidth;
-    const scrollPosition = containerRef.current.scrollLeft;
+    // Snap to nearest slide
+    const slideWidth = container.offsetWidth || container.clientWidth;
+    const scrollPosition = container.scrollLeft;
     const newIndex = Math.round(scrollPosition / slideWidth);
     const clampedIndex = Math.max(0, Math.min(newIndex, items.length - 1));
     goToSlide(clampedIndex);
@@ -76,27 +83,30 @@ export default function Carousel({
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!containerRef.current) return;
+    const container = containerRef.current;
     setIsDragging(true);
-    setStartX(e.touches[0].pageX - containerRef.current.offsetLeft);
-    setScrollLeft(containerRef.current.scrollLeft);
-    containerRef.current.style.scrollSnapType = 'none';
+    setStartX(e.touches[0].pageX - container.offsetLeft);
+    setScrollLeft(container.scrollLeft);
+    container.style.scrollSnapType = 'none';
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging || !containerRef.current) return;
-    const x = e.touches[0].pageX - containerRef.current.offsetLeft;
+    const container = containerRef.current;
+    const x = e.touches[0].pageX - container.offsetLeft;
     const walk = (x - startX) * 2;
-    containerRef.current.scrollLeft = scrollLeft - walk;
+    container.scrollLeft = scrollLeft - walk;
   };
 
   const handleTouchEnd = () => {
     if (!containerRef.current) return;
+    const container = containerRef.current;
     setIsDragging(false);
-    containerRef.current.style.scrollSnapType = 'x mandatory';
+    container.style.scrollSnapType = 'x mandatory';
     
-    // Snap to nearest slide (tudo ou nada)
-    const slideWidth = containerRef.current.offsetWidth;
-    const scrollPosition = containerRef.current.scrollLeft;
+    // Snap to nearest slide
+    const slideWidth = container.offsetWidth || container.clientWidth;
+    const scrollPosition = container.scrollLeft;
     const newIndex = Math.round(scrollPosition / slideWidth);
     const clampedIndex = Math.max(0, Math.min(newIndex, items.length - 1));
     goToSlide(clampedIndex);
@@ -107,8 +117,9 @@ export default function Carousel({
     if (!container) return;
 
     const handleScroll = () => {
-      if (isDragging) return; // Don't update during drag
-      const slideWidth = container.offsetWidth;
+      if (isDragging) return;
+      const slideWidth = container.offsetWidth || container.clientWidth;
+      if (slideWidth === 0) return; // Container not ready
       const scrollPosition = container.scrollLeft;
       const newIndex = Math.round(scrollPosition / slideWidth);
       const clampedIndex = Math.max(0, Math.min(newIndex, items.length - 1));
@@ -117,7 +128,7 @@ export default function Carousel({
       }
     };
 
-    container.addEventListener('scroll', handleScroll);
+    container.addEventListener('scroll', handleScroll, { passive: true });
     return () => container.removeEventListener('scroll', handleScroll);
   }, [currentIndex, items.length, isDragging]);
 
