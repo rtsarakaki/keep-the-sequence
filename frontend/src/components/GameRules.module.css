@@ -112,10 +112,9 @@
   }
 
   .rulesScroll {
-    overflow-x: visible;
-    flex-wrap: wrap;
-    justify-content: center;
-    scroll-snap-type: none;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scroll-snap-type: x mandatory;
   }
 
   .ruleCard {

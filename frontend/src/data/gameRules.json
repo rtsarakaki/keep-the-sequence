@@ -2,22 +2,27 @@
   {
     "number": 1,
     "title": "Objetivo",
-    "description": "Jogue todas as 98 cartas nas 4 pilhas antes que o baralho acabe."
+    "description": "Jogue todas as 98 cartas nas 4 pilhas antes que o baralho acabe. Trabalhem juntos para vencer!"
   },
   {
     "number": 2,
     "title": "Pilhas",
-    "description": "Duas pilhas crescentes (1→99) e duas decrescentes (100→2)."
+    "description": "Duas pilhas crescentes começam em 1 e vão até 99. Duas pilhas decrescentes começam em 100 e vão até 2. Você só pode jogar cartas maiores nas crescentes e menores nas decrescentes."
   },
   {
     "number": 3,
     "title": "Regra Especial",
-    "description": "Você pode jogar uma carta 10 unidades menor/maior que a última."
+    "description": "Você pode jogar uma carta exatamente 10 unidades menor que a última em pilhas crescentes, ou 10 unidades maior em pilhas decrescentes. Isso faz a pilha retroceder na contagem, abrindo mais opções de jogada para o time!"
   },
   {
     "number": 4,
     "title": "Comunicação",
-    "description": "Vocês só podem se comunicar através das jogadas. Quando não for sua vez, você pode marcar uma pilha para pedir que outros jogadores não joguem nela."
+    "description": "Não é permitido conversar, falar quais cartas você tem, citar números, dizer se é maior ou menor, ou qualquer outra forma de comunicação verbal. A única forma de comunicação é através das jogadas."
+  },
+  {
+    "number": 5,
+    "title": "Marcação de Pilhas",
+    "description": "Quando não for sua vez, você pode marcar uma pilha para indicar sua preferência de que outros jogadores não joguem nela. Esta marcação é apenas uma sugestão e não impede que outros joguem na pilha."
   }
 ]
 
