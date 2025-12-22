@@ -1,0 +1,23 @@
+[
+  {
+    "number": 1,
+    "title": "Objetivo",
+    "description": "Jogue todas as 98 cartas nas 4 pilhas antes que o baralho acabe."
+  },
+  {
+    "number": 2,
+    "title": "Pilhas",
+    "description": "Duas pilhas crescentes (1→99) e duas decrescentes (100→2)."
+  },
+  {
+    "number": 3,
+    "title": "Regra Especial",
+    "description": "Você pode jogar uma carta 10 unidades menor/maior que a última."
+  },
+  {
+    "number": 4,
+    "title": "Comunicação",
+    "description": "Vocês só podem se comunicar através das jogadas. Quando não for sua vez, você pode marcar uma pilha para pedir que outros jogadores não joguem nela."
+  }
+]
+
