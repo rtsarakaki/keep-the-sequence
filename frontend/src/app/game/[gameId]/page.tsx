@@ -95,6 +95,22 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
     });
   };
 
+  const handleMarkPreference = (pileId: 'ascending1' | 'ascending2' | 'descending1' | 'descending2' | null) => {
+    if (wsStatus !== 'connected' || !playerId || !gameState) {
+      return;
+    }
+
+    // Check if game is in playing status
+    if (gameState.status !== 'playing') {
+      return;
+    }
+
+    sendMessage({
+      action: 'markPilePreference',
+      pileId,
+    });
+  };
+
   const handleSetStartingPlayer = (startingPlayerId: string) => {
     if (wsStatus !== 'connected' || !playerId) {
       return;
@@ -318,6 +334,11 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
               deckLength={gameState.deck.length}
               onCardDrop={isGameFinished ? undefined : (cardIndex, pileId) => handlePlayCard(cardIndex, pileId)}
               isDroppable={!isGameFinished && wsStatus === 'connected' && isMyTurn}
+              currentPlayerId={playerId}
+              currentTurn={gameState.currentTurn}
+              pilePreferences={gameState.pilePreferences}
+              players={gameState.players}
+              onMarkPreference={isGameFinished ? undefined : handleMarkPreference}
             />
 
             {currentPlayer && (

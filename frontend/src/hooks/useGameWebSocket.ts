@@ -20,6 +20,7 @@ export interface GameState {
   currentTurn: string | null;
   cardsPlayedThisTurn: number;
   status: 'waiting' | 'playing' | 'finished' | 'abandoned';
+  pilePreferences: Record<string, string | null>; // Maps playerId -> pileId (null if no preference)
   updatedAt?: string; // ISO timestamp for comparing state freshness
   createdBy: string; // ID of the player who created the game
 }

@@ -6,6 +6,7 @@ import { Card } from '../../../domain/valueObjects/Card';
 import { formatGameForMessage } from './gameMessageFormatter';
 import { areAllHandsEmpty } from '../../../domain/services/GameRules';
 import { SetStartingPlayerDTO } from '../../../application/useCases/SetStartingPlayerUseCase';
+import { MarkPilePreferenceDTO } from '../../../application/useCases/MarkPilePreferenceUseCase';
 
 /**
  * WebSocket game handler for processing game actions.
@@ -442,6 +443,48 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
           }).catch(() => {
             // Silently handle notification errors
           });
+
+        return Promise.resolve({
+          statusCode: 200,
+        });
+      }
+
+      case 'markPilePreference': {
+        const markPilePreferenceUseCase = container.getMarkPilePreferenceUseCase();
+        const markPilePreferenceData = messageBody as {
+          action: 'markPilePreference';
+          pileId: string | null;
+        };
+
+        const dto: MarkPilePreferenceDTO = {
+          gameId,
+          playerId,
+          pileId: markPilePreferenceData.pileId as keyof import('../../../domain/services/GameRules').GamePiles | null,
+        };
+
+        const result = await markPilePreferenceUseCase.execute(dto);
+
+        if (!result.isSuccess) {
+          await webSocketService.sendToConnection(connectionId, {
+            type: 'error',
+            error: result.error || 'Falha ao marcar preferência de pilha',
+          });
+          return Promise.resolve({
+            statusCode: 400,
+            body: JSON.stringify({ error: result.error }),
+          });
+        }
+
+        // Broadcast updated game state to all players
+        const allConnections = await connectionRepository.findByGameId(gameId);
+        const connectionIds = allConnections.map(c => c.connectionId);
+
+        await webSocketService.sendToConnections(connectionIds, {
+          type: 'gameUpdated',
+          game: formatGameForMessage(result.value),
+        }).catch(() => {
+          // Silently handle notification errors
+        });
 
         return Promise.resolve({
           statusCode: 200,

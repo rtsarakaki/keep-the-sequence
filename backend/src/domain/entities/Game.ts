@@ -14,6 +14,7 @@ export class Game {
   readonly cardsPlayedThisTurn: number; // Number of cards played by current player in this turn
   readonly createdBy: string; // Player ID of the player who created the game
   readonly status: GameStatus;
+  readonly pilePreferences: Readonly<Record<string, keyof GamePiles | null>>; // Maps playerId -> pileId (null if no preference)
   readonly createdAt: Date;
   readonly updatedAt: Date;
   readonly ttl?: number;
@@ -28,6 +29,7 @@ export class Game {
     cardsPlayedThisTurn?: number; // Optional, defaults to 0
     createdBy: string; // Player ID of the player who created the game
     status: GameStatus;
+    pilePreferences?: Readonly<Record<string, keyof GamePiles | null>>; // Optional, defaults to empty object
     createdAt: Date;
     updatedAt: Date;
     ttl?: number;
@@ -46,6 +48,7 @@ export class Game {
     this.cardsPlayedThisTurn = data.cardsPlayedThisTurn ?? 0;
     this.createdBy = data.createdBy;
     this.status = data.status;
+    this.pilePreferences = Object.freeze({ ...(data.pilePreferences || {}) });
     this.createdAt = data.createdAt;
     this.updatedAt = data.updatedAt;
     this.ttl = data.ttl;
@@ -54,6 +57,19 @@ export class Game {
 
   addCardToPile(pileId: keyof GamePiles, card: Card): Game {
     const currentPile = this.piles[pileId] || [];
+    
+    // Remove pile preferences for this pile when a card is played
+    const updatedPreferences: Record<string, keyof GamePiles | null> = {};
+    for (const [playerId, preferredPile] of Object.entries(this.pilePreferences)) {
+      if (preferredPile === pileId) {
+        // Remove preference for this pile
+        updatedPreferences[playerId] = null;
+      } else {
+        // Keep other preferences
+        updatedPreferences[playerId] = preferredPile;
+      }
+    }
+    
     return new Game({
       ...this,
       piles: {
@@ -61,6 +77,7 @@ export class Game {
         [pileId]: Object.freeze([...currentPile, card]),
       },
       cardsPlayedThisTurn: this.cardsPlayedThisTurn + 1, // Increment cards played this vez
+      pilePreferences: Object.freeze(updatedPreferences),
       updatedAt: new Date(),
     });
   }
@@ -134,6 +151,24 @@ export class Game {
     return new Game({
       ...this,
       deck: Object.freeze(newDeck),
+      updatedAt: new Date(),
+    });
+  }
+
+  /**
+   * Marks a pile preference for a player (or removes it if pileId is null).
+   * Each player can only have one pile preference at a time.
+   * If a player already has a preference, it will be replaced.
+   */
+  markPilePreference(playerId: string, pileId: keyof GamePiles | null): Game {
+    const updatedPreferences: Record<string, keyof GamePiles | null> = {
+      ...this.pilePreferences,
+      [playerId]: pileId,
+    };
+    
+    return new Game({
+      ...this,
+      pilePreferences: Object.freeze(updatedPreferences),
       updatedAt: new Date(),
     });
   }

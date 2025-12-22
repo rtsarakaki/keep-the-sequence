@@ -10,6 +10,12 @@ interface GameBoardProps {
   deckLength?: number;
   onCardDrop?: (cardIndex: number, pileId: 'ascending1' | 'ascending2' | 'descending1' | 'descending2') => void;
   isDroppable?: boolean;
+  // Pile preference props
+  currentPlayerId?: string | null;
+  currentTurn?: string | null;
+  pilePreferences?: Record<string, string | null>;
+  players?: Array<{ id: string; name: string }>;
+  onMarkPreference?: (pileId: 'ascending1' | 'ascending2' | 'descending1' | 'descending2' | null) => void;
 }
 
 const PILE_CONFIG = [
@@ -19,7 +25,17 @@ const PILE_CONFIG = [
   { key: 'descending2' as const, title: 'Pilha Decrescente 2', shortTitle: 'D2', icon: '↓' },
 ] as const;
 
-export function GameBoard({ piles, deckLength = 0, onCardDrop, isDroppable = true }: GameBoardProps) {
+export function GameBoard({ 
+  piles, 
+  deckLength = 0, 
+  onCardDrop, 
+  isDroppable = true,
+  currentPlayerId,
+  currentTurn,
+  pilePreferences,
+  players,
+  onMarkPreference,
+}: GameBoardProps) {
   const [hoveredPile, setHoveredPile] = useState<string | null>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -71,6 +87,7 @@ export function GameBoard({ piles, deckLength = 0, onCardDrop, isDroppable = tru
             key={key}
             title={shortTitle}
             shortTitle={shortTitle}
+            pileId={key}
             cards={piles[key]}
             onDrop={(e) => handleDrop(e, key)}
             onDragOver={handleDragOver}
@@ -78,6 +95,11 @@ export function GameBoard({ piles, deckLength = 0, onCardDrop, isDroppable = tru
             onDragLeave={handleDragLeave}
             isHovered={hoveredPile === key}
             isDroppable={isDroppable}
+            currentPlayerId={currentPlayerId}
+            currentTurn={currentTurn}
+            pilePreferences={pilePreferences}
+            players={players}
+            onMarkPreference={onMarkPreference}
           />
         ))}
       </div>

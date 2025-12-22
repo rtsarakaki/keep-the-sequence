@@ -24,6 +24,7 @@ export function formatGameForMessage(game: Game): {
   cardsPlayedThisTurn: number;
   createdBy: string;
   status: 'waiting' | 'playing' | 'finished' | 'abandoned';
+  pilePreferences: Record<string, string | null>; // Maps playerId -> pileId (null if no preference)
   createdAt: string;
   updatedAt: string;
 } {
@@ -47,6 +48,7 @@ export function formatGameForMessage(game: Game): {
     cardsPlayedThisTurn: game.cardsPlayedThisTurn,
     createdBy: game.createdBy,
     status: game.status,
+    pilePreferences: { ...game.pilePreferences },
     createdAt: game.createdAt.toISOString(),
     updatedAt: game.updatedAt.toISOString(),
   };

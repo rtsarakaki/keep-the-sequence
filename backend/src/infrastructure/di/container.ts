@@ -11,6 +11,7 @@ import { SyncGameUseCase } from '../../application/useCases/SyncGameUseCase';
 import { EndGameUseCase } from '../../application/useCases/EndGameUseCase';
 import { EndTurnUseCase } from '../../application/useCases/EndTurnUseCase';
 import { SetStartingPlayerUseCase } from '../../application/useCases/SetStartingPlayerUseCase';
+import { MarkPilePreferenceUseCase } from '../../application/useCases/MarkPilePreferenceUseCase';
 import { APIGatewayProxyWebsocketHandlerV2 } from 'aws-lambda';
 
 /**
@@ -30,6 +31,7 @@ class Container {
   private endGameUseCase: EndGameUseCase | null = null;
   private endTurnUseCase: EndTurnUseCase | null = null;
   private setStartingPlayerUseCase: SetStartingPlayerUseCase | null = null;
+  private markPilePreferenceUseCase: MarkPilePreferenceUseCase | null = null;
 
   getGameRepository(): IGameRepository {
     if (!this.gameRepository) {
@@ -106,6 +108,13 @@ class Container {
       this.setStartingPlayerUseCase = new SetStartingPlayerUseCase(this.getGameRepository());
     }
     return this.setStartingPlayerUseCase;
+  }
+
+  getMarkPilePreferenceUseCase(): MarkPilePreferenceUseCase {
+    if (!this.markPilePreferenceUseCase) {
+      this.markPilePreferenceUseCase = new MarkPilePreferenceUseCase(this.getGameRepository());
+    }
+    return this.markPilePreferenceUseCase;
   }
 
   getSQSEventService(): SQSEventService {

@@ -184,3 +184,82 @@
   display: none; /* Hidden on desktop */
 }
 
+.warningIcon {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: #ff9800;
+  color: white;
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(255, 152, 0, 0.4);
+  transition: all 0.2s ease;
+}
+
+.warningIcon:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.6);
+}
+
+.warningIcon svg {
+  font-size: 1.25rem;
+}
+
+.markPreferenceButton {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  width: 100%;
+  text-align: center;
+}
+
+.markPreferenceButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.markPreferenceButton:active {
+  transform: translateY(0);
+}
+
+.markPreferenceButton.marked {
+  background: linear-gradient(135deg, #f44336 0%, #e91e63 100%);
+}
+
+.markPreferenceButton.marked:hover {
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .warningIcon {
+    width: 1.5rem;
+    height: 1.5rem;
+    top: 0.25rem;
+    right: 0.25rem;
+  }
+
+  .warningIcon svg {
+    font-size: 1rem;
+  }
+
+  .markPreferenceButton {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+  }
+}
+

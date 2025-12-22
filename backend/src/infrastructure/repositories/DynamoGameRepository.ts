@@ -4,6 +4,7 @@ import { IGameRepository } from '../../domain/repositories/IGameRepository';
 import { Game, GameStatus } from '../../domain/entities/Game';
 import { Player } from '../../domain/entities/Player';
 import { Card } from '../../domain/valueObjects/Card';
+import { GamePiles } from '../../domain/services/GameRules';
 
 export class DynamoGameRepository implements IGameRepository {
   private readonly client: DynamoDBDocumentClient;
@@ -136,6 +137,20 @@ export class DynamoGameRepository implements IGameRepository {
       throw new Error('Invalid DynamoDB item: missing or invalid timestamps');
     }
 
+    // Map pilePreferences (optional, defaults to empty object)
+    const pilePreferences = item.pilePreferences;
+    const mappedPreferences: Record<string, keyof GamePiles | null> = {};
+    if (pilePreferences && typeof pilePreferences === 'object' && pilePreferences !== null) {
+      for (const [playerId, pileId] of Object.entries(pilePreferences)) {
+        const validPileIds: (keyof GamePiles)[] = ['ascending1', 'ascending2', 'descending1', 'descending2'];
+        if (pileId === null || pileId === undefined) {
+          mappedPreferences[playerId] = null;
+        } else if (typeof pileId === 'string' && validPileIds.includes(pileId as keyof GamePiles)) {
+          mappedPreferences[playerId] = pileId as keyof GamePiles;
+        }
+      }
+    }
+
     return new Game({
       id: item.gameId,
       players: mapPlayers(Array.isArray(item.players) ? item.players : []),
@@ -153,6 +168,7 @@ export class DynamoGameRepository implements IGameRepository {
       cardsPlayedThisTurn: typeof item.cardsPlayedThisTurn === 'number' ? item.cardsPlayedThisTurn : 0,
       createdBy: getCreatedBy(),
       status: status as GameStatus,
+      pilePreferences: mappedPreferences,
       createdAt: new Date(createdAt),
       updatedAt: new Date(updatedAt),
       ttl: typeof item.ttl === 'number' ? item.ttl : undefined,
@@ -201,6 +217,7 @@ export class DynamoGameRepository implements IGameRepository {
       cardsPlayedThisTurn: game.cardsPlayedThisTurn,
       createdBy: game.createdBy,
       status: game.status,
+      pilePreferences: game.pilePreferences,
       createdAt: game.createdAt.getTime(),
       updatedAt: game.updatedAt.getTime(),
       ...(game.ttl !== undefined && { ttl: game.ttl }),
