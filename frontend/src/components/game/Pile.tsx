@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card } from './Card';
 import { PileHistoryModal } from './PileHistoryModal';
 import { MdHistory, MdWarning } from 'react-icons/md';
@@ -45,20 +45,35 @@ export function Pile({
   onMarkPreference,
 }: PileProps) {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [showWarningMessage, setShowWarningMessage] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastCard = cards.length > 0 ? cards[cards.length - 1] : null;
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleHistoryClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsHistoryOpen(true);
   };
 
+  // Find all players who marked this pile
+  const markedByPlayerIds = Object.entries(pilePreferences)
+    .filter(([, preferredPile]) => preferredPile === pileId)
+    .map(([playerId]) => playerId);
+  
+  const markedByPlayers = markedByPlayerIds
+    .map(playerId => players.find(p => p.id === playerId))
+    .filter((player): player is { id: string; name: string } => player !== undefined);
+
   // Check if this pile is marked by any player
-  const markedByPlayerId = Object.entries(pilePreferences).find(
-    ([, preferredPile]) => preferredPile === pileId
-  )?.[0];
-  const markedByPlayer = markedByPlayerId 
-    ? players.find(p => p.id === markedByPlayerId)
-    : null;
+  const isPileMarked = markedByPlayers.length > 0;
 
   // Check if current player can mark preferences (not their turn)
   const canMarkPreference = currentPlayerId && 
@@ -68,9 +83,6 @@ export function Pile({
   // Check if current player has marked this pile
   const isMarkedByCurrentPlayer = currentPlayerId && 
     pilePreferences[currentPlayerId] === pileId;
-
-  // Check if current player is the one whose turn it is (to show warning)
-  const isCurrentPlayerTurn = currentPlayerId === currentTurn;
 
   const handleMarkPreference = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -84,6 +96,31 @@ export function Pile({
       onMarkPreference(pileId);
     }
   };
+
+  const handleWarningClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    // Clear existing timeout if any
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    // Toggle message visibility
+    if (showWarningMessage) {
+      setShowWarningMessage(false);
+    } else {
+      setShowWarningMessage(true);
+      // Auto-hide after 3 seconds
+      timeoutRef.current = setTimeout(() => {
+        setShowWarningMessage(false);
+        timeoutRef.current = null;
+      }, 3000);
+    }
+  };
+
+  const warningMessage = markedByPlayers.length === 1
+    ? `${markedByPlayers[0].name} pediu para não jogar aqui`
+    : `${markedByPlayers.map(p => p.name).join(', ')} pediram para não jogar aqui`;
 
   return (
     <>
@@ -123,11 +160,25 @@ export function Pile({
             </div>
           )}
         </div>
-        {/* Show warning icon if it's current player's turn and pile is marked */}
-        {isCurrentPlayerTurn && markedByPlayer && (
-          <div className={styles.warningIcon} title={`${markedByPlayer.name} pediu para não jogar aqui`}>
-            <MdWarning />
-          </div>
+        {/* Show warning icon if pile is marked by any player */}
+        {isPileMarked && (
+          <>
+            <div 
+              className={styles.warningIcon} 
+              title={warningMessage}
+              onClick={handleWarningClick}
+            >
+              <MdWarning />
+              {markedByPlayers.length > 1 && (
+                <span className={styles.warningCount}>{markedByPlayers.length}</span>
+              )}
+            </div>
+            {showWarningMessage && (
+              <div className={styles.warningMessage}>
+                {warningMessage}
+              </div>
+            )}
+          </>
         )}
         {/* Show "Don't play here" button if not current player's turn */}
         {canMarkPreference && (
