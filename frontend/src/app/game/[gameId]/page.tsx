@@ -283,7 +283,7 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
       />
 
       {isWaitingForPlayers ? (
-        <WaitingForPlayers gameState={gameState} currentPlayerId={playerId} />
+        <WaitingForPlayers gameState={gameState} />
       ) : (
         <>
           {isGameFinished && (

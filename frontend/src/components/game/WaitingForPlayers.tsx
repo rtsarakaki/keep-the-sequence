@@ -6,11 +6,9 @@ import styles from './WaitingForPlayers.module.css';
 
 interface WaitingForPlayersProps {
   gameState: GameState;
-  currentPlayerId: string | null;
 }
 
-export function WaitingForPlayers({ gameState, currentPlayerId }: WaitingForPlayersProps) {
-  const currentPlayer = gameState.players.find(p => p.id === currentPlayerId);
+export function WaitingForPlayers({ gameState }: WaitingForPlayersProps) {
   const playersNeeded = Math.max(0, 2 - gameState.players.length);
 
   return (
@@ -52,21 +50,6 @@ export function WaitingForPlayers({ gameState, currentPlayerId }: WaitingForPlay
             </button>
           </div>
         </div>
-        {currentPlayer && (
-          <div className={styles.yourCards}>
-            <p className={styles.yourCardsTitle}>Suas cartas (serão usadas quando o jogo começar):</p>
-            <div className={styles.cardsPreview}>
-              {currentPlayer.hand.slice(0, 5).map((card, idx) => (
-                <div key={idx} className={styles.cardPreview}>
-                  {card.value}
-                </div>
-              ))}
-              {currentPlayer.hand.length > 5 && (
-                <div className={styles.cardPreview}>+{currentPlayer.hand.length - 5}</div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
