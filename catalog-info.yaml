@@ -1,0 +1,22 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: games-keep-the-sequence-website
+  description: |
+    Versão digital do jogo de cartas cooperativo "The Game", onde os jogadores 
+    trabalham juntos para descartar todas as cartas em sequências crescentes e 
+    decrescentes. Adaptação web do clássico jogo de estratégia e cooperação, 
+    mantendo as regras originais e oferecendo uma experiência multiplayer online.
+  tags:
+    - game
+    - cards
+    - cooperative
+    - web
+    - multiplayer
+  annotations:
+    github.com/project-slug: rtsarakaki/keep-the-sequence
+spec:
+  type: website  # service ou website, library, etc.
+  lifecycle: production  # ou experimental, deprecated
+  owner: rtsarakaki  # seu username
+  system: games  # opcional
