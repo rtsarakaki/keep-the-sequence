@@ -18,5 +18,5 @@ metadata:
 spec:
   type: website  # service ou website, library, etc.
   lifecycle: production  # ou experimental, deprecated
-  owner: rtsarakaki  # seu username
+  owner: user:rtsarakaki  # seu username
   system: games  # opcional
