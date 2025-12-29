@@ -18,5 +18,5 @@ metadata:
 spec:
   type: website  # service ou website, library, etc.
   lifecycle: production  # ou experimental, deprecated
-  owner: time-arakaki  # seu username
+  owner: developers  # seu username
   system: games  # opcional
