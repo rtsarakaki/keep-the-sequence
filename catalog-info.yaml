@@ -8,5 +8,5 @@ metadata:
 spec:
   type: website
   lifecycle: production
-  owner: developers  # seu username
+  owner: group:default/developers
   system: games
