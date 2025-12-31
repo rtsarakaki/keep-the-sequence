@@ -8,5 +8,5 @@ metadata:
 spec:
   type: website
   lifecycle: production
-  owner: group:default/developers
-  system: games
+  owner: developers
+  system: text-tools
