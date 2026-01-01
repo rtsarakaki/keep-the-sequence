@@ -82,12 +82,13 @@ export function GameBoard({
         </div>
       </div>
       <div className={styles.piles}>
-        {PILE_CONFIG.map(({ key, shortTitle }) => (
+        {PILE_CONFIG.map(({ key, shortTitle, icon, title: fullTitle }) => (
           <Pile
             key={key}
-            title={shortTitle}
+            title={fullTitle}
             shortTitle={shortTitle}
             pileId={key}
+            directionIcon={icon}
             cards={piles[key]}
             onDrop={(e) => handleDrop(e, key)}
             onDragOver={handleDragOver}

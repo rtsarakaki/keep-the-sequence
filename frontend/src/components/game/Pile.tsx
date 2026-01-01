@@ -12,6 +12,7 @@ interface PileProps {
   title: string;
   shortTitle?: string;
   pileId: PileId;
+  directionIcon?: string;
   cards: Array<{ value: number; suit: string }>;
   onDrop?: (e: React.DragEvent) => void;
   onDragOver?: (e: React.DragEvent) => void;
@@ -31,6 +32,7 @@ export function Pile({
   title, 
   shortTitle,
   pileId,
+  directionIcon,
   cards, 
   onDrop, 
   onDragOver, 
@@ -134,7 +136,14 @@ export function Pile({
         onDragLeave={onDragLeave}
       >
         <div className={styles.header}>
-          <h3 className={styles.title}>{title}</h3>
+          <h3 className={styles.title}>
+            {directionIcon && (
+              <span className={styles.directionArrow} aria-label={pileId.includes('ascending') ? 'Crescente' : 'Decrescente'}>
+                {directionIcon}
+              </span>
+            )}
+            {title}
+          </h3>
           {cards.length > 0 && (
             <button
               className={styles.historyButton}
@@ -148,9 +157,20 @@ export function Pile({
           )}
         </div>
         {shortTitle && (
-          <div className={styles.mobileTitle}>{shortTitle}</div>
+          <div className={styles.mobileTitle}>
+            {directionIcon && (
+              <span className={styles.directionArrow}>{directionIcon}</span>
+            )}
+            {shortTitle}
+          </div>
         )}
         <div className={styles.pileCards}>
+          {/* Direction indicator - always visible */}
+          {directionIcon && (
+            <div className={styles.directionIndicator}>
+              <span className={styles.directionArrowLarge}>{directionIcon}</span>
+            </div>
+          )}
           {/* Show warning icon if pile is marked by any player */}
           {isPileMarked && (
             <>
