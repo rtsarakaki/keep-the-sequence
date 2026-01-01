@@ -24,7 +24,7 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
     router.push('/');
   };
 
-  const { gameState, wsStatus, error, gameError, retryCount, isRetrying, retry, sendMessage, clearGameError } = useGameWebSocket({
+  const { gameState, wsStatus, error, gameError, retryCount, isRetrying, retry, sendMessage, clearGameError, disconnect } = useGameWebSocket({
     gameId: params.gameId,
     playerId: playerId || undefined,
     playerName: playerName || undefined,
@@ -157,6 +157,13 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
     }
   };
 
+  const handleLeaveGame = () => {
+    if (confirm('Tem certeza que deseja sair do jogo?')) {
+      disconnect();
+      router.push('/');
+    }
+  };
+
   if (error) {
     return (
       <GameError
@@ -205,6 +212,7 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
         cardsPlayedThisTurn={gameState.cardsPlayedThisTurn}
         isGameCreator={isGameCreator}
         onEndGame={handleEndGame}
+        onLeaveGame={handleLeaveGame}
       />
 
       {isWaitingForPlayers ? (

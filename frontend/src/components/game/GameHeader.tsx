@@ -10,7 +10,8 @@ import {
   MdPlayArrow, 
   MdCheckCircleOutline,
   MdCancel,
-  MdPowerSettingsNew
+  MdPowerSettingsNew,
+  MdExitToApp
 } from 'react-icons/md';
 import styles from './GameHeader.module.css';
 
@@ -24,6 +25,7 @@ interface GameHeaderProps {
   cardsPlayedThisTurn: number;
   isGameCreator?: boolean;
   onEndGame?: () => void;
+  onLeaveGame?: () => void;
 }
 
 const STATUS_LABELS: Record<GameState['status'], string> = {
@@ -42,7 +44,8 @@ export function GameHeader({
   currentPlayerId,
   cardsPlayedThisTurn,
   isGameCreator = false,
-  onEndGame
+  onEndGame,
+  onLeaveGame
 }: GameHeaderProps) {
   const currentTurnPlayer = currentTurn ? players.find(p => p.id === currentTurn) : null;
   const isMyTurn = currentTurn === currentPlayerId && gameStatus === 'playing';
@@ -97,6 +100,17 @@ export function GameHeader({
             aria-label="Encerrar Jogo"
           >
             <MdPowerSettingsNew className={styles.icon} />
+          </button>
+        )}
+        {onLeaveGame && (
+          <button
+            onClick={onLeaveGame}
+            className={styles.leaveGameButton}
+            title="Sair do Jogo"
+            aria-label="Sair do Jogo"
+          >
+            <MdExitToApp className={styles.icon} />
+            <span className={styles.leaveGameText}>Sair</span>
           </button>
         )}
         <div className={styles.statusBadge} data-status={wsStatus} title={getConnectionLabel()}>

@@ -43,6 +43,7 @@ interface UseGameWebSocketReturn {
   retry: () => void;
   sendMessage: (message: unknown) => void;
   clearGameError: () => void;
+  disconnect: () => void;
 }
 
 /**
@@ -318,6 +319,14 @@ export function useGameWebSocket({
     setGameError(null);
   }, []);
 
+  const disconnect = useCallback(() => {
+    if (ws) {
+      ws.disconnect();
+      setWs(null);
+      setWsStatus('disconnected');
+    }
+  }, [ws]);
+
   return {
     gameState,
     wsStatus,
@@ -328,6 +337,7 @@ export function useGameWebSocket({
     retry,
     sendMessage,
     clearGameError,
+    disconnect,
   };
 }
 
