@@ -51,7 +51,7 @@
 }
 
 .directionArrow {
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   font-weight: 900;
   color: #667eea;
   display: inline-block;
@@ -99,28 +99,6 @@
   justify-content: center;
   gap: 0.5rem;
   position: relative;
-}
-
-.directionIndicator {
-  position: absolute;
-  top: 0.5rem;
-  left: 0.5rem;
-  background: rgba(102, 126, 234, 0.1);
-  border: 2px solid #667eea;
-  border-radius: 50%;
-  width: 2.5rem;
-  height: 2.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 5;
-}
-
-.directionArrowLarge {
-  font-size: 1.5rem;
-  font-weight: 900;
-  color: #667eea;
-  line-height: 1;
 }
 
 .lastCard {
@@ -217,15 +195,8 @@
     gap: 0.25rem;
   }
 
-  .directionIndicator {
-    width: 1.75rem;
-    height: 1.75rem;
-    top: 0.25rem;
-    left: 0.25rem;
-  }
-
-  .directionArrowLarge {
-    font-size: 1rem;
+  .directionArrow {
+    font-size: 1.2rem;
   }
 }
 

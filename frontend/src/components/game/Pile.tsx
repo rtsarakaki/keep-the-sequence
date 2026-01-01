@@ -165,12 +165,6 @@ export function Pile({
           </div>
         )}
         <div className={styles.pileCards}>
-          {/* Direction indicator - always visible */}
-          {directionIcon && (
-            <div className={styles.directionIndicator}>
-              <span className={styles.directionArrowLarge}>{directionIcon}</span>
-            </div>
-          )}
           {/* Show warning icon if pile is marked by any player */}
           {isPileMarked && (
             <>

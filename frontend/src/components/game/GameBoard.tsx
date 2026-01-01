@@ -82,10 +82,10 @@ export function GameBoard({
         </div>
       </div>
       <div className={styles.piles}>
-        {PILE_CONFIG.map(({ key, shortTitle, icon, title: fullTitle }) => (
+        {PILE_CONFIG.map(({ key, shortTitle, icon }) => (
           <Pile
             key={key}
-            title={fullTitle}
+            title={shortTitle}
             shortTitle={shortTitle}
             pileId={key}
             directionIcon={icon}
