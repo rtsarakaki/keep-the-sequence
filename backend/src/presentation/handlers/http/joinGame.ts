@@ -3,6 +3,7 @@ import { container } from '../../../infrastructure/di/container';
 import { JoinGameDTO } from '../../../application/dto/JoinGameDTO';
 import { formatGameForMessage } from '../websocket/gameMessageFormatter';
 import { WebSocketService } from '../../../infrastructure/websocket/WebSocketService';
+import { getClientIp } from '../utils/getClientIp';
 
 /**
  * HTTP endpoint to join an existing game
@@ -67,12 +68,27 @@ export const handler = async (
       });
     }
 
+    const trimmedPlayerName = body.playerName.trim();
+    if (trimmedPlayerName.length < 3) {
+      return Promise.resolve({
+        statusCode: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': origin || '*',
+        },
+        body: JSON.stringify({ error: 'O nome do jogador deve ter pelo menos 3 caracteres' }),
+      });
+    }
+
     // Join game
     const joinGameUseCase = container.getJoinGameUseCase();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+    const clientIp: string | undefined = getClientIp(event);
     const dto: JoinGameDTO = {
       gameId: body.gameId.trim(),
-      playerName: body.playerName.trim(),
+      playerName: trimmedPlayerName,
       playerId: body.playerId,
+      clientIp,
     };
 
     const result = await joinGameUseCase.execute(dto);
@@ -89,9 +105,8 @@ export const handler = async (
     }
 
     // Find the player that was added (case-insensitive name comparison)
-    const playerName = body.playerName.trim();
     const player = result.value.players.find(p => 
-      p.name.toLowerCase() === playerName.toLowerCase() && 
+      p.name.toLowerCase() === trimmedPlayerName.toLowerCase() && 
       (!body.playerId || p.id === body.playerId)
     );
 
@@ -130,7 +145,7 @@ export const handler = async (
         eventType: 'joinGame',
         eventData: {
           playerId: player?.id,
-          playerName: body.playerName.trim(),
+          playerName: trimmedPlayerName,
         },
         timestamp: Date.now(),
       }).catch(() => {

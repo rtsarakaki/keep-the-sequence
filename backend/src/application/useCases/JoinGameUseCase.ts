@@ -1,4 +1,5 @@
 import { IGameRepository } from '../../domain/repositories/IGameRepository';
+import { IConnectionRepository } from '../../domain/repositories/IConnectionRepository';
 import { JoinGameDTO } from '../dto/JoinGameDTO';
 import { Game } from '../../domain/entities/Game';
 import { Player } from '../../domain/entities/Player';
@@ -16,7 +17,10 @@ import { randomUUID } from 'crypto';
 export class JoinGameUseCase {
   private readonly MAX_PLAYERS = 5;
 
-  constructor(private readonly gameRepository: IGameRepository) {}
+  constructor(
+    private readonly gameRepository: IGameRepository,
+    private readonly connectionRepository: IConnectionRepository
+  ) {}
 
   async execute(dto: JoinGameDTO): Promise<Result<Game>> {
     try {
@@ -35,7 +39,8 @@ export class JoinGameUseCase {
         p => p.id === playerId || p.name.toLowerCase() === dto.playerName.toLowerCase()
       );
 
-      // If player exists, allow reconnection even if game is in 'playing' status
+      // If player exists, allow reconnection (IP may change due to network changes)
+      // This allows legitimate reconnections while still preventing initial impersonation
       if (existingPlayer) {
         // Player is reconnecting - just update connection status
         const updatedGame = existingGame.updatePlayer(existingPlayer.id, (p) =>
@@ -44,6 +49,40 @@ export class JoinGameUseCase {
         
         await this.gameRepository.save(updatedGame);
         return success(updatedGame);
+      }
+
+      // For new players, validate that they're not trying to impersonate someone else
+      // Check if someone with the same IP is already using a different name/ID
+      // This prevents the same person from joining multiple times with different names
+      if (dto.clientIp) {
+        const allConnections = await this.connectionRepository.findByGameId(dto.gameId);
+        const existingConnectionWithSameIp = allConnections.find(c => c.clientIp === dto.clientIp);
+        
+        if (existingConnectionWithSameIp) {
+          const existingPlayerWithSameIp = existingGame.players.find(
+            p => p.id === existingConnectionWithSameIp.playerId
+          );
+          
+          if (existingPlayerWithSameIp) {
+            return failure('Você já está conectado a este jogo com outro nome. Use o mesmo nome para reconectar.');
+          }
+        }
+        
+        // Check if someone is trying to use a name/ID that belongs to a different IP
+        // This prevents impersonation: if playerId or name matches an existing player,
+        // but the IP is different, it's likely an impersonation attempt
+        const existingPlayerWithDifferentIp = existingGame.players.find(
+          p => p.name.toLowerCase() === dto.playerName.toLowerCase()
+        );
+        
+        if (existingPlayerWithDifferentIp) {
+          // Check if there's a connection for this player with a different IP
+          const playerConnection = allConnections.find(c => c.playerId === existingPlayerWithDifferentIp.id);
+          
+          if (playerConnection && playerConnection.clientIp && playerConnection.clientIp !== dto.clientIp) {
+            return failure('Este nome já está sendo usado por outro jogador. Escolha um nome diferente.');
+          }
+        }
       }
 
       // New player joining - allow if:

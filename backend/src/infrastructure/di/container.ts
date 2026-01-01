@@ -67,7 +67,10 @@ class Container {
 
   getJoinGameUseCase(): JoinGameUseCase {
     if (!this.joinGameUseCase) {
-      this.joinGameUseCase = new JoinGameUseCase(this.getGameRepository());
+      this.joinGameUseCase = new JoinGameUseCase(
+        this.getGameRepository(),
+        this.getConnectionRepository()
+      );
     }
     return this.joinGameUseCase;
   }

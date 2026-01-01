@@ -2,6 +2,7 @@ import { APIGatewayProxyWebsocketHandlerV2 } from 'aws-lambda';
 import { AuthService } from '../../../domain/services/AuthService';
 import { container } from '../../../infrastructure/di/container';
 import { formatGameForMessage } from './gameMessageFormatter';
+import { getClientIp } from '../utils/getClientIp';
 
 /**
  * WebSocket $connect handler with authentication and origin validation.
@@ -88,10 +89,13 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
     // Save connection with TTL (24 hours)
     // DynamoDB will automatically delete disconnected connections after 24h
     const now = new Date();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+    const clientIp: string | undefined = getClientIp(event);
     await connectionRepository.save({
       connectionId,
       gameId,
       playerId,
+      clientIp,
       connectedAt: now,
       lastActivity: now,
       ttl: Math.floor(now.getTime() / 1000) + (24 * 60 * 60), // 24 hours

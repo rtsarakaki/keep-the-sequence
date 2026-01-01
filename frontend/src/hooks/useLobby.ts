@@ -24,8 +24,13 @@ export function useLobby() {
   }, []);
 
   const handleCreateGame = async () => {
-    if (!playerName.trim()) {
+    const trimmedName = playerName.trim();
+    if (!trimmedName) {
       setError('Por favor, informe seu nome');
+      return;
+    }
+    if (trimmedName.length < 3) {
+      setError('O nome deve ter pelo menos 3 caracteres');
       return;
     }
 
@@ -34,11 +39,11 @@ export function useLobby() {
 
     try {
       // Create game via HTTP endpoint
-      const result = await createGame(playerName.trim());
+      const result = await createGame(trimmedName);
 
       // Store player info in sessionStorage for the game page
       sessionStorage.setItem('playerId', result.playerId);
-      sessionStorage.setItem('playerName', playerName.trim());
+      sessionStorage.setItem('playerName', trimmedName);
       sessionStorage.setItem('gameId', result.gameId);
 
       // Redirect to game page
@@ -56,18 +61,23 @@ export function useLobby() {
       return;
     }
 
-    if (!playerName.trim()) {
+    const trimmedName = playerName.trim();
+    if (!trimmedName) {
       setError('Por favor, informe seu nome');
+      return;
+    }
+    if (trimmedName.length < 3) {
+      setError('O nome deve ter pelo menos 3 caracteres');
       return;
     }
 
     try {
       // Join game via HTTP endpoint (backend will generate playerId automatically)
-      const result = await joinGame(gameId.trim(), playerName.trim());
+      const result = await joinGame(gameId.trim(), trimmedName);
 
       // Store player info in sessionStorage for the game page
       sessionStorage.setItem('playerId', result.playerId);
-      sessionStorage.setItem('playerName', playerName.trim());
+      sessionStorage.setItem('playerName', trimmedName);
       sessionStorage.setItem('gameId', result.gameId);
 
       // Redirect to game page (will connect via WebSocket there)

@@ -28,9 +28,10 @@ export default function LobbyActions({
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      if (mode === 'create' && !isCreating && playerName.trim()) {
+      const trimmedName = playerName.trim();
+      if (mode === 'create' && !isCreating && trimmedName && trimmedName.length >= 3) {
         onCreateGame();
-      } else if (mode === 'join' && gameId.trim() && playerName.trim()) {
+      } else if (mode === 'join' && gameId.trim() && trimmedName && trimmedName.length >= 3) {
         onJoinGame();
       }
     }
@@ -72,7 +73,7 @@ export default function LobbyActions({
               <button
                 className={styles.button}
                 onClick={onCreateGame}
-                disabled={isCreating || !playerName.trim()}
+                disabled={isCreating || !playerName.trim() || playerName.trim().length < 3}
               >
                 {isCreating ? 'Criando...' : 'Criar Partida'}
               </button>
@@ -104,7 +105,7 @@ export default function LobbyActions({
               <button
                 className={styles.button}
                 onClick={onJoinGame}
-                disabled={!gameId.trim() || !playerName.trim()}
+                disabled={!gameId.trim() || !playerName.trim() || playerName.trim().length < 3}
               >
                 Entrar
               </button>

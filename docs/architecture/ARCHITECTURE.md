@@ -4,10 +4,30 @@ Este documento descreve a arquitetura completa do sistema de jogo cooperativo on
 
 ## Visão Geral
 
-O sistema é composto por três camadas principais:
+O sistema é composto por três camadas principais distribuídas entre duas plataformas:
+
+### 🌐 Vercel Platform
 - **Frontend**: Next.js (React) - Interface do usuário responsiva
+  - Hospedagem e CDN global
+  - Deploy automático via GitHub
+  - SSL/TLS automático
+  - **DNS Management**: Gerenciamento de DNS para domínios personalizados
+    - Não é um serviço completo como Route53, mas permite configurar registros DNS
+    - Suporta domínios comprados na Vercel ou externos
+    - Configuração automática de registros A, AAAA, CNAME, MX, TXT
+    - SSL automático via Let's Encrypt
+
+### ☁️ AWS Cloud
 - **Backend**: AWS Lambda + API Gateway WebSocket - Lógica de negócio e comunicação em tempo real
 - **Infraestrutura**: AWS (DynamoDB, SQS, CloudFormation/CDK) - Persistência e processamento assíncrono
+  - Escalabilidade automática
+  - Alta disponibilidade
+  - Pay-per-use
+  - **Rede**: Recursos na rede pública/default (sem VPC)
+    - Lambdas executam na rede pública da AWS
+    - Acesso direto à internet para serviços AWS gerenciados
+    - Não requer configuração de VPC, subnets ou security groups
+    - Ideal para serverless (menos latência, sem cold starts de VPC)
 
 ## Diagrama de Arquitetura Geral
 
@@ -18,39 +38,49 @@ graph TB
         Desktop[Desktop Browser]
     end
 
-    subgraph "Frontend - Next.js"
-        NextApp[Next.js Application]
-        WSClient[WebSocket Client]
-        GameUI[Game UI Components]
+    subgraph Vercel["🌐 Vercel Platform"]
+        subgraph "Frontend - Next.js"
+            NextApp[Next.js Application]
+            WSClient[WebSocket Client]
+            GameUI[Game UI Components]
+        end
+        subgraph "DNS Management"
+            CustomDomain[Custom Domain]
+            DNSRecords[DNS Records<br/>A, AAAA, CNAME]
+            SSLCert[SSL Certificate<br/>Auto-generated]
+        end
     end
 
-    subgraph "API Gateway"
-        WSAPI[WebSocket API Gateway]
+    subgraph AWS["☁️ AWS Cloud - Public Network"]
+        subgraph "API Gateway"
+            WSAPI[WebSocket API Gateway]
+        end
+
+        subgraph "Backend - Lambda Functions"
+            OnConnect[onConnect Handler]
+            OnDisconnect[onDisconnect Handler]
+            GameHandler[gameHandler]
+            SyncHandler[syncHandler]
+            SQSConsumer[SQS Consumer]
+        end
+
+        subgraph "Data Layer"
+            GamesTable[(Games Table<br/>DynamoDB)]
+            ConnectionsTable[(Connections Table<br/>DynamoDB)]
+            EventsTable[(Game Events Table<br/>DynamoDB)]
+        end
+
+        subgraph "Message Queue"
+            SQSQueue[SQS Queue<br/>game-events]
+            DLQ[Dead Letter Queue<br/>game-events-dlq]
+        end
     end
 
-    subgraph "Backend - Lambda Functions"
-        OnConnect[onConnect Handler]
-        OnDisconnect[onDisconnect Handler]
-        GameHandler[gameHandler]
-        SyncHandler[syncHandler]
-        SQSConsumer[SQS Consumer]
-    end
-
-    subgraph "Data Layer"
-        GamesTable[(Games Table<br/>DynamoDB)]
-        ConnectionsTable[(Connections Table<br/>DynamoDB)]
-        EventsTable[(Game Events Table<br/>DynamoDB)]
-    end
-
-    subgraph "Message Queue"
-        SQSQueue[SQS Queue<br/>game-events]
-        DLQ[Dead Letter Queue<br/>game-events-dlq]
-    end
-
-    Mobile --> NextApp
-    Desktop --> NextApp
+    Mobile -->|HTTPS| NextApp
+    Desktop -->|HTTPS| NextApp
+    CustomDomain -->|DNS| NextApp
     NextApp --> WSClient
-    WSClient <--> WSAPI
+    WSClient <-->|WebSocket Connection| WSAPI
     WSAPI --> OnConnect
     WSAPI --> OnDisconnect
     WSAPI --> GameHandler
@@ -72,7 +102,7 @@ graph TB
 
 ## Componentes Principais
 
-### Frontend (Next.js)
+### 🌐 Frontend (Vercel - Next.js)
 
 **Páginas:**
 - `/` - Lobby: Listar e criar partidas
@@ -88,7 +118,7 @@ graph TB
 - `WebSocketService` - Gerenciamento de conexão WebSocket
 - `GameService` - Lógica de negócio do frontend
 
-### Backend (AWS Lambda)
+### ☁️ Backend (AWS Lambda)
 
 **Handlers WebSocket:**
 - `onConnect` - Registra nova conexão WebSocket
@@ -101,7 +131,7 @@ graph TB
 **Handlers SQS:**
 - `sqsConsumer` - Processa eventos da fila SQS
 
-### Infraestrutura AWS
+### ☁️ Infraestrutura AWS
 
 **DynamoDB Tables:**
 - `the-game-games` - Estado completo das partidas
@@ -218,30 +248,44 @@ sequenceDiagram
 
 ```mermaid
 graph TB
-    subgraph "Presentation Layer"
-        WebSocketHandlers[WebSocket Handlers]
-        HTTPHandlers[HTTP Handlers]
-        SQSHandlers[SQS Handlers]
+    subgraph Vercel["🌐 Vercel - Frontend"]
+        subgraph "Frontend Layer"
+            NextApp[Next.js App]
+            ReactComponents[React Components]
+            WebSocketClient[WebSocket Client]
+        end
     end
 
-    subgraph "Application Layer"
-        UseCases[Use Cases]
-        DTOs[DTOs]
-        Mappers[Mappers]
+    subgraph AWS["☁️ AWS - Backend (Public Network)"]
+        subgraph "Presentation Layer"
+            WebSocketHandlers[WebSocket Handlers]
+            HTTPHandlers[HTTP Handlers]
+            SQSHandlers[SQS Handlers]
+        end
+
+        subgraph "Application Layer"
+            UseCases[Use Cases]
+            DTOs[DTOs]
+            Mappers[Mappers]
+        end
+
+        subgraph "Domain Layer"
+            Entities[Entities<br/>Game, Player, Card]
+            ValueObjects[Value Objects]
+            DomainServices[Domain Services<br/>GameRules]
+            Repositories[Repository Interfaces]
+        end
+
+        subgraph "Infrastructure Layer"
+            DynamoRepo[DynamoDB Repository]
+            WebSocketService[WebSocket Service]
+            SQSService[SQS Service]
+        end
     end
 
-    subgraph "Domain Layer"
-        Entities[Entities<br/>Game, Player, Card]
-        ValueObjects[Value Objects]
-        DomainServices[Domain Services<br/>GameRules]
-        Repositories[Repository Interfaces]
-    end
-
-    subgraph "Infrastructure Layer"
-        DynamoRepo[DynamoDB Repository]
-        WebSocketService[WebSocket Service]
-        SQSService[SQS Service]
-    end
+    NextApp --> ReactComponents
+    ReactComponents --> WebSocketClient
+    WebSocketClient <-->|WebSocket| WebSocketHandlers
 
     WebSocketHandlers --> UseCases
     HTTPHandlers --> UseCases
@@ -355,7 +399,7 @@ graph LR
     H --> I[Lambda Functions]
     
     C -->|Deploy Frontend| J[Next.js Build]
-    J --> K[Vercel/S3+CloudFront]
+    J --> K[Vercel Platform]
     
     D --> L{All Pass?}
     E --> L
@@ -365,6 +409,15 @@ graph LR
     M -->|Approved| F
     M -->|Approved| H
     M -->|Approved| J
+    
+    subgraph AWS["☁️ AWS Cloud"]
+        G
+        I
+    end
+    
+    subgraph Vercel["🌐 Vercel Platform"]
+        K
+    end
 ```
 
 ## Escalabilidade
@@ -398,6 +451,23 @@ graph LR
 - **Application Logs**: Estruturados em JSON para fácil parsing
 - **Error Tracking**: Integração com CloudWatch Alarms
 
+## Arquitetura de Rede
+
+A aplicação **não utiliza VPC**. Todos os recursos executam na **rede pública/default** da AWS:
+
+- ✅ **Lambda Functions**: Rede pública (menor latência, sem cold starts de VPC)
+- ✅ **DynamoDB**: Acessível via endpoint público (protegido por IAM)
+- ✅ **SQS**: Acessível via endpoint público (protegido por IAM)
+- ✅ **API Gateway**: Publicamente acessível (necessário para WebSocket)
+
+**Vantagens**:
+- Menor latência e cold starts mais rápidos
+- Menor custo (sem NAT Gateway)
+- Simplicidade de configuração
+- Segurança via IAM é suficiente
+
+Para detalhes completos, consulte [`NETWORK_ARCHITECTURE.md`](./NETWORK_ARCHITECTURE.md).
+
 ## Próximos Passos
 
 1. ✅ Infraestrutura AWS criada (DynamoDB, SQS, WebSocket API)
@@ -415,4 +485,5 @@ graph LR
 - [AWS SQS](https://docs.aws.amazon.com/sqs/)
 - [Next.js](https://nextjs.org/docs)
 - [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+- [AWS Lambda in VPC](https://docs.aws.amazon.com/lambda/latest/dg/configuration-vpc.html)
 

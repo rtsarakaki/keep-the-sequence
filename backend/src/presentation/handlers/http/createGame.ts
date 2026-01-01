@@ -1,6 +1,7 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { container } from '../../../infrastructure/di/container';
 import { CreateGameDTO } from '../../../application/dto/CreateGameDTO';
+import { getClientIp } from '../utils/getClientIp';
 
 /**
  * HTTP endpoint to create a new game
@@ -54,11 +55,26 @@ export const handler = async (
       });
     }
 
+    const trimmedPlayerName = body.playerName.trim();
+    if (trimmedPlayerName.length < 3) {
+      return Promise.resolve({
+        statusCode: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': origin || '*',
+        },
+        body: JSON.stringify({ error: 'O nome do jogador deve ter pelo menos 3 caracteres' }),
+      });
+    }
+
     // Create game
     const createGameUseCase = container.getCreateGameUseCase();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+    const clientIp: string | undefined = getClientIp(event);
     const dto: CreateGameDTO = {
-      playerName: body.playerName.trim(),
+      playerName: trimmedPlayerName,
       playerId: body.playerId,
+      clientIp,
     };
 
     const result = await createGameUseCase.execute(dto);

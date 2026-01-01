@@ -2,6 +2,7 @@ export interface Connection {
   connectionId: string;
   gameId: string;
   playerId: string;
+  clientIp?: string; // Client IP address for security validation
   connectedAt: Date;
   lastActivity: Date;
   ttl?: number; // Time to Live (Unix timestamp in seconds)

@@ -1,5 +1,6 @@
 import { JoinGameUseCase } from './JoinGameUseCase';
 import { IGameRepository } from '../../domain/repositories/IGameRepository';
+import { IConnectionRepository } from '../../domain/repositories/IConnectionRepository';
 import { Game } from '../../domain/entities/Game';
 import { Player } from '../../domain/entities/Player';
 import { Card } from '../../domain/valueObjects/Card';
@@ -7,6 +8,7 @@ import { GameInitializer } from '../../domain/services/GameInitializer';
 
 describe('JoinGameUseCase', () => {
   let mockGameRepository: jest.Mocked<IGameRepository>;
+  let mockConnectionRepository: jest.Mocked<IConnectionRepository>;
   let joinGameUseCase: JoinGameUseCase;
 
   beforeEach(() => {
@@ -15,7 +17,13 @@ describe('JoinGameUseCase', () => {
       save: jest.fn(),
       delete: jest.fn(),
     };
-    joinGameUseCase = new JoinGameUseCase(mockGameRepository);
+    mockConnectionRepository = {
+      save: jest.fn(),
+      findByConnectionId: jest.fn(),
+      findByGameId: jest.fn().mockResolvedValue([]),
+      delete: jest.fn(),
+    };
+    joinGameUseCase = new JoinGameUseCase(mockGameRepository, mockConnectionRepository);
   });
 
   describe('execute', () => {

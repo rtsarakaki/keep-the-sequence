@@ -7,6 +7,7 @@ import { formatGameForMessage } from './gameMessageFormatter';
 import { areAllHandsEmpty } from '../../../domain/services/GameRules';
 import { SetStartingPlayerDTO } from '../../../application/useCases/SetStartingPlayerUseCase';
 import { MarkPilePreferenceDTO } from '../../../application/useCases/MarkPilePreferenceUseCase';
+import { getClientIp } from '../utils/getClientIp';
 
 /**
  * WebSocket game handler for processing game actions.
@@ -250,10 +251,37 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
           playerName: string;
         };
 
+        // Validate player name
+        if (!joinGameData.playerName || typeof joinGameData.playerName !== 'string' || !joinGameData.playerName.trim()) {
+          await webSocketService.sendToConnection(connectionId, {
+            type: 'error',
+            error: 'playerName is required',
+          });
+          return Promise.resolve({
+            statusCode: 400,
+            body: JSON.stringify({ error: 'playerName is required' }),
+          });
+        }
+
+        const trimmedPlayerName = joinGameData.playerName.trim();
+        if (trimmedPlayerName.length < 3) {
+          await webSocketService.sendToConnection(connectionId, {
+            type: 'error',
+            error: 'O nome do jogador deve ter pelo menos 3 caracteres',
+          });
+          return Promise.resolve({
+            statusCode: 400,
+            body: JSON.stringify({ error: 'O nome do jogador deve ter pelo menos 3 caracteres' }),
+          });
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+        const clientIp: string | undefined = getClientIp(event);
         const dto: JoinGameDTO = {
           gameId,
           playerId, // Use connection's playerId
-          playerName: joinGameData.playerName,
+          playerName: trimmedPlayerName,
+          clientIp,
         };
 
         const result = await joinGameUseCase.execute(dto);
