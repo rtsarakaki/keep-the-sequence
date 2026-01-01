@@ -34,11 +34,12 @@ export function PlayersList({
   onSetStartingPlayer 
 }: PlayersListProps) {
   const isGameCreator = currentPlayerId === createdBy;
+  const isCurrentTurnPlayer = currentPlayerId === currentTurn;
   // Only allow setting starting player if:
-  // 1. User is the game creator
+  // 1. User is the game creator OR is the current turn player
   // 2. No cards have been played yet
   // 3. Game is not finished
-  const canSetStartingPlayer = isGameCreator && !hasAnyCardsBeenPlayed(piles) && gameStatus !== 'finished';
+  const canSetStartingPlayer = (isGameCreator || isCurrentTurnPlayer) && !hasAnyCardsBeenPlayed(piles) && gameStatus !== 'finished';
 
   return (
     <div className={styles.playersList}>
@@ -49,7 +50,11 @@ export function PlayersList({
         {players.map((player) => {
           const isCurrentPlayer = player.id === currentPlayerId;
           const isStartingPlayer = player.id === currentTurn;
-          const canSetThisPlayer = canSetStartingPlayer && player.id !== currentTurn;
+          // Can set this player if:
+          // - User can set starting player (creator or current turn)
+          // - This player is not the current turn (can't pass to yourself)
+          // - This player is not the current player if current player is the turn (can't pass to yourself)
+          const canSetThisPlayer = canSetStartingPlayer && player.id !== currentTurn && player.id !== currentPlayerId;
 
           return (
             <li 
@@ -72,12 +77,15 @@ export function PlayersList({
                   {player.name}
                   {isCurrentPlayer && <span className={styles.youBadge}>Você</span>}
                   {isStartingPlayer && <span className={styles.startingBadge}>Começa</span>}
+                  {isCurrentTurnPlayer && isStartingPlayer && !hasAnyCardsBeenPlayed(piles) && (
+                    <span className={styles.yourTurnBadge}>Sua vez</span>
+                  )}
                 </span>
                 {canSetThisPlayer && onSetStartingPlayer && (
                   <button
                     className={styles.setStartingButton}
                     onClick={() => onSetStartingPlayer(player.id)}
-                    title="Definir como jogador inicial"
+                    title={isGameCreator ? "Definir como jogador inicial" : "Passar a vez para este jogador"}
                   >
                     <MdPlayArrow className={styles.icon} />
                   </button>
@@ -95,7 +103,9 @@ export function PlayersList({
       </ul>
       {canSetStartingPlayer && (
         <p className={styles.hint}>
-          Você pode escolher quem começa clicando no ícone ao lado do jogador
+          {isGameCreator 
+            ? "Você pode escolher quem começa clicando no ícone ao lado do jogador"
+            : "Você pode passar a vez para outro jogador clicando no ícone, ou simplesmente começar jogando"}
         </p>
       )}
     </div>

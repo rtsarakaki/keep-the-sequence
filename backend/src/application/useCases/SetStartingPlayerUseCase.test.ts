@@ -72,7 +72,7 @@ describe('SetStartingPlayerUseCase', () => {
       }
     });
 
-    it('should return error if requesting player is not the creator', async () => {
+    it('should return error if requesting player is not the creator or current turn', async () => {
       const creator = new Player({
         id: 'creator-1',
         name: 'Creator',
@@ -85,27 +85,77 @@ describe('SetStartingPlayerUseCase', () => {
         hand: [],
         isConnected: true,
       });
+      const player3 = new Player({
+        id: 'player-3',
+        name: 'Player 3',
+        hand: [],
+        isConnected: true,
+      });
 
       const game = GameInitializer.createGame('game-1', creator);
       const gameWithPlayers = new Game({
         ...game,
-        players: Object.freeze([creator, player2]),
+        players: Object.freeze([creator, player2, player3]),
         status: 'waiting' as const,
-        currentTurn: null,
+        currentTurn: 'player-2', // player-2 has the turn
       });
 
       mockGameRepository.findById.mockResolvedValue(gameWithPlayers);
 
       const result = await setStartingPlayerUseCase.execute({
         gameId: 'game-1',
-        playerId: 'player-2', // Not the creator
-        startingPlayerId: 'player-2',
+        playerId: 'player-3', // Not the creator and not the current turn
+        startingPlayerId: 'player-3',
       });
 
       expect(result.isSuccess).toBe(false);
       if (!result.isSuccess) {
-        expect(result.error).toContain('Only the game creator can set the starting player');
+        expect(result.error).toContain('Only the game creator or the player whose turn it is can set the starting player');
       }
+    });
+
+    it('should allow current turn player to set next player', async () => {
+      const creator = new Player({
+        id: 'creator-1',
+        name: 'Creator',
+        hand: [],
+        isConnected: true,
+      });
+      const player2 = new Player({
+        id: 'player-2',
+        name: 'Player 2',
+        hand: [],
+        isConnected: true,
+      });
+      const player3 = new Player({
+        id: 'player-3',
+        name: 'Player 3',
+        hand: [],
+        isConnected: true,
+      });
+
+      const game = GameInitializer.createGame('game-1', creator);
+      const gameWithPlayers = new Game({
+        ...game,
+        players: Object.freeze([creator, player2, player3]),
+        status: 'waiting' as const,
+        currentTurn: 'player-2', // player-2 has the turn
+      });
+
+      mockGameRepository.findById.mockResolvedValue(gameWithPlayers);
+      mockGameRepository.save.mockResolvedValue(undefined);
+
+      const result = await setStartingPlayerUseCase.execute({
+        gameId: 'game-1',
+        playerId: 'player-2', // Current turn player
+        startingPlayerId: 'player-3', // Passing to player-3
+      });
+
+      expect(result.isSuccess).toBe(true);
+      if (result.isSuccess) {
+        expect(result.value.currentTurn).toBe('player-3');
+      }
+      expect(mockGameRepository.save).toHaveBeenCalledTimes(1);
     });
 
     it('should return error if cards have been played', async () => {

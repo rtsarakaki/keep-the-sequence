@@ -5,19 +5,20 @@ import { hasAnyCardsBeenPlayed } from '../../domain/services/GameRules';
 
 export interface SetStartingPlayerDTO {
   gameId: string;
-  playerId: string; // The player who is making the request (must be creator)
+  playerId: string; // The player who is making the request (must be creator or current turn)
   startingPlayerId: string; // The player who should start
 }
 
 /**
  * Use Case: Set the starting player
  * 
- * Allows the game creator to choose which player starts the game.
+ * Allows the game creator to choose which player starts the game, or allows
+ * the player whose turn it is to pass the turn to another player.
  * This can only be done before any cards have been played.
  * 
  * Validates:
  * 1. Game exists
- * 2. Requesting player is the game creator
+ * 2. Requesting player is the game creator OR is the current turn player
  * 3. No cards have been played yet
  * 4. Starting player exists in the game
  * 5. Game is in waiting or playing status (but no cards played)
@@ -34,9 +35,12 @@ export class SetStartingPlayerUseCase {
         return failure('Game not found');
       }
 
-      // Validate requesting player is the creator
-      if (game.createdBy !== dto.playerId) {
-        return failure('Only the game creator can set the starting player');
+      // Validate requesting player is the creator OR is the current turn player
+      const isCreator = game.createdBy === dto.playerId;
+      const isCurrentTurn = game.currentTurn === dto.playerId;
+      
+      if (!isCreator && !isCurrentTurn) {
+        return failure('Only the game creator or the player whose turn it is can set the starting player');
       }
 
       // Validate no cards have been played

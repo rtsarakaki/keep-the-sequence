@@ -117,6 +117,15 @@
   font-weight: 600;
 }
 
+.yourTurnBadge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+  color: white;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
 .playerActions {
   display: flex;
   align-items: center;
