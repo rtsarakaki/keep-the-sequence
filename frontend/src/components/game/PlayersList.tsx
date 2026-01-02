@@ -52,9 +52,12 @@ export function PlayersList({
           const isStartingPlayer = player.id === currentTurn;
           // Can set this player if:
           // - User can set starting player (creator or current turn)
-          // - This player is not the current turn (can't pass to yourself)
-          // - This player is not the current player if current player is the turn (can't pass to yourself)
-          const canSetThisPlayer = canSetStartingPlayer && player.id !== currentTurn && player.id !== currentPlayerId;
+          // - This player is not the current turn (can't pass to the player who already has the turn)
+          // - If the current player has the turn (and is not the creator), they can't pass to themselves
+          // - If the user is the creator, they can pass to any player (including themselves if they don't have the turn)
+          const canSetThisPlayer = canSetStartingPlayer && 
+            player.id !== currentTurn && 
+            (isGameCreator || player.id !== currentPlayerId);
 
           return (
             <li 
