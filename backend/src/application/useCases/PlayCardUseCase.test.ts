@@ -18,6 +18,10 @@ describe('PlayCardUseCase', () => {
     playCardUseCase = new PlayCardUseCase(mockGameRepository);
   });
 
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   describe('execute', () => {
     it('should play a valid card on ascending pile', async () => {
       // Create a game with a player
