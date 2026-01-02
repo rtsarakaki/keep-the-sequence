@@ -111,6 +111,44 @@ describe('SetStartingPlayerUseCase', () => {
       expect(result.isSuccess).toBe(false);
       if (!result.isSuccess) {
         expect(result.error).toContain('Only the game creator or the player whose turn it is can set the starting player');
+        expect(result.error).toContain('Current turn: player-2');
+      }
+    });
+
+    it('should return error with null currentTurn in error message when currentTurn is null', async () => {
+      const creator = new Player({
+        id: 'creator-1',
+        name: 'Creator',
+        hand: [],
+        isConnected: true,
+      });
+      const player2 = new Player({
+        id: 'player-2',
+        name: 'Player 2',
+        hand: [],
+        isConnected: true,
+      });
+
+      const game = GameInitializer.createGame('game-1', creator);
+      const gameWithPlayers = new Game({
+        ...game,
+        players: Object.freeze([creator, player2]),
+        status: 'waiting' as const,
+        currentTurn: null, // No current turn
+      });
+
+      mockGameRepository.findById.mockResolvedValue(gameWithPlayers);
+
+      const result = await setStartingPlayerUseCase.execute({
+        gameId: 'game-1',
+        playerId: 'player-2', // Not the creator and currentTurn is null
+        startingPlayerId: 'player-2',
+      });
+
+      expect(result.isSuccess).toBe(false);
+      if (!result.isSuccess) {
+        expect(result.error).toContain('Only the game creator or the player whose turn it is can set the starting player');
+        expect(result.error).toContain('Current turn: null');
       }
     });
 
