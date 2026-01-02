@@ -81,7 +81,6 @@ export function PlayersList({
                 <span className={styles.playerName}>
                   {player.name}
                   {isCurrentPlayer && <span className={styles.youBadge}>Você</span>}
-                  {isStartingPlayer && <span className={styles.startingBadge}>Começa</span>}
                   {isCurrentTurnPlayer && isStartingPlayer && !hasAnyCardsBeenPlayed(piles) && (
                     <span className={styles.yourTurnBadge}>Sua vez</span>
                   )}
