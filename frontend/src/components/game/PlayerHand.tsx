@@ -110,7 +110,7 @@ export function PlayerHand({
                   <button
                     onClick={() => handlePileClick(originalIndex, 'ascending1')}
                     disabled={isDisabled}
-                    className={styles.playButton}
+                    className={`${styles.playButton} ${styles.ascendingButton}`}
                     title="Jogar na Pilha Crescente 1"
                   >
                     C1
@@ -118,7 +118,7 @@ export function PlayerHand({
                   <button
                     onClick={() => handlePileClick(originalIndex, 'ascending2')}
                     disabled={isDisabled}
-                    className={styles.playButton}
+                    className={`${styles.playButton} ${styles.ascendingButton}`}
                     title="Jogar na Pilha Crescente 2"
                   >
                     C2
@@ -126,7 +126,7 @@ export function PlayerHand({
                   <button
                     onClick={() => handlePileClick(originalIndex, 'descending1')}
                     disabled={isDisabled}
-                    className={styles.playButton}
+                    className={`${styles.playButton} ${styles.descendingButton}`}
                     title="Jogar na Pilha Decrescente 1"
                   >
                     D1
@@ -134,7 +134,7 @@ export function PlayerHand({
                   <button
                     onClick={() => handlePileClick(originalIndex, 'descending2')}
                     disabled={isDisabled}
-                    className={styles.playButton}
+                    className={`${styles.playButton} ${styles.descendingButton}`}
                     title="Jogar na Pilha Decrescente 2"
                   >
                     D2

@@ -1,6 +1,4 @@
 .pile {
-  background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
-  border: 2px solid #ddd;
   border-radius: 12px;
   padding: 1rem;
   transition: all 0.2s ease;
@@ -12,15 +10,39 @@
   position: relative;
 }
 
-.pile:hover {
-  border-color: #0070f3;
-  box-shadow: 0 2px 8px rgba(0, 112, 243, 0.1);
+/* Ascending piles (C1, C2) - Blue/cyan tones */
+.pile.ascending {
+  background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+  border: 2px solid #7dd3fc;
 }
 
-.pile.hovered {
-  border-color: #0070f3;
-  background-color: #e3f2fd;
-  box-shadow: 0 4px 12px rgba(0, 112, 243, 0.3);
+/* Descending piles (D1, D2) - Orange/amber tones */
+.pile.descending {
+  background: linear-gradient(135deg, #fff7ed 0%, #fffbeb 100%);
+  border: 2px solid #fbbf24;
+}
+
+.pile.ascending:hover {
+  border-color: #0ea5e9;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.2);
+}
+
+.pile.descending:hover {
+  border-color: #f59e0b;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+}
+
+.pile.ascending.hovered {
+  border-color: #0ea5e9;
+  background-color: #bae6fd;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+  transform: scale(1.02);
+}
+
+.pile.descending.hovered {
+  border-color: #f59e0b;
+  background-color: #fed7aa;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
   transform: scale(1.02);
 }
 

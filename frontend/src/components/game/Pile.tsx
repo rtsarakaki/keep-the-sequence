@@ -131,7 +131,7 @@ export function Pile({
   return (
     <>
       <div 
-        className={`${styles.pile} ${isHovered ? styles.hovered : ''} ${isHighlighted ? styles.highlighted : ''} ${!isDroppable ? styles.notDroppable : ''}`}
+        className={`${styles.pile} ${pileId.includes('ascending') ? styles.ascending : styles.descending} ${isHovered ? styles.hovered : ''} ${isHighlighted ? styles.highlighted : ''} ${!isDroppable ? styles.notDroppable : ''}`}
         onDrop={onDrop}
         onDragOver={onDragOver}
         onDragEnter={onDragEnter}
