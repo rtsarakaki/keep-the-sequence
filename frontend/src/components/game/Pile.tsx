@@ -19,6 +19,7 @@ interface PileProps {
   onDragEnter?: (e: React.DragEvent) => void;
   onDragLeave?: (e: React.DragEvent) => void;
   isHovered?: boolean;
+  isHighlighted?: boolean;
   isDroppable?: boolean;
   // Pile preference props
   currentPlayerId?: string | null;
@@ -36,9 +37,10 @@ export function Pile({
   cards, 
   onDrop, 
   onDragOver, 
-  onDragEnter, 
+  onDragEnter,
   onDragLeave,
   isHovered = false,
+  isHighlighted = false,
   isDroppable = true,
   currentPlayerId,
   currentTurn,
@@ -129,7 +131,7 @@ export function Pile({
   return (
     <>
       <div 
-        className={`${styles.pile} ${isHovered ? styles.hovered : ''} ${!isDroppable ? styles.notDroppable : ''}`}
+        className={`${styles.pile} ${isHovered ? styles.hovered : ''} ${isHighlighted ? styles.highlighted : ''} ${!isDroppable ? styles.notDroppable : ''}`}
         onDrop={onDrop}
         onDragOver={onDragOver}
         onDragEnter={onDragEnter}

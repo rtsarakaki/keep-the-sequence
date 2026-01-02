@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { GameState } from '@/hooks/useGameWebSocket';
 import { Pile } from './Pile';
 import styles from './GameBoard.module.css';
@@ -37,6 +37,67 @@ export function GameBoard({
   onMarkPreference,
 }: GameBoardProps) {
   const [hoveredPile, setHoveredPile] = useState<string | null>(null);
+  const [highlightedPile, setHighlightedPile] = useState<string | null>(null);
+  const previousPilesRef = useRef<{ ascending1: number; ascending2: number; descending1: number; descending2: number } | null>(null);
+  const highlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Detect when a pile is updated (card played)
+  useEffect(() => {
+    if (!previousPilesRef.current) {
+      // First render, just store current state (store lengths, not the full object)
+      previousPilesRef.current = {
+        ascending1: piles.ascending1.length,
+        ascending2: piles.ascending2.length,
+        descending1: piles.descending1.length,
+        descending2: piles.descending2.length,
+      };
+      return;
+    }
+
+    // Check each pile to see if it grew (a card was played)
+    const pileKeys: Array<keyof GameState['piles']> = ['ascending1', 'ascending2', 'descending1', 'descending2'];
+    
+    for (const pileKey of pileKeys) {
+      const previousLength = previousPilesRef.current[pileKey];
+      const currentLength = piles[pileKey].length;
+      
+      // If a pile grew, highlight it
+      if (currentLength > previousLength) {
+        // Clear any existing timeout
+        if (highlightTimeoutRef.current) {
+          clearTimeout(highlightTimeoutRef.current);
+        }
+        
+        // Highlight the pile
+        setHighlightedPile(pileKey);
+        
+        // Remove highlight after 2 seconds
+        highlightTimeoutRef.current = setTimeout(() => {
+          setHighlightedPile(null);
+          highlightTimeoutRef.current = null;
+        }, 2000);
+        
+        break; // Only highlight one pile at a time
+      }
+    }
+    
+    // Update previous piles reference (store lengths)
+    previousPilesRef.current = {
+      ascending1: piles.ascending1.length,
+      ascending2: piles.ascending2.length,
+      descending1: piles.descending1.length,
+      descending2: piles.descending2.length,
+    };
+  }, [piles]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -95,6 +156,7 @@ export function GameBoard({
             onDragEnter={(e) => handleDragEnter(e, key)}
             onDragLeave={handleDragLeave}
             isHovered={hoveredPile === key}
+            isHighlighted={highlightedPile === key}
             isDroppable={isDroppable}
             currentPlayerId={currentPlayerId}
             currentTurn={currentTurn}
