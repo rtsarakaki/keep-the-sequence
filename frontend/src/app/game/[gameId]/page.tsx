@@ -121,11 +121,13 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
     }
 
     // Check if any cards have been played
+    // Piles start with initial cards (1 for ascending, 100 for descending)
+    // So we check if length > 1 (meaning a card was played in addition to the initial card)
     const hasCardsBeenPlayed = 
-      gameState.piles.ascending1.length > 0 ||
-      gameState.piles.ascending2.length > 0 ||
-      gameState.piles.descending1.length > 0 ||
-      gameState.piles.descending2.length > 0;
+      gameState.piles.ascending1.length > 1 ||
+      gameState.piles.ascending2.length > 1 ||
+      gameState.piles.descending1.length > 1 ||
+      gameState.piles.descending2.length > 1;
 
     if (hasCardsBeenPlayed) {
       // This should not happen as the button should be hidden, but just in case

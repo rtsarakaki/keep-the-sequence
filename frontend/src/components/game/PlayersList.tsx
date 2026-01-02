@@ -15,12 +15,14 @@ interface PlayersListProps {
 }
 
 // Helper to check if any cards have been played
+// Piles start with initial cards (1 for ascending, 100 for descending)
+// So we check if length > 1 (meaning a card was played in addition to the initial card)
 const hasAnyCardsBeenPlayed = (piles: GameState['piles']): boolean => {
   return (
-    piles.ascending1.length > 0 ||
-    piles.ascending2.length > 0 ||
-    piles.descending1.length > 0 ||
-    piles.descending2.length > 0
+    piles.ascending1.length > 1 ||
+    piles.ascending2.length > 1 ||
+    piles.descending1.length > 1 ||
+    piles.descending2.length > 1
   );
 };
 
