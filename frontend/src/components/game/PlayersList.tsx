@@ -55,11 +55,11 @@ export function PlayersList({
           // Can set this player if:
           // - User can set starting player (creator or current turn)
           // - This player is not the current turn (can't pass to the player who already has the turn)
-          // - If the current player has the turn (and is not the creator), they can't pass to themselves
           // - If the user is the creator, they can pass to any player (including themselves if they don't have the turn)
+          // - If the user has the turn (but is not the creator), they can pass to any other player (not themselves)
           const canSetThisPlayer = canSetStartingPlayer && 
             player.id !== currentTurn && 
-            (isGameCreator || player.id !== currentPlayerId);
+            (isGameCreator || (isCurrentTurnPlayer && player.id !== currentPlayerId));
 
           return (
             <li 
@@ -108,7 +108,9 @@ export function PlayersList({
       </ul>
       {canSetStartingPlayer && (
         <p className={styles.hint}>
-          {isGameCreator 
+          {isGameCreator && isCurrentTurnPlayer
+            ? "Você pode escolher quem começa clicando no ícone ao lado do jogador, ou simplesmente começar jogando"
+            : isGameCreator
             ? "Você pode escolher quem começa clicando no ícone ao lado do jogador"
             : "Você pode passar a vez para outro jogador clicando no ícone, ou simplesmente começar jogando"}
         </p>
