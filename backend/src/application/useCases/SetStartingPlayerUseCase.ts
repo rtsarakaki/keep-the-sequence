@@ -37,10 +37,14 @@ export class SetStartingPlayerUseCase {
 
       // Validate requesting player is the creator OR is the current turn player
       const isCreator = game.createdBy === dto.playerId;
-      const isCurrentTurn = game.currentTurn === dto.playerId;
+      const isCurrentTurn = game.currentTurn !== null && game.currentTurn === dto.playerId;
       
       if (!isCreator && !isCurrentTurn) {
-        return failure('Only the game creator or the player whose turn it is can set the starting player');
+        // Provide more detailed error message for debugging
+        const errorDetails = game.currentTurn 
+          ? `Current turn: ${game.currentTurn}, Requesting player: ${dto.playerId}, Creator: ${game.createdBy}`
+          : `Current turn: null, Requesting player: ${dto.playerId}, Creator: ${game.createdBy}`;
+        return failure(`Only the game creator or the player whose turn it is can set the starting player. ${errorDetails}`);
       }
 
       // Validate no cards have been played
