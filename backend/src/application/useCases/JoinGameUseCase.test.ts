@@ -640,6 +640,132 @@ describe('JoinGameUseCase', () => {
         expect(result.value.status).toBe('playing');
       }
     });
+
+    it('should block player from connecting from different device when already connected', async () => {
+      const existingPlayer = new Player({
+        id: 'player-1',
+        name: 'Player 1',
+        hand: [new Card(10, 'hearts')],
+        isConnected: true, // Already connected
+      });
+      const game = GameInitializer.createGame('game-1', existingPlayer);
+      const playingGame = game
+        .addPlayer(new Player({
+          id: 'player-2',
+          name: 'Player 2',
+          hand: [new Card(30, 'hearts')],
+          isConnected: true,
+        }))
+        .updateStatus('playing')
+        .updateTurn('player-1');
+
+      mockGameRepository.findById = jest.fn().mockResolvedValue(playingGame);
+      
+      // Mock connection repository to return an active connection with different IP
+      const mockConnection = {
+        connectionId: 'existing-connection-id',
+        gameId: 'game-1',
+        playerId: 'player-1',
+        clientIp: '192.168.1.1', // Different IP
+        connectedAt: new Date(),
+        lastActivity: new Date(),
+      };
+      mockConnectionRepository.findByGameId = jest.fn().mockResolvedValue([mockConnection]);
+
+      const dto = {
+        gameId: 'game-1',
+        playerName: 'Player 1',
+        playerId: 'player-1',
+        clientIp: '192.168.1.2', // Different IP (different device)
+      };
+
+      const result = await joinGameUseCase.execute(dto);
+
+      expect(result.isSuccess).toBe(false);
+      if (!result.isSuccess) {
+        expect(result.error).toContain('já está conectado a este jogo em outro dispositivo');
+      }
+    });
+
+    it('should allow reconnection from same IP when player is connected', async () => {
+      const existingPlayer = new Player({
+        id: 'player-1',
+        name: 'Player 1',
+        hand: [new Card(10, 'hearts')],
+        isConnected: true, // Already connected
+      });
+      const game = GameInitializer.createGame('game-1', existingPlayer);
+      const playingGame = game
+        .addPlayer(new Player({
+          id: 'player-2',
+          name: 'Player 2',
+          hand: [new Card(30, 'hearts')],
+          isConnected: true,
+        }))
+        .updateStatus('playing')
+        .updateTurn('player-1');
+
+      mockGameRepository.findById = jest.fn().mockResolvedValue(playingGame);
+      mockGameRepository.save = jest.fn().mockResolvedValue(undefined);
+      
+      // Mock connection repository to return an active connection with same IP
+      const sameIp = '192.168.1.1';
+      const mockConnection = {
+        connectionId: 'existing-connection-id',
+        gameId: 'game-1',
+        playerId: 'player-1',
+        clientIp: sameIp,
+        connectedAt: new Date(),
+        lastActivity: new Date(),
+      };
+      mockConnectionRepository.findByGameId = jest.fn().mockResolvedValue([mockConnection]);
+
+      const dto = {
+        gameId: 'game-1',
+        playerName: 'Player 1',
+        playerId: 'player-1',
+        clientIp: sameIp, // Same IP (same device reconnecting)
+      };
+
+      const result = await joinGameUseCase.execute(dto);
+
+      // Should allow reconnection from same IP
+      expect(result.isSuccess).toBe(true);
+    });
+
+    it('should allow reconnection when player is not connected (isConnected = false)', async () => {
+      const existingPlayer = new Player({
+        id: 'player-1',
+        name: 'Player 1',
+        hand: [new Card(10, 'hearts')],
+        isConnected: false, // Not connected
+      });
+      const game = GameInitializer.createGame('game-1', existingPlayer);
+      const playingGame = game
+        .addPlayer(new Player({
+          id: 'player-2',
+          name: 'Player 2',
+          hand: [new Card(30, 'hearts')],
+          isConnected: true,
+        }))
+        .updateStatus('playing')
+        .updateTurn('player-1');
+
+      mockGameRepository.findById = jest.fn().mockResolvedValue(playingGame);
+      mockGameRepository.save = jest.fn().mockResolvedValue(undefined);
+
+      const dto = {
+        gameId: 'game-1',
+        playerName: 'Player 1',
+        playerId: 'player-1',
+        clientIp: '192.168.1.2', // Any IP is fine since player is not connected
+      };
+
+      const result = await joinGameUseCase.execute(dto);
+
+      // Should allow reconnection when player is not connected
+      expect(result.isSuccess).toBe(true);
+    });
   });
 });
 

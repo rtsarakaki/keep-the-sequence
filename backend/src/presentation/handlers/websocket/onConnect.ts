@@ -86,6 +86,28 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
       });
     }
 
+    // Check if player is already connected from another device
+    const player = game.players.find(p => p.id === playerId);
+    if (player && player.isConnected) {
+      // Get all connections for this game to check if there's an active connection with different IP
+      const allConnections = await connectionRepository.findByGameId(gameId);
+      const activeConnection = allConnections.find(c => c.playerId === playerId);
+      
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+      const clientIp: string | undefined = getClientIp(event);
+      
+      // If there's an active connection and the IP is different, block the new connection
+      if (activeConnection && clientIp && activeConnection.clientIp && activeConnection.clientIp !== clientIp) {
+        return Promise.resolve({
+          statusCode: 403,
+          body: JSON.stringify({ 
+            error: 'Você já está conectado a este jogo em outro dispositivo. Desconecte-se primeiro antes de entrar em outro dispositivo.',
+            code: 'ALREADY_CONNECTED',
+          }),
+        });
+      }
+    }
+
     // Save connection with TTL (24 hours)
     // DynamoDB will automatically delete disconnected connections after 24h
     const now = new Date();

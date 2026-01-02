@@ -39,10 +39,24 @@ export class JoinGameUseCase {
         p => p.id === playerId || p.name.toLowerCase() === dto.playerName.toLowerCase()
       );
 
-      // If player exists, allow reconnection (IP may change due to network changes)
-      // This allows legitimate reconnections while still preventing initial impersonation
+      // If player exists, check if they're already connected from another device
       if (existingPlayer) {
-        // Player is reconnecting - just update connection status
+        // Check if player is already connected
+        if (existingPlayer.isConnected) {
+          // Get all connections for this game to check if there's an active connection
+          const allConnections = await this.connectionRepository.findByGameId(dto.gameId);
+          const activeConnection = allConnections.find(c => c.playerId === existingPlayer.id);
+          
+          // If there's an active connection and the IP is different, block the new connection
+          if (activeConnection && dto.clientIp && activeConnection.clientIp && activeConnection.clientIp !== dto.clientIp) {
+            return failure('Você já está conectado a este jogo em outro dispositivo. Desconecte-se primeiro antes de entrar em outro dispositivo.');
+          }
+          
+          // If same IP or no IP info, allow reconnection (same device reconnecting)
+          // This handles cases where the connection was lost but the player is still marked as connected
+        }
+        
+        // Player is reconnecting - update connection status
         const updatedGame = existingGame.updatePlayer(existingPlayer.id, (p) =>
           p.updateConnectionStatus(true)
         );
