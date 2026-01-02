@@ -2,7 +2,7 @@ import { APIGatewayProxyWebsocketHandlerV2 } from 'aws-lambda';
 import { AuthService } from '../../../domain/services/AuthService';
 import { container } from '../../../infrastructure/di/container';
 import { formatGameForMessage } from './gameMessageFormatter';
-import { getClientIp } from '../utils/getClientIp';
+import { getClientIp } from '../../utils/getClientIp';
 
 /**
  * WebSocket $connect handler with authentication and origin validation.

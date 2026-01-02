@@ -7,7 +7,7 @@ import { formatGameForMessage } from './gameMessageFormatter';
 import { areAllHandsEmpty } from '../../../domain/services/GameRules';
 import { SetStartingPlayerDTO } from '../../../application/useCases/SetStartingPlayerUseCase';
 import { MarkPilePreferenceDTO } from '../../../application/useCases/MarkPilePreferenceUseCase';
-import { getClientIp } from '../utils/getClientIp';
+import { getClientIp } from '../../utils/getClientIp';
 
 /**
  * WebSocket game handler for processing game actions.

@@ -3,7 +3,7 @@ import { container } from '../../../infrastructure/di/container';
 import { JoinGameDTO } from '../../../application/dto/JoinGameDTO';
 import { formatGameForMessage } from '../websocket/gameMessageFormatter';
 import { WebSocketService } from '../../../infrastructure/websocket/WebSocketService';
-import { getClientIp } from '../utils/getClientIp';
+import { getClientIp } from '../../utils/getClientIp';
 
 /**
  * HTTP endpoint to join an existing game
