@@ -766,6 +766,53 @@ describe('JoinGameUseCase', () => {
       // Should allow reconnection when player is not connected
       expect(result.isSuccess).toBe(true);
     });
+
+    it('should allow new player with different name from same IP when old connection is inactive', async () => {
+      // Scenario: Someone previously joined with name "Player 1" from IP 192.168.1.1
+      // but is no longer connected. Now someone from the same IP wants to join with a different name.
+      // This should be allowed since the old connection is inactive.
+      const oldPlayer = new Player({
+        id: 'old-player-id',
+        name: 'Player 1',
+        hand: [new Card(10, 'hearts')],
+        isConnected: false, // Not connected anymore
+      });
+      const game = GameInitializer.createGame('game-1', oldPlayer);
+      const waitingGame = game.updateStatus('waiting');
+
+      mockGameRepository.findById = jest.fn().mockResolvedValue(waitingGame);
+      mockGameRepository.save = jest.fn().mockResolvedValue(undefined);
+
+      const sameIp = '192.168.1.1';
+      // Mock connection repository to return an old connection with same IP but inactive player
+      const mockConnection = {
+        connectionId: 'old-connection-id',
+        gameId: 'game-1',
+        playerId: 'old-player-id',
+        clientIp: sameIp,
+        connectedAt: new Date(Date.now() - 3600000), // 1 hour ago
+        lastActivity: new Date(Date.now() - 3600000),
+      };
+      mockConnectionRepository.findByGameId = jest.fn().mockResolvedValue([mockConnection]);
+
+      const dto = {
+        gameId: 'game-1',
+        playerName: 'New Player', // Different name
+        playerId: 'new-player-id',
+        clientIp: sameIp, // Same IP as old connection
+      };
+
+      const result = await joinGameUseCase.execute(dto);
+
+      // Should allow new player since old player is not connected
+      expect(result.isSuccess).toBe(true);
+      if (result.isSuccess) {
+        expect(result.value.players.length).toBe(2); // Old player + new player
+        const newPlayer = result.value.players.find(p => p.id === 'new-player-id');
+        expect(newPlayer).toBeDefined();
+        expect(newPlayer?.name).toBe('New Player');
+      }
+    });
   });
 });
 

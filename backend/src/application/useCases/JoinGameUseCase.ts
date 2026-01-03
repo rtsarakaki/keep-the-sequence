@@ -68,6 +68,7 @@ export class JoinGameUseCase {
       // For new players, validate that they're not trying to impersonate someone else
       // Check if someone with the same IP is already using a different name/ID
       // This prevents the same person from joining multiple times with different names
+      // BUT only block if the existing connection is still active (player is connected)
       if (dto.clientIp) {
         const allConnections = await this.connectionRepository.findByGameId(dto.gameId);
         const existingConnectionWithSameIp = allConnections.find(c => c.clientIp === dto.clientIp);
@@ -77,7 +78,9 @@ export class JoinGameUseCase {
             p => p.id === existingConnectionWithSameIp.playerId
           );
           
-          if (existingPlayerWithSameIp) {
+          // Only block if the player with the same IP is still actively connected
+          // This allows re-entry if the previous connection was lost/disconnected
+          if (existingPlayerWithSameIp && existingPlayerWithSameIp.isConnected) {
             return failure('Você já está conectado a este jogo com outro nome. Use o mesmo nome para reconectar.');
           }
         }
