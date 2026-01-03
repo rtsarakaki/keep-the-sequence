@@ -193,30 +193,49 @@ export function PlayerHand({
     const touch = e.changedTouches[0];
     const cardIndex = touchStartRef.current.cardIndex;
     
-    // Store reference to clone before hiding it
+    // Store reference to clone and container before any async operations
     const cloneToRemove = draggedCardCloneRef.current;
+    const originalContainer = draggedCardElementRef.current;
     
-    // Temporarily hide the clone to detect what's underneath
+    // Immediately remove clone from DOM first to prevent it from interfering
     if (cloneToRemove) {
-      cloneToRemove.style.opacity = '0';
-      cloneToRemove.style.pointerEvents = 'none';
-      cloneToRemove.style.visibility = 'hidden';
+      try {
+        if (cloneToRemove.parentNode) {
+          cloneToRemove.parentNode.removeChild(cloneToRemove);
+        } else {
+          cloneToRemove.remove();
+        }
+      } catch (error) {
+        // Try alternative removal method
+        try {
+          cloneToRemove.remove();
+        } catch (e) {
+          // Ignore if already removed
+        }
+      }
+      draggedCardCloneRef.current = null;
     }
     
-    // Use requestAnimationFrame for immediate cleanup after detection
-    requestAnimationFrame(() => {
-      // Get all elements at touch point (clone is now hidden)
+    // Restore original card immediately
+    if (originalContainer) {
+      originalContainer.style.opacity = '';
+      originalContainer.style.transform = '';
+      originalContainer.style.zIndex = '';
+    }
+    
+    // Clear dragged state
+    setDraggedCardIndex(null);
+    draggedCardElementRef.current = null;
+    
+    // Now detect drop target without clone interfering
+    setTimeout(() => {
+      // Get all elements at touch point (clone is already removed)
       const elementsAtPoint = document.elementsFromPoint(touch.clientX, touch.clientY);
       
       // Find the pile element (look for data-pile-id attribute)
       let pileElement: HTMLElement | null = null;
       for (const element of elementsAtPoint) {
         const htmlElement = element as HTMLElement;
-        
-        // Skip the clone if it's still in the list
-        if (htmlElement === cloneToRemove) {
-          continue;
-        }
         
         // Check if this element or any parent has the pile ID
         let current: HTMLElement | null = htmlElement;
@@ -232,7 +251,7 @@ export function PlayerHand({
       }
       
       // If we found a pile and it's droppable, play the card
-      if (pileElement && pileElement.dataset.pileId && touchStartRef.current) {
+      if (pileElement && pileElement.dataset.pileId) {
         const pileId = pileElement.dataset.pileId as 'ascending1' | 'ascending2' | 'descending1' | 'descending2';
         // Check if pile is droppable
         if (pileElement.dataset.isDroppable === 'true') {
@@ -240,14 +259,14 @@ export function PlayerHand({
         }
       }
       
-      // Immediately remove clone and restore original card
-      cleanupCardClone();
-      
       // Clear hover state
       window.dispatchEvent(new CustomEvent('cardDragOverPile', { 
         detail: { pileId: null } 
       }));
-    });
+      
+      // Final cleanup
+      touchStartRef.current = null;
+    }, 0);
   };
 
   const handleDragStart = (e: React.DragEvent, cardIndex: number) => {
