@@ -12,6 +12,7 @@ import { GameHeader } from '@/components/game/GameHeader';
 import { PlayersList } from '@/components/game/PlayersList';
 import { PlayerHand } from '@/components/game/PlayerHand';
 import { WaitingForPlayers } from '@/components/game/WaitingForPlayers';
+import { JoinGameForm } from '@/components/game/JoinGameForm';
 import { GameNotification } from '@/components/game/GameNotification';
 import { MdEmojiEvents, MdSentimentDissatisfied } from 'react-icons/md';
 import styles from './page.module.css';
@@ -201,6 +202,11 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
       router.push('/');
     }
   };
+
+  // If no playerId, show join form
+  if (!playerId) {
+    return <JoinGameForm gameId={params.gameId} />;
+  }
 
   if (error) {
     return (
