@@ -65,7 +65,7 @@
 .handCards {
   display: flex;
   flex-wrap: nowrap;
-  gap: 1rem;
+  gap: 1.5rem; /* Increased from 1rem to 1.5rem for better spacing between cards */
   justify-content: flex-start;
   overflow-x: auto;
   overflow-y: visible;
@@ -97,7 +97,7 @@
 .handCardWrapper {
   position: relative;
   flex: 0 0 auto;
-  padding: 0.5rem 1rem; /* Added horizontal padding for easier scrolling */
+  padding: 1.5rem 0; /* Increased vertical padding for easier scrolling */
   margin: 0.25rem 0;
 }
 
@@ -296,7 +296,7 @@
   .handCards {
     display: flex;
     flex-wrap: nowrap;
-    gap: 0.75rem;
+    gap: 1.25rem; /* Increased from 0.75rem to 1.25rem for better spacing between cards on mobile */
     justify-content: flex-start;
     overflow-x: auto;
     overflow-y: visible;
@@ -308,7 +308,7 @@
   .handCardWrapper {
     flex: 0 0 auto;
     scroll-snap-align: start;
-    padding: 0.5rem 1.5rem; /* Increased horizontal padding for easier scrolling on mobile */
+    padding: 2rem 0; /* Increased vertical padding for easier scrolling on mobile */
     margin: 0.25rem 0;
   }
 
