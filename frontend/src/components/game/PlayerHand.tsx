@@ -31,6 +31,8 @@ export function PlayerHand({
   const touchStartRef = useRef<{ cardIndex: number; x: number; y: number; initialX: number; initialY: number } | null>(null);
   const draggedCardElementRef = useRef<HTMLElement | null>(null);
   const draggedCardCloneRef = useRef<HTMLElement | null>(null);
+  const dragStartRef = useRef<{ cardIndex: number; initialX: number; initialY: number } | null>(null);
+  const dragCloneRef = useRef<HTMLElement | null>(null);
 
   // Touch event handlers for mobile support
   const handleTouchStart = (e: React.TouchEvent, cardIndex: number) => {
@@ -96,21 +98,11 @@ export function PlayerHand({
       draggedCardCloneRef.current.style.left = `${touchStartRef.current.initialX + deltaX}px`;
       draggedCardCloneRef.current.style.top = `${touchStartRef.current.initialY + deltaY}px`;
     }
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!touchStartRef.current) {
-      return;
-    }
     
-    const touch = e.changedTouches[0];
-    
-    // Get all elements at touch point (not just the top one)
+    // Detect which pile is being hovered over
     const elementsAtPoint = document.elementsFromPoint(touch.clientX, touch.clientY);
+    let hoveredPileId: string | null = null;
     
-    // Find the pile element (look for data-pile-id attribute)
-    // Skip the dragged card clone itself
-    let pileElement: HTMLElement | null = null;
     for (const element of elementsAtPoint) {
       const htmlElement = element as HTMLElement;
       if (htmlElement === draggedCardCloneRef.current) {
@@ -121,39 +113,112 @@ export function PlayerHand({
       let current: HTMLElement | null = htmlElement;
       while (current) {
         if (current.dataset.pileId) {
-          pileElement = current;
+          hoveredPileId = current.dataset.pileId;
           break;
         }
         current = current.parentElement;
       }
       
-      if (pileElement) break;
+      if (hoveredPileId) break;
     }
     
-    // If we found a pile and it's droppable, play the card
-    if (pileElement && pileElement.dataset.pileId) {
-      const pileId = pileElement.dataset.pileId as 'ascending1' | 'ascending2' | 'descending1' | 'descending2';
-      // Check if pile is droppable
-      if (pileElement.dataset.isDroppable === 'true') {
-        onPlayCard(touchStartRef.current.cardIndex, pileId);
+    // Dispatch custom event to notify GameBoard about hovered pile
+    if (hoveredPileId) {
+      const pileElement = document.querySelector(`[data-pile-id="${hoveredPileId}"]`) as HTMLElement;
+      if (pileElement && pileElement.dataset.isDroppable === 'true') {
+        window.dispatchEvent(new CustomEvent('cardDragOverPile', { 
+          detail: { pileId: hoveredPileId } 
+        }));
+      } else {
+        window.dispatchEvent(new CustomEvent('cardDragOverPile', { 
+          detail: { pileId: null } 
+        }));
       }
+    } else {
+      window.dispatchEvent(new CustomEvent('cardDragOverPile', { 
+        detail: { pileId: null } 
+      }));
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) {
+      return;
     }
     
-    // Remove the card clone
-    if (draggedCardCloneRef.current && draggedCardCloneRef.current.parentNode) {
-      document.body.removeChild(draggedCardCloneRef.current);
-      draggedCardCloneRef.current = null;
+    const touch = e.changedTouches[0];
+    
+    // Temporarily hide the clone to detect what's underneath
+    if (draggedCardCloneRef.current) {
+      draggedCardCloneRef.current.style.opacity = '0';
+      draggedCardCloneRef.current.style.pointerEvents = 'none';
     }
     
-    // Reset original card container visual state
-    if (draggedCardElementRef.current) {
-      draggedCardElementRef.current.style.opacity = '';
-    }
-    
-    // Cleanup
-    touchStartRef.current = null;
-    setDraggedCardIndex(null);
-    draggedCardElementRef.current = null;
+    // Small delay to ensure the clone is hidden
+    setTimeout(() => {
+      if (!touchStartRef.current) {
+        // Cleanup if touchStartRef was cleared
+        if (draggedCardCloneRef.current && draggedCardCloneRef.current.parentNode) {
+          document.body.removeChild(draggedCardCloneRef.current);
+          draggedCardCloneRef.current = null;
+        }
+        if (draggedCardElementRef.current) {
+          draggedCardElementRef.current.style.opacity = '';
+        }
+        return;
+      }
+      
+      // Get all elements at touch point
+      const elementsAtPoint = document.elementsFromPoint(touch.clientX, touch.clientY);
+      
+      // Find the pile element (look for data-pile-id attribute)
+      let pileElement: HTMLElement | null = null;
+      for (const element of elementsAtPoint) {
+        const htmlElement = element as HTMLElement;
+        
+        // Check if this element or any parent has the pile ID
+        let current: HTMLElement | null = htmlElement;
+        while (current) {
+          if (current.dataset.pileId) {
+            pileElement = current;
+            break;
+          }
+          current = current.parentElement;
+        }
+        
+        if (pileElement) break;
+      }
+      
+      // If we found a pile and it's droppable, play the card
+      if (pileElement && pileElement.dataset.pileId && touchStartRef.current) {
+        const pileId = pileElement.dataset.pileId as 'ascending1' | 'ascending2' | 'descending1' | 'descending2';
+        // Check if pile is droppable
+        if (pileElement.dataset.isDroppable === 'true') {
+          onPlayCard(touchStartRef.current.cardIndex, pileId);
+        }
+      }
+      
+      // Remove the card clone
+      if (draggedCardCloneRef.current && draggedCardCloneRef.current.parentNode) {
+        document.body.removeChild(draggedCardCloneRef.current);
+        draggedCardCloneRef.current = null;
+      }
+      
+      // Reset original card container visual state
+      if (draggedCardElementRef.current) {
+        draggedCardElementRef.current.style.opacity = '';
+      }
+      
+      // Clear hover state
+      window.dispatchEvent(new CustomEvent('cardDragOverPile', { 
+        detail: { pileId: null } 
+      }));
+      
+      // Cleanup
+      touchStartRef.current = null;
+      setDraggedCardIndex(null);
+      draggedCardElementRef.current = null;
+    }, 10);
   };
 
   const handleDragStart = (e: React.DragEvent, cardIndex: number) => {
@@ -161,12 +226,96 @@ export function PlayerHand({
       e.preventDefault();
       return;
     }
+    
+    const cardContainer = e.currentTarget as HTMLElement;
+    const cardWrapper = cardContainer.querySelector('[data-card-element]') as HTMLElement;
+    
+    if (!cardWrapper) {
+      e.preventDefault();
+      return;
+    }
+    
+    const cardRect = cardWrapper.getBoundingClientRect();
+    
+    dragStartRef.current = {
+      cardIndex,
+      initialX: cardRect.left,
+      initialY: cardRect.top,
+    };
+    
     setDraggedCardIndex(cardIndex);
+    
+    // Store reference to the container for visual feedback
+    draggedCardElementRef.current = cardContainer;
+    
+    // Create a clone of just the card wrapper (not the buttons) for desktop drag
+    const cardClone = cardWrapper.cloneNode(true) as HTMLElement;
+    cardClone.style.position = 'fixed';
+    cardClone.style.left = `${cardRect.left}px`;
+    cardClone.style.top = `${cardRect.top}px`;
+    cardClone.style.width = `${cardRect.width}px`;
+    cardClone.style.height = `${cardRect.height}px`;
+    cardClone.style.zIndex = '9999';
+    cardClone.style.opacity = '0.9';
+    cardClone.style.pointerEvents = 'none';
+    cardClone.style.transform = 'scale(1.1)';
+    cardClone.style.transition = 'none';
+    cardClone.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.3)';
+    document.body.appendChild(cardClone);
+    dragCloneRef.current = cardClone;
+    
+    // Make the original card container semi-transparent
+    if (draggedCardElementRef.current) {
+      draggedCardElementRef.current.style.opacity = '0.4';
+    }
+    
+    // Hide the default drag image
+    const dragImage = document.createElement('div');
+    dragImage.style.position = 'absolute';
+    dragImage.style.top = '-9999px';
+    document.body.appendChild(dragImage);
+    e.dataTransfer.setDragImage(dragImage, 0, 0);
+    setTimeout(() => document.body.removeChild(dragImage), 0);
+    
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', cardIndex.toString());
+    
+    // Update clone position during drag
+    const handleDrag = (dragEvent: DragEvent) => {
+      if (dragCloneRef.current && dragStartRef.current) {
+        dragCloneRef.current.style.left = `${dragEvent.clientX - cardRect.width / 2}px`;
+        dragCloneRef.current.style.top = `${dragEvent.clientY - cardRect.height / 2}px`;
+      }
+    };
+    
+    document.addEventListener('dragover', handleDrag);
+    
+    // Cleanup on drag end
+    const handleDragEndCleanup = () => {
+      document.removeEventListener('dragover', handleDrag);
+      if (dragCloneRef.current && dragCloneRef.current.parentNode) {
+        document.body.removeChild(dragCloneRef.current);
+        dragCloneRef.current = null;
+      }
+      if (draggedCardElementRef.current) {
+        draggedCardElementRef.current.style.opacity = '';
+      }
+      dragStartRef.current = null;
+      setDraggedCardIndex(null);
+      draggedCardElementRef.current = null;
+    };
+    
+    // Store cleanup function
+    (e.currentTarget as HTMLElement & { __dragEndCleanup?: () => void }).__dragEndCleanup = handleDragEndCleanup;
   };
 
-  const handleDragEnd = () => {
+  const handleDragEnd = (e: React.DragEvent) => {
+    const element = e.currentTarget as HTMLElement & { __dragEndCleanup?: () => void };
+    const cleanup = element.__dragEndCleanup;
+    if (cleanup) {
+      cleanup();
+      delete element.__dragEndCleanup;
+    }
     setDraggedCardIndex(null);
   };
 

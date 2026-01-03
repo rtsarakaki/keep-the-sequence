@@ -40,6 +40,20 @@ export function GameBoard({
   const [highlightedPile, setHighlightedPile] = useState<string | null>(null);
   const previousPilesRef = useRef<{ ascending1: number; ascending2: number; descending1: number; descending2: number } | null>(null);
   const highlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Listen for touch drag events from PlayerHand
+  useEffect(() => {
+    const handleCardDragOverPile = (e: Event) => {
+      const customEvent = e as CustomEvent<{ pileId: string | null }>;
+      setHoveredPile(customEvent.detail.pileId);
+    };
+    
+    window.addEventListener('cardDragOverPile', handleCardDragOverPile as EventListener);
+    
+    return () => {
+      window.removeEventListener('cardDragOverPile', handleCardDragOverPile as EventListener);
+    };
+  }, []);
 
   // Detect when a pile is updated (card played)
   useEffect(() => {
