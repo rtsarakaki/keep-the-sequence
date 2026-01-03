@@ -24,7 +24,7 @@ export default function Home() {
 
       <div className={styles.mainContent}>
         <div className={styles.hero}>
-          <h1 className={styles.title}>The Game</h1>
+          <h1 className={styles.title}>Keep the Sequence</h1>
           <p className={styles.subtitle}>
             Um jogo cooperativo de cartas online
           </p>

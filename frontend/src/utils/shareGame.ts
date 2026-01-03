@@ -18,7 +18,7 @@ export function getGameUrl(gameId: string): string {
 export function getWhatsAppShareLink(gameId: string): string {
   const gameUrl = getGameUrl(gameId);
   const message = encodeURIComponent(
-    `🎮 Venha jogar The Game comigo!\n\n` +
+    `🎮 Venha jogar Keep the Sequence comigo!\n\n` +
     `ID do jogo: ${gameId}\n` +
     `Entre aqui: ${gameUrl}`
   );
@@ -31,7 +31,7 @@ export function getWhatsAppShareLink(gameId: string): string {
 export function getTelegramShareLink(gameId: string): string {
   const gameUrl = getGameUrl(gameId);
   const message = encodeURIComponent(
-    `🎮 Venha jogar The Game comigo!\n\n` +
+    `🎮 Venha jogar Keep the Sequence comigo!\n\n` +
     `ID do jogo: ${gameId}\n` +
     `Entre aqui: ${gameUrl}`
   );

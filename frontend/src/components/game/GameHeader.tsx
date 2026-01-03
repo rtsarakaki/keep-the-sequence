@@ -89,7 +89,7 @@ export function GameHeader({
   return (
     <header className={styles.header}>
       <div className={styles.singleRow}>
-        <h1 className={styles.title}>The Game</h1>
+        <h1 className={styles.title}>Keep the Sequence</h1>
         <div className={styles.gameId}>ID: {gameId}</div>
         {isGameCreator && onEndGame && (
           <button
