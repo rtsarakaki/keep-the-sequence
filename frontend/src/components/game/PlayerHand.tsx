@@ -40,22 +40,60 @@ export function PlayerHand({
 
   // Cleanup function to remove card clone
   const cleanupCardClone = () => {
-    // Remove clone from DOM
+    // Remove clone from DOM - try multiple methods to ensure removal
     if (draggedCardCloneRef.current) {
+      const clone = draggedCardCloneRef.current;
       try {
-        if (draggedCardCloneRef.current.parentNode) {
-          draggedCardCloneRef.current.parentNode.removeChild(draggedCardCloneRef.current);
+        if (clone.parentNode) {
+          clone.parentNode.removeChild(clone);
+        } else {
+          clone.remove();
         }
       } catch (error) {
-        // Clone might have already been removed, try alternative method
+        // Try alternative removal method
         try {
-          draggedCardCloneRef.current.remove();
+          clone.remove();
         } catch (e) {
-          // Ignore if already removed
+          // If that fails, try to find and remove by attribute
+          try {
+            const clones = document.querySelectorAll('[data-card-clone="true"]');
+            clones.forEach(c => {
+              try {
+                if (c.parentNode) {
+                  c.parentNode.removeChild(c);
+                } else {
+                  c.remove();
+                }
+              } catch (err) {
+                // Ignore individual removal errors
+              }
+            });
+          } catch (err) {
+            // Ignore if querySelector fails
+          }
         }
       }
       draggedCardCloneRef.current = null;
     }
+    
+    // Also remove any orphaned clones that might exist
+    try {
+      const orphanedClones = document.querySelectorAll('[data-card-clone="true"]');
+      orphanedClones.forEach(clone => {
+        try {
+          if (clone.parentNode) {
+            clone.parentNode.removeChild(clone);
+          } else {
+            (clone as HTMLElement).remove();
+          }
+        } catch (e) {
+          // Ignore individual removal errors
+        }
+      });
+    } catch (error) {
+      // Ignore if querySelector fails
+    }
+    
     // Restore original card opacity
     if (draggedCardElementRef.current) {
       draggedCardElementRef.current.style.opacity = '';
@@ -66,12 +104,20 @@ export function PlayerHand({
     draggedCardElementRef.current = null;
   };
 
-  // Cleanup on unmount or when draggedCardIndex changes
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       cleanupCardClone();
     };
   }, []);
+
+  // Monitor draggedCardIndex and ensure clone is removed when it becomes null
+  useEffect(() => {
+    if (draggedCardIndex === null && draggedCardCloneRef.current) {
+      // If draggedCardIndex is null but clone still exists, remove it
+      cleanupCardClone();
+    }
+  }, [draggedCardIndex]);
 
   // Touch event handlers for mobile support
   const handleTouchStart = (e: React.TouchEvent, cardIndex: number) => {
@@ -106,6 +152,9 @@ export function PlayerHand({
     
     // Create a clone of just the card wrapper (not the buttons)
     const cardClone = cardWrapper.cloneNode(true) as HTMLElement;
+    // Add unique identifier to clone for easier tracking and removal
+    cardClone.setAttribute('data-card-clone', 'true');
+    cardClone.setAttribute('data-clone-index', cardIndex.toString());
     cardClone.style.position = 'fixed';
     cardClone.style.left = `${cardRect.left}px`;
     cardClone.style.top = `${cardRect.top}px`;
