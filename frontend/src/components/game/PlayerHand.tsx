@@ -40,16 +40,27 @@ export function PlayerHand({
 
   // Cleanup function to remove card clone
   const cleanupCardClone = () => {
-    if (draggedCardCloneRef.current && draggedCardCloneRef.current.parentNode) {
+    // Remove clone from DOM
+    if (draggedCardCloneRef.current) {
       try {
-        document.body.removeChild(draggedCardCloneRef.current);
+        if (draggedCardCloneRef.current.parentNode) {
+          draggedCardCloneRef.current.parentNode.removeChild(draggedCardCloneRef.current);
+        }
       } catch (error) {
-        // Clone might have already been removed
+        // Clone might have already been removed, try alternative method
+        try {
+          draggedCardCloneRef.current.remove();
+        } catch (e) {
+          // Ignore if already removed
+        }
       }
       draggedCardCloneRef.current = null;
     }
+    // Restore original card opacity
     if (draggedCardElementRef.current) {
       draggedCardElementRef.current.style.opacity = '';
+      draggedCardElementRef.current.style.transform = '';
+      draggedCardElementRef.current.style.zIndex = '';
     }
     setDraggedCardIndex(null);
     draggedCardElementRef.current = null;
@@ -67,6 +78,9 @@ export function PlayerHand({
     if (wsStatus !== 'connected' || !isMyTurn) {
       return;
     }
+    
+    // Cleanup any existing clone first
+    cleanupCardClone();
     
     const touch = e.touches[0];
     const cardContainer = e.currentTarget as HTMLElement;
@@ -179,55 +193,30 @@ export function PlayerHand({
     const touch = e.changedTouches[0];
     const cardIndex = touchStartRef.current.cardIndex;
     
+    // Store reference to clone before hiding it
+    const cloneToRemove = draggedCardCloneRef.current;
+    
     // Temporarily hide the clone to detect what's underneath
-    if (draggedCardCloneRef.current) {
-      draggedCardCloneRef.current.style.opacity = '0';
-      draggedCardCloneRef.current.style.pointerEvents = 'none';
+    if (cloneToRemove) {
+      cloneToRemove.style.opacity = '0';
+      cloneToRemove.style.pointerEvents = 'none';
+      cloneToRemove.style.visibility = 'hidden';
     }
     
-    // Small delay to ensure the clone is hidden
-    setTimeout(() => {
-      // Always cleanup the clone, regardless of what happens
-      const shouldCleanup = () => {
-        // Remove the card clone
-        if (draggedCardCloneRef.current && draggedCardCloneRef.current.parentNode) {
-          try {
-            document.body.removeChild(draggedCardCloneRef.current);
-          } catch (error) {
-            // Clone might have already been removed
-          }
-          draggedCardCloneRef.current = null;
-        }
-        
-        // Reset original card container visual state
-        if (draggedCardElementRef.current) {
-          draggedCardElementRef.current.style.opacity = '';
-        }
-        
-        // Clear hover state
-        window.dispatchEvent(new CustomEvent('cardDragOverPile', { 
-          detail: { pileId: null } 
-        }));
-        
-        // Cleanup refs
-        touchStartRef.current = null;
-        setDraggedCardIndex(null);
-        draggedCardElementRef.current = null;
-      };
-
-      if (!touchStartRef.current) {
-        // Cleanup if touchStartRef was cleared
-        shouldCleanup();
-        return;
-      }
-      
-      // Get all elements at touch point
+    // Use requestAnimationFrame for immediate cleanup after detection
+    requestAnimationFrame(() => {
+      // Get all elements at touch point (clone is now hidden)
       const elementsAtPoint = document.elementsFromPoint(touch.clientX, touch.clientY);
       
       // Find the pile element (look for data-pile-id attribute)
       let pileElement: HTMLElement | null = null;
       for (const element of elementsAtPoint) {
         const htmlElement = element as HTMLElement;
+        
+        // Skip the clone if it's still in the list
+        if (htmlElement === cloneToRemove) {
+          continue;
+        }
         
         // Check if this element or any parent has the pile ID
         let current: HTMLElement | null = htmlElement;
@@ -251,9 +240,14 @@ export function PlayerHand({
         }
       }
       
-      // Always cleanup after processing
-      shouldCleanup();
-    }, 10);
+      // Immediately remove clone and restore original card
+      cleanupCardClone();
+      
+      // Clear hover state
+      window.dispatchEvent(new CustomEvent('cardDragOverPile', { 
+        detail: { pileId: null } 
+      }));
+    });
   };
 
   const handleDragStart = (e: React.DragEvent, cardIndex: number) => {
