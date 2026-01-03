@@ -255,8 +255,32 @@ export function PlayerHand({
         const pileId = pileElement.dataset.pileId as 'ascending1' | 'ascending2' | 'descending1' | 'descending2';
         // Check if pile is droppable
         if (pileElement.dataset.isDroppable === 'true') {
+          // Call onPlayCard which may show confirmation modal
+          // But clone is already removed, so card will be visible normally
           onPlayCard(cardIndex, pileId);
         }
+      }
+      
+      // Ensure original card is fully restored (in case confirmation modal appears)
+      // This is a safety check to ensure card is visible even if modal shows
+      if (originalContainer) {
+        originalContainer.style.opacity = '';
+        originalContainer.style.transform = '';
+        originalContainer.style.zIndex = '';
+      }
+      
+      // Double-check clone is removed (safety check)
+      if (draggedCardCloneRef.current) {
+        try {
+          if (draggedCardCloneRef.current.parentNode) {
+            draggedCardCloneRef.current.parentNode.removeChild(draggedCardCloneRef.current);
+          } else {
+            draggedCardCloneRef.current.remove();
+          }
+        } catch (e) {
+          // Ignore if already removed
+        }
+        draggedCardCloneRef.current = null;
       }
       
       // Clear hover state
