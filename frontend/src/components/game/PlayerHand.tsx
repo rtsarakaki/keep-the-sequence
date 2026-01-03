@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { WebSocketStatus } from '@/services/websocket';
 import { GameState } from '@/hooks/useGameWebSocket';
 import { Card } from './Card';
@@ -37,6 +37,30 @@ export function PlayerHand({
   const draggedCardCloneRef = useRef<HTMLElement | null>(null);
   const dragStartRef = useRef<{ cardIndex: number; initialX: number; initialY: number } | null>(null);
   const dragCloneRef = useRef<HTMLElement | null>(null);
+
+  // Cleanup function to remove card clone
+  const cleanupCardClone = () => {
+    if (draggedCardCloneRef.current && draggedCardCloneRef.current.parentNode) {
+      try {
+        document.body.removeChild(draggedCardCloneRef.current);
+      } catch (error) {
+        // Clone might have already been removed
+      }
+      draggedCardCloneRef.current = null;
+    }
+    if (draggedCardElementRef.current) {
+      draggedCardElementRef.current.style.opacity = '';
+    }
+    setDraggedCardIndex(null);
+    draggedCardElementRef.current = null;
+  };
+
+  // Cleanup on unmount or when draggedCardIndex changes
+  useEffect(() => {
+    return () => {
+      cleanupCardClone();
+    };
+  }, []);
 
   // Touch event handlers for mobile support
   const handleTouchStart = (e: React.TouchEvent, cardIndex: number) => {
@@ -147,10 +171,13 @@ export function PlayerHand({
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (!touchStartRef.current) {
+      // Ensure cleanup even if touchStartRef is null
+      cleanupCardClone();
       return;
     }
     
     const touch = e.changedTouches[0];
+    const cardIndex = touchStartRef.current.cardIndex;
     
     // Temporarily hide the clone to detect what's underneath
     if (draggedCardCloneRef.current) {
@@ -160,15 +187,37 @@ export function PlayerHand({
     
     // Small delay to ensure the clone is hidden
     setTimeout(() => {
-      if (!touchStartRef.current) {
-        // Cleanup if touchStartRef was cleared
+      // Always cleanup the clone, regardless of what happens
+      const shouldCleanup = () => {
+        // Remove the card clone
         if (draggedCardCloneRef.current && draggedCardCloneRef.current.parentNode) {
-          document.body.removeChild(draggedCardCloneRef.current);
+          try {
+            document.body.removeChild(draggedCardCloneRef.current);
+          } catch (error) {
+            // Clone might have already been removed
+          }
           draggedCardCloneRef.current = null;
         }
+        
+        // Reset original card container visual state
         if (draggedCardElementRef.current) {
           draggedCardElementRef.current.style.opacity = '';
         }
+        
+        // Clear hover state
+        window.dispatchEvent(new CustomEvent('cardDragOverPile', { 
+          detail: { pileId: null } 
+        }));
+        
+        // Cleanup refs
+        touchStartRef.current = null;
+        setDraggedCardIndex(null);
+        draggedCardElementRef.current = null;
+      };
+
+      if (!touchStartRef.current) {
+        // Cleanup if touchStartRef was cleared
+        shouldCleanup();
         return;
       }
       
@@ -198,30 +247,12 @@ export function PlayerHand({
         const pileId = pileElement.dataset.pileId as 'ascending1' | 'ascending2' | 'descending1' | 'descending2';
         // Check if pile is droppable
         if (pileElement.dataset.isDroppable === 'true') {
-          onPlayCard(touchStartRef.current.cardIndex, pileId);
+          onPlayCard(cardIndex, pileId);
         }
       }
       
-      // Remove the card clone
-      if (draggedCardCloneRef.current && draggedCardCloneRef.current.parentNode) {
-        document.body.removeChild(draggedCardCloneRef.current);
-        draggedCardCloneRef.current = null;
-      }
-      
-      // Reset original card container visual state
-      if (draggedCardElementRef.current) {
-        draggedCardElementRef.current.style.opacity = '';
-      }
-      
-      // Clear hover state
-      window.dispatchEvent(new CustomEvent('cardDragOverPile', { 
-        detail: { pileId: null } 
-      }));
-      
-      // Cleanup
-      touchStartRef.current = null;
-      setDraggedCardIndex(null);
-      draggedCardElementRef.current = null;
+      // Always cleanup after processing
+      shouldCleanup();
     }, 10);
   };
 
