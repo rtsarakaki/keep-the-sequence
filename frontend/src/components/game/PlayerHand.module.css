@@ -112,6 +112,9 @@
   border-radius: 12px;
   transition: all 0.2s ease;
   cursor: grab;
+  touch-action: none; /* Prevent default touch behaviors on mobile */
+  user-select: none; /* Prevent text selection during drag */
+  -webkit-user-select: none;
 }
 
 .handCard:hover:not(.disabled) {

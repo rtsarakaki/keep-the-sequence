@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { WebSocketStatus } from '@/services/websocket';
 import { GameState } from '@/hooks/useGameWebSocket';
 import { Card } from './Card';
@@ -28,6 +28,86 @@ export function PlayerHand({
   canEndTurn = false,
 }: PlayerHandProps) {
   const [draggedCardIndex, setDraggedCardIndex] = useState<number | null>(null);
+  const touchStartRef = useRef<{ cardIndex: number; x: number; y: number } | null>(null);
+  const draggedCardElementRef = useRef<HTMLElement | null>(null);
+
+  // Touch event handlers for mobile support
+  const handleTouchStart = (e: React.TouchEvent, cardIndex: number) => {
+    if (wsStatus !== 'connected' || isDisabled) {
+      return;
+    }
+    
+    const touch = e.touches[0];
+    touchStartRef.current = {
+      cardIndex,
+      x: touch.clientX,
+      y: touch.clientY,
+    };
+    
+    setDraggedCardIndex(cardIndex);
+    
+    // Store reference to the card element for visual feedback
+    draggedCardElementRef.current = e.currentTarget as HTMLElement;
+    if (draggedCardElementRef.current) {
+      draggedCardElementRef.current.style.opacity = '0.6';
+      draggedCardElementRef.current.style.zIndex = '1000';
+      draggedCardElementRef.current.style.position = 'relative';
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartRef.current || !draggedCardElementRef.current) return;
+    
+    e.preventDefault(); // Prevent scrolling while dragging
+    
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - touchStartRef.current.x;
+    const deltaY = touch.clientY - touchStartRef.current.y;
+    
+    // Move the card visually
+    if (draggedCardElementRef.current) {
+      draggedCardElementRef.current.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(1.05)`;
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) {
+      return;
+    }
+    
+    const touch = e.changedTouches[0];
+    
+    // Reset card visual state first
+    if (draggedCardElementRef.current) {
+      draggedCardElementRef.current.style.opacity = '';
+      draggedCardElementRef.current.style.transform = '';
+      draggedCardElementRef.current.style.zIndex = '';
+      draggedCardElementRef.current.style.position = '';
+    }
+    
+    // Find element at touch point
+    const elementAtPoint = document.elementFromPoint(touch.clientX, touch.clientY);
+    
+    // Find the pile element (look for data-pile-id attribute)
+    let pileElement: HTMLElement | null = elementAtPoint as HTMLElement;
+    while (pileElement && !pileElement.dataset.pileId) {
+      pileElement = pileElement.parentElement;
+    }
+    
+    // If we found a pile and it's droppable, play the card
+    if (pileElement && pileElement.dataset.pileId) {
+      const pileId = pileElement.dataset.pileId as 'ascending1' | 'ascending2' | 'descending1' | 'descending2';
+      // Check if pile is droppable
+      if (pileElement.dataset.isDroppable === 'true') {
+        onPlayCard(touchStartRef.current.cardIndex, pileId);
+      }
+    }
+    
+    // Cleanup
+    touchStartRef.current = null;
+    setDraggedCardIndex(null);
+    draggedCardElementRef.current = null;
+  };
 
   const handleDragStart = (e: React.DragEvent, cardIndex: number) => {
     if (wsStatus !== 'connected') {
@@ -103,6 +183,9 @@ export function PlayerHand({
                 draggable={!isDisabled}
                 onDragStart={(e) => handleDragStart(e, originalIndex)}
                 onDragEnd={handleDragEnd}
+                onTouchStart={(e) => handleTouchStart(e, originalIndex)}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
                 className={`${styles.handCard} ${draggedCardIndex === originalIndex ? styles.dragging : ''} ${isDisabled ? styles.disabled : ''}`}
               >
                 <Card card={card} size="medium" />

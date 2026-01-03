@@ -136,6 +136,8 @@ export function Pile({
         onDragOver={onDragOver}
         onDragEnter={onDragEnter}
         onDragLeave={onDragLeave}
+        data-pile-id={pileId}
+        data-is-droppable={isDroppable ? 'true' : 'false'}
       >
         <div className={styles.header}>
           <h3 className={styles.title}>
