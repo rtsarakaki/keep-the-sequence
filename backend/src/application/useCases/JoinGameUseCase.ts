@@ -66,38 +66,46 @@ export class JoinGameUseCase {
       }
 
       // For new players, validate that they're not trying to impersonate someone else
-      // Check if someone with the same IP is already using a different name/ID
-      // This prevents the same person from joining multiple times with different names
+      // IMPORTANT: All validations are scoped to THIS specific game (dto.gameId)
+      // Check if someone with the same IP is already using a different name/ID in THIS game
+      // This prevents the same person from joining multiple times with different names in the same game
       // BUT only block if the existing connection is still active (player is connected)
       if (dto.clientIp) {
-        const allConnections = await this.connectionRepository.findByGameId(dto.gameId);
-        const existingConnectionWithSameIp = allConnections.find(c => c.clientIp === dto.clientIp);
+        // Get all connections ONLY for this specific game
+        const allConnectionsForThisGame = await this.connectionRepository.findByGameId(dto.gameId);
+        
+        // Check if someone with the same IP is already connected to THIS game with a different name
+        const existingConnectionWithSameIp = allConnectionsForThisGame.find(
+          c => c.clientIp === dto.clientIp && c.gameId === dto.gameId
+        );
         
         if (existingConnectionWithSameIp) {
           const existingPlayerWithSameIp = existingGame.players.find(
             p => p.id === existingConnectionWithSameIp.playerId
           );
           
-          // Only block if the player with the same IP is still actively connected
+          // Only block if the player with the same IP is still actively connected to THIS game
           // This allows re-entry if the previous connection was lost/disconnected
           if (existingPlayerWithSameIp && existingPlayerWithSameIp.isConnected) {
-            return failure('Você já está conectado a este jogo com outro nome. Use o mesmo nome para reconectar.');
+            return failure(`Você já está conectado ao jogo "${dto.gameId}" com outro nome. Use o mesmo nome para reconectar.`);
           }
         }
         
-        // Check if someone is trying to use a name/ID that belongs to a different IP
-        // This prevents impersonation: if playerId or name matches an existing player,
+        // Check if someone is trying to use a name/ID that belongs to a different IP in THIS game
+        // This prevents impersonation: if playerId or name matches an existing player in THIS game,
         // but the IP is different, it's likely an impersonation attempt
         const existingPlayerWithDifferentIp = existingGame.players.find(
           p => p.name.toLowerCase() === dto.playerName.toLowerCase()
         );
         
         if (existingPlayerWithDifferentIp) {
-          // Check if there's a connection for this player with a different IP
-          const playerConnection = allConnections.find(c => c.playerId === existingPlayerWithDifferentIp.id);
+          // Check if there's a connection for this player in THIS game with a different IP
+          const playerConnection = allConnectionsForThisGame.find(
+            c => c.playerId === existingPlayerWithDifferentIp.id && c.gameId === dto.gameId
+          );
           
           if (playerConnection && playerConnection.clientIp && playerConnection.clientIp !== dto.clientIp) {
-            return failure('Este nome já está sendo usado por outro jogador. Escolha um nome diferente.');
+            return failure(`Este nome já está sendo usado por outro jogador no jogo "${dto.gameId}". Escolha um nome diferente.`);
           }
         }
       }
