@@ -40,28 +40,54 @@ export function getTelegramShareLink(gameId: string): string {
 
 /**
  * Opens WhatsApp share dialog in a new window/tab
+ * Never redirects the current page - only opens in new window/tab
  */
 export function shareViaWhatsApp(gameId: string): void {
-  const link = getWhatsAppShareLink(gameId);
-  // Open in new window/tab - this keeps the game page open
-  const newWindow = window.open(link, '_blank', 'noopener,noreferrer');
-  // If popup was blocked, try to open in same window as fallback
-  if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-    // Fallback: open in same window (shouldn't happen with user interaction)
-    window.location.href = link;
+  const gameUrl = getGameUrl(gameId);
+  const message = `🎮 Venha jogar Keep the Sequence comigo!\n\nID do jogo: ${gameId}\nEntre aqui: ${gameUrl}`;
+  
+  // Try Web Share API first (works well on mobile)
+  if (navigator.share) {
+    navigator.share({
+      title: 'Keep the Sequence',
+      text: message,
+      url: gameUrl,
+    }).catch(() => {
+      // User cancelled or share failed, fallback to WhatsApp link
+      const link = getWhatsAppShareLink(gameId);
+      window.open(link, '_blank', 'noopener,noreferrer');
+    });
+  } else {
+    // Fallback to WhatsApp link in new window/tab
+    const link = getWhatsAppShareLink(gameId);
+    window.open(link, '_blank', 'noopener,noreferrer');
+    // Never redirect current page - if popup is blocked, user can try again
   }
 }
 
 /**
  * Opens Telegram share dialog in a new window/tab
+ * Never redirects the current page - only opens in new window/tab
  */
 export function shareViaTelegram(gameId: string): void {
-  const link = getTelegramShareLink(gameId);
-  // Open in new window/tab - this keeps the game page open
-  const newWindow = window.open(link, '_blank', 'noopener,noreferrer');
-  // If popup was blocked, try to open in same window as fallback
-  if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-    // Fallback: open in same window (shouldn't happen with user interaction)
-    window.location.href = link;
+  const gameUrl = getGameUrl(gameId);
+  const message = `🎮 Venha jogar Keep the Sequence comigo!\n\nID do jogo: ${gameId}\nEntre aqui: ${gameUrl}`;
+  
+  // Try Web Share API first (works well on mobile)
+  if (navigator.share) {
+    navigator.share({
+      title: 'Keep the Sequence',
+      text: message,
+      url: gameUrl,
+    }).catch(() => {
+      // User cancelled or share failed, fallback to Telegram link
+      const link = getTelegramShareLink(gameId);
+      window.open(link, '_blank', 'noopener,noreferrer');
+    });
+  } else {
+    // Fallback to Telegram link in new window/tab
+    const link = getTelegramShareLink(gameId);
+    window.open(link, '_blank', 'noopener,noreferrer');
+    // Never redirect current page - if popup is blocked, user can try again
   }
 }
