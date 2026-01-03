@@ -36,7 +36,7 @@ export function PlayerHand({
 
   // Touch event handlers for mobile support
   const handleTouchStart = (e: React.TouchEvent, cardIndex: number) => {
-    if (wsStatus !== 'connected' || isDisabled) {
+    if (wsStatus !== 'connected' || !isMyTurn) {
       return;
     }
     
@@ -222,7 +222,7 @@ export function PlayerHand({
   };
 
   const handleDragStart = (e: React.DragEvent, cardIndex: number) => {
-    if (wsStatus !== 'connected') {
+    if (wsStatus !== 'connected' || !isMyTurn) {
       e.preventDefault();
       return;
     }
@@ -324,7 +324,7 @@ export function PlayerHand({
     onPlayCard(cardIndex, pileId);
   };
 
-  const isDisabled = wsStatus !== 'connected';
+  const isDisabled = wsStatus !== 'connected' || !isMyTurn;
 
   // Sort cards by value in ascending order, preserving original indices
   const handWithIndices = player.hand.map((card, index) => ({ card, originalIndex: index }));
