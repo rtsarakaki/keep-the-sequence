@@ -1,7 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useGameWebSocket } from '@/hooks/useGameWebSocket';
+import { useConfirmCardPlay } from '@/hooks/useConfirmCardPlay';
+import { ConfirmCardPlayModal } from '@/components/game/ConfirmCardPlayModal';
 import { GameError } from '@/components/game/GameError';
 import { GameLoading } from '@/components/game/GameLoading';
 import { GameBoard } from '@/components/game/GameBoard';
@@ -14,6 +17,8 @@ import { MdEmojiEvents, MdSentimentDissatisfied } from 'react-icons/md';
 import styles from './page.module.css';
 
 export default function GamePage({ params }: { params: { gameId: string } }) {
+  const [confirmCardPlay] = useConfirmCardPlay();
+  const [pendingPlay, setPendingPlay] = useState<{ cardIndex: number; pileId: 'ascending1' | 'ascending2' | 'descending1' | 'descending2' } | null>(null);
   const searchParams = useSearchParams();
   const router = useRouter();
   const playerId = searchParams.get('playerId');
@@ -31,7 +36,7 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
     onGameEnded: handleGameEnded,
   });
 
-  const handlePlayCard = (cardIndex: number, pileId: 'ascending1' | 'ascending2' | 'descending1' | 'descending2') => {
+  const handlePlayCardDirect = (cardIndex: number, pileId: 'ascending1' | 'ascending2' | 'descending1' | 'descending2') => {
     if (wsStatus !== 'connected') {
       return;
     }
@@ -64,6 +69,37 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
       },
       pileId,
     });
+  };
+
+  const handlePlayCard = (cardIndex: number, pileId: 'ascending1' | 'ascending2' | 'descending1' | 'descending2') => {
+    if (confirmCardPlay) {
+      // Show confirmation modal
+      setPendingPlay({ cardIndex, pileId });
+    } else {
+      // Play directly without confirmation
+      handlePlayCardDirect(cardIndex, pileId);
+    }
+  };
+
+  const handleConfirmPlay = () => {
+    if (pendingPlay) {
+      handlePlayCardDirect(pendingPlay.cardIndex, pendingPlay.pileId);
+      setPendingPlay(null);
+    }
+  };
+
+  const handleCancelPlay = () => {
+    setPendingPlay(null);
+  };
+
+  const getPileName = (pileId: 'ascending1' | 'ascending2' | 'descending1' | 'descending2'): string => {
+    const names: Record<string, string> = {
+      ascending1: 'Pilha Crescente 1 (C1)',
+      ascending2: 'Pilha Crescente 2 (C2)',
+      descending1: 'Pilha Decrescente 1 (D1)',
+      descending2: 'Pilha Decrescente 2 (D2)',
+    };
+    return names[pileId] || pileId;
   };
 
   const handleEndTurn = () => {
@@ -285,6 +321,22 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
         gameStatus={gameState.status}
         onSetStartingPlayer={handleSetStartingPlayer}
       />
+      
+      {pendingPlay && gameState && playerId && (
+        (() => {
+          const currentPlayer = gameState.players.find(p => p.id === playerId);
+          const card = currentPlayer?.hand[pendingPlay.cardIndex];
+          return card ? (
+            <ConfirmCardPlayModal
+              isOpen={true}
+              card={card}
+              pileName={getPileName(pendingPlay.pileId)}
+              onConfirm={handleConfirmPlay}
+              onCancel={handleCancelPlay}
+            />
+          ) : null;
+        })()
+      )}
     </main>
   );
 }

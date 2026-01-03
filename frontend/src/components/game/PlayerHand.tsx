@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import { WebSocketStatus } from '@/services/websocket';
 import { GameState } from '@/hooks/useGameWebSocket';
+import { useConfirmCardPlay } from '@/hooks/useConfirmCardPlay';
 import { Card } from './Card';
 import styles from './PlayerHand.module.css';
 
@@ -33,6 +34,7 @@ export function PlayerHand({
   const draggedCardCloneRef = useRef<HTMLElement | null>(null);
   const dragStartRef = useRef<{ cardIndex: number; initialX: number; initialY: number } | null>(null);
   const dragCloneRef = useRef<HTMLElement | null>(null);
+  const [confirmCardPlay, setConfirmCardPlay] = useConfirmCardPlay();
 
   // Touch event handlers for mobile support
   const handleTouchStart = (e: React.TouchEvent, cardIndex: number) => {
@@ -358,16 +360,29 @@ export function PlayerHand({
             </div>
           )}
         </div>
-        {isMyTurn && onEndTurn && (
-          <button
-            onClick={onEndTurn}
-            className={styles.endTurnButton}
-            disabled={!canEndTurn || wsStatus !== 'connected'}
-            title={canEndTurn ? 'Passar a vez para o próximo jogador' : `Jogue pelo menos ${minimumCards} carta${minimumCards > 1 ? 's' : ''} primeiro`}
-          >
-            {canEndTurn ? '✓ Passar a Vez' : `Jogue ${minimumCards} carta${minimumCards > 1 ? 's' : ''} primeiro`}
-          </button>
-        )}
+        <div className={styles.headerActions}>
+          <label className={styles.confirmToggle}>
+            <input
+              type="checkbox"
+              checked={confirmCardPlay}
+              onChange={(e) => setConfirmCardPlay(e.target.checked)}
+              className={styles.confirmToggleInput}
+            />
+            <span className={styles.confirmToggleLabel}>
+              Confirmar jogadas
+            </span>
+          </label>
+          {isMyTurn && onEndTurn && (
+            <button
+              onClick={onEndTurn}
+              className={styles.endTurnButton}
+              disabled={!canEndTurn || wsStatus !== 'connected'}
+              title={canEndTurn ? 'Passar a vez para o próximo jogador' : `Jogue pelo menos ${minimumCards} carta${minimumCards > 1 ? 's' : ''} primeiro`}
+            >
+              {canEndTurn ? '✓ Passar a Vez' : `Jogue ${minimumCards} carta${minimumCards > 1 ? 's' : ''} primeiro`}
+            </button>
+          )}
+        </div>
       </div>
       <div className={styles.handCards}>
         {sortedHand.length === 0 ? (
