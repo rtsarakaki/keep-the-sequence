@@ -97,7 +97,7 @@
 .handCardWrapper {
   position: relative;
   flex: 0 0 auto;
-  padding: 0.5rem 0;
+  padding: 0.5rem 1rem; /* Added horizontal padding for easier scrolling */
   margin: 0.25rem 0;
 }
 
@@ -308,7 +308,7 @@
   .handCardWrapper {
     flex: 0 0 auto;
     scroll-snap-align: start;
-    padding: 0.5rem 0;
+    padding: 0.5rem 1.5rem; /* Increased horizontal padding for easier scrolling on mobile */
     margin: 0.25rem 0;
   }
 

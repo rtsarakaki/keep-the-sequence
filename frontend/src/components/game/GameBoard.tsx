@@ -75,21 +75,16 @@ export function GameBoard({
       const previousLength = previousPilesRef.current[pileKey];
       const currentLength = piles[pileKey].length;
       
-      // If a pile grew, highlight it
+      // If a pile grew, highlight it (effect lasts until next card is played)
       if (currentLength > previousLength) {
-        // Clear any existing timeout
+        // Clear any existing timeout (in case cleanup is needed)
         if (highlightTimeoutRef.current) {
           clearTimeout(highlightTimeoutRef.current);
+          highlightTimeoutRef.current = null;
         }
         
-        // Highlight the pile
+        // Highlight the new pile (this will automatically remove highlight from previous pile)
         setHighlightedPile(pileKey);
-        
-        // Remove highlight after 2 seconds
-        highlightTimeoutRef.current = setTimeout(() => {
-          setHighlightedPile(null);
-          highlightTimeoutRef.current = null;
-        }, 2000);
         
         break; // Only highlight one pile at a time
       }
@@ -104,7 +99,7 @@ export function GameBoard({
     };
   }, [piles]);
 
-  // Cleanup timeout on unmount
+  // Cleanup on unmount (though timeout is no longer used, keeping for safety)
   useEffect(() => {
     return () => {
       if (highlightTimeoutRef.current) {
