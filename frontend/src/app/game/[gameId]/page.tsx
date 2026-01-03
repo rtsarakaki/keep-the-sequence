@@ -18,7 +18,7 @@ import { MdEmojiEvents, MdSentimentDissatisfied } from 'react-icons/md';
 import styles from './page.module.css';
 
 export default function GamePage({ params }: { params: { gameId: string } }) {
-  const [confirmCardPlay] = useConfirmCardPlay();
+  const [confirmCardPlay, setConfirmCardPlay] = useConfirmCardPlay();
   const [pendingPlay, setPendingPlay] = useState<{ cardIndex: number; pileId: 'ascending1' | 'ascending2' | 'descending1' | 'descending2' } | null>(null);
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -312,6 +312,8 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
                 minimumCards={minimumCards}
                 onEndTurn={isGameFinished ? undefined : handleEndTurn}
                 canEndTurn={!isGameFinished && canEndTurn}
+                confirmCardPlay={confirmCardPlay}
+                setConfirmCardPlay={setConfirmCardPlay}
               />
             )}
           </div>

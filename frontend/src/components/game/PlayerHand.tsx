@@ -3,7 +3,6 @@
 import { useState, useRef } from 'react';
 import { WebSocketStatus } from '@/services/websocket';
 import { GameState } from '@/hooks/useGameWebSocket';
-import { useConfirmCardPlay } from '@/hooks/useConfirmCardPlay';
 import { Card } from './Card';
 import styles from './PlayerHand.module.css';
 
@@ -16,6 +15,8 @@ interface PlayerHandProps {
   minimumCards?: number;
   onEndTurn?: () => void;
   canEndTurn?: boolean;
+  confirmCardPlay?: boolean;
+  setConfirmCardPlay?: (confirm: boolean) => void;
 }
 
 export function PlayerHand({ 
@@ -27,6 +28,8 @@ export function PlayerHand({
   minimumCards = 0,
   onEndTurn,
   canEndTurn = false,
+  confirmCardPlay = false,
+  setConfirmCardPlay,
 }: PlayerHandProps) {
   const [draggedCardIndex, setDraggedCardIndex] = useState<number | null>(null);
   const touchStartRef = useRef<{ cardIndex: number; x: number; y: number; initialX: number; initialY: number } | null>(null);
@@ -34,7 +37,6 @@ export function PlayerHand({
   const draggedCardCloneRef = useRef<HTMLElement | null>(null);
   const dragStartRef = useRef<{ cardIndex: number; initialX: number; initialY: number } | null>(null);
   const dragCloneRef = useRef<HTMLElement | null>(null);
-  const [confirmCardPlay, setConfirmCardPlay] = useConfirmCardPlay();
 
   // Touch event handlers for mobile support
   const handleTouchStart = (e: React.TouchEvent, cardIndex: number) => {
@@ -361,17 +363,19 @@ export function PlayerHand({
           )}
         </div>
         <div className={styles.headerActions}>
-          <label className={styles.confirmToggle}>
-            <input
-              type="checkbox"
-              checked={confirmCardPlay}
-              onChange={(e) => setConfirmCardPlay(e.target.checked)}
-              className={styles.confirmToggleInput}
-            />
-            <span className={styles.confirmToggleLabel}>
-              Confirmar jogadas
-            </span>
-          </label>
+          {setConfirmCardPlay && (
+            <label className={styles.confirmToggle}>
+              <input
+                type="checkbox"
+                checked={confirmCardPlay}
+                onChange={(e) => setConfirmCardPlay(e.target.checked)}
+                className={styles.confirmToggleInput}
+              />
+              <span className={styles.confirmToggleLabel}>
+                Confirmar jogadas
+              </span>
+            </label>
+          )}
           {isMyTurn && onEndTurn && (
             <button
               onClick={onEndTurn}
