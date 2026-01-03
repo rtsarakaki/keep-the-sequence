@@ -30,6 +30,7 @@ export function PlayerHand({
   const [draggedCardIndex, setDraggedCardIndex] = useState<number | null>(null);
   const touchStartRef = useRef<{ cardIndex: number; x: number; y: number; initialX: number; initialY: number } | null>(null);
   const draggedCardElementRef = useRef<HTMLElement | null>(null);
+  const draggedCardCloneRef = useRef<HTMLElement | null>(null);
 
   // Touch event handlers for mobile support
   const handleTouchStart = (e: React.TouchEvent, cardIndex: number) => {
@@ -38,8 +39,13 @@ export function PlayerHand({
     }
     
     const touch = e.touches[0];
-    const cardElement = e.currentTarget as HTMLElement;
-    const cardRect = cardElement.getBoundingClientRect();
+    const cardContainer = e.currentTarget as HTMLElement;
+    // Find the card element wrapper (the div with data-card-element)
+    const cardWrapper = cardContainer.querySelector('[data-card-element]') as HTMLElement;
+    
+    if (!cardWrapper) return;
+    
+    const cardRect = cardWrapper.getBoundingClientRect();
     
     touchStartRef.current = {
       cardIndex,
@@ -51,22 +57,33 @@ export function PlayerHand({
     
     setDraggedCardIndex(cardIndex);
     
-    // Store reference to the card element for visual feedback
-    draggedCardElementRef.current = cardElement;
+    // Store reference to the container for visual feedback
+    draggedCardElementRef.current = cardContainer;
+    
+    // Create a clone of just the card wrapper (not the buttons)
+    const cardClone = cardWrapper.cloneNode(true) as HTMLElement;
+    cardClone.style.position = 'fixed';
+    cardClone.style.left = `${cardRect.left}px`;
+    cardClone.style.top = `${cardRect.top}px`;
+    cardClone.style.width = `${cardRect.width}px`;
+    cardClone.style.height = `${cardRect.height}px`;
+    cardClone.style.zIndex = '9999';
+    cardClone.style.opacity = '0.9';
+    cardClone.style.pointerEvents = 'none';
+    cardClone.style.transform = 'scale(1.1)';
+    cardClone.style.transition = 'none';
+    cardClone.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.3)';
+    document.body.appendChild(cardClone);
+    draggedCardCloneRef.current = cardClone;
+    
+    // Make the original card container semi-transparent
     if (draggedCardElementRef.current) {
-      // Use fixed positioning to take card out of normal flow and place it above everything
-      draggedCardElementRef.current.style.position = 'fixed';
-      draggedCardElementRef.current.style.left = `${cardRect.left}px`;
-      draggedCardElementRef.current.style.top = `${cardRect.top}px`;
-      draggedCardElementRef.current.style.width = `${cardRect.width}px`;
-      draggedCardElementRef.current.style.zIndex = '9999';
-      draggedCardElementRef.current.style.opacity = '0.8';
-      draggedCardElementRef.current.style.pointerEvents = 'none'; // Allow touches to pass through to elements below
+      draggedCardElementRef.current.style.opacity = '0.4';
     }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!touchStartRef.current || !draggedCardElementRef.current) return;
+    if (!touchStartRef.current || !draggedCardCloneRef.current) return;
     
     e.preventDefault(); // Prevent scrolling while dragging
     
@@ -74,11 +91,10 @@ export function PlayerHand({
     const deltaX = touch.clientX - touchStartRef.current.x;
     const deltaY = touch.clientY - touchStartRef.current.y;
     
-    // Move the card visually using fixed positioning
-    if (draggedCardElementRef.current && touchStartRef.current) {
-      draggedCardElementRef.current.style.left = `${touchStartRef.current.initialX + deltaX}px`;
-      draggedCardElementRef.current.style.top = `${touchStartRef.current.initialY + deltaY}px`;
-      draggedCardElementRef.current.style.transform = 'scale(1.1)';
+    // Move only the card clone visually using fixed positioning
+    if (draggedCardCloneRef.current && touchStartRef.current) {
+      draggedCardCloneRef.current.style.left = `${touchStartRef.current.initialX + deltaX}px`;
+      draggedCardCloneRef.current.style.top = `${touchStartRef.current.initialY + deltaY}px`;
     }
   };
 
@@ -93,12 +109,12 @@ export function PlayerHand({
     const elementsAtPoint = document.elementsFromPoint(touch.clientX, touch.clientY);
     
     // Find the pile element (look for data-pile-id attribute)
-    // Skip the dragged card element itself
+    // Skip the dragged card clone itself
     let pileElement: HTMLElement | null = null;
     for (const element of elementsAtPoint) {
       const htmlElement = element as HTMLElement;
-      if (htmlElement === draggedCardElementRef.current) {
-        continue; // Skip the dragged card itself
+      if (htmlElement === draggedCardCloneRef.current) {
+        continue; // Skip the dragged card clone itself
       }
       
       // Check if this element or any parent has the pile ID
@@ -123,16 +139,15 @@ export function PlayerHand({
       }
     }
     
-    // Reset card visual state
+    // Remove the card clone
+    if (draggedCardCloneRef.current && draggedCardCloneRef.current.parentNode) {
+      document.body.removeChild(draggedCardCloneRef.current);
+      draggedCardCloneRef.current = null;
+    }
+    
+    // Reset original card container visual state
     if (draggedCardElementRef.current) {
-      draggedCardElementRef.current.style.position = '';
-      draggedCardElementRef.current.style.left = '';
-      draggedCardElementRef.current.style.top = '';
-      draggedCardElementRef.current.style.width = '';
-      draggedCardElementRef.current.style.zIndex = '';
       draggedCardElementRef.current.style.opacity = '';
-      draggedCardElementRef.current.style.transform = '';
-      draggedCardElementRef.current.style.pointerEvents = '';
     }
     
     // Cleanup
@@ -220,7 +235,9 @@ export function PlayerHand({
                 onTouchEnd={handleTouchEnd}
                 className={`${styles.handCard} ${draggedCardIndex === originalIndex ? styles.dragging : ''} ${isDisabled ? styles.disabled : ''}`}
               >
-                <Card card={card} size="medium" />
+                <div data-card-element>
+                  <Card card={card} size="medium" />
+                </div>
                 <div className={styles.cardActions}>
                   <button
                     onClick={() => handlePileClick(originalIndex, 'ascending1')}
