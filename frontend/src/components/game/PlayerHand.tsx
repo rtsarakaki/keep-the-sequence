@@ -28,7 +28,7 @@ export function PlayerHand({
   canEndTurn = false,
 }: PlayerHandProps) {
   const [draggedCardIndex, setDraggedCardIndex] = useState<number | null>(null);
-  const touchStartRef = useRef<{ cardIndex: number; x: number; y: number } | null>(null);
+  const touchStartRef = useRef<{ cardIndex: number; x: number; y: number; initialX: number; initialY: number } | null>(null);
   const draggedCardElementRef = useRef<HTMLElement | null>(null);
 
   // Touch event handlers for mobile support
@@ -38,20 +38,30 @@ export function PlayerHand({
     }
     
     const touch = e.touches[0];
+    const cardElement = e.currentTarget as HTMLElement;
+    const cardRect = cardElement.getBoundingClientRect();
+    
     touchStartRef.current = {
       cardIndex,
       x: touch.clientX,
       y: touch.clientY,
+      initialX: cardRect.left,
+      initialY: cardRect.top,
     };
     
     setDraggedCardIndex(cardIndex);
     
     // Store reference to the card element for visual feedback
-    draggedCardElementRef.current = e.currentTarget as HTMLElement;
+    draggedCardElementRef.current = cardElement;
     if (draggedCardElementRef.current) {
-      draggedCardElementRef.current.style.opacity = '0.6';
-      draggedCardElementRef.current.style.zIndex = '1000';
-      draggedCardElementRef.current.style.position = 'relative';
+      // Use fixed positioning to take card out of normal flow and place it above everything
+      draggedCardElementRef.current.style.position = 'fixed';
+      draggedCardElementRef.current.style.left = `${cardRect.left}px`;
+      draggedCardElementRef.current.style.top = `${cardRect.top}px`;
+      draggedCardElementRef.current.style.width = `${cardRect.width}px`;
+      draggedCardElementRef.current.style.zIndex = '9999';
+      draggedCardElementRef.current.style.opacity = '0.8';
+      draggedCardElementRef.current.style.pointerEvents = 'none'; // Allow touches to pass through to elements below
     }
   };
 
@@ -64,9 +74,11 @@ export function PlayerHand({
     const deltaX = touch.clientX - touchStartRef.current.x;
     const deltaY = touch.clientY - touchStartRef.current.y;
     
-    // Move the card visually
-    if (draggedCardElementRef.current) {
-      draggedCardElementRef.current.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(1.05)`;
+    // Move the card visually using fixed positioning
+    if (draggedCardElementRef.current && touchStartRef.current) {
+      draggedCardElementRef.current.style.left = `${touchStartRef.current.initialX + deltaX}px`;
+      draggedCardElementRef.current.style.top = `${touchStartRef.current.initialY + deltaY}px`;
+      draggedCardElementRef.current.style.transform = 'scale(1.1)';
     }
   };
 
@@ -77,21 +89,29 @@ export function PlayerHand({
     
     const touch = e.changedTouches[0];
     
-    // Reset card visual state first
-    if (draggedCardElementRef.current) {
-      draggedCardElementRef.current.style.opacity = '';
-      draggedCardElementRef.current.style.transform = '';
-      draggedCardElementRef.current.style.zIndex = '';
-      draggedCardElementRef.current.style.position = '';
-    }
-    
-    // Find element at touch point
-    const elementAtPoint = document.elementFromPoint(touch.clientX, touch.clientY);
+    // Get all elements at touch point (not just the top one)
+    const elementsAtPoint = document.elementsFromPoint(touch.clientX, touch.clientY);
     
     // Find the pile element (look for data-pile-id attribute)
-    let pileElement: HTMLElement | null = elementAtPoint as HTMLElement;
-    while (pileElement && !pileElement.dataset.pileId) {
-      pileElement = pileElement.parentElement;
+    // Skip the dragged card element itself
+    let pileElement: HTMLElement | null = null;
+    for (const element of elementsAtPoint) {
+      const htmlElement = element as HTMLElement;
+      if (htmlElement === draggedCardElementRef.current) {
+        continue; // Skip the dragged card itself
+      }
+      
+      // Check if this element or any parent has the pile ID
+      let current: HTMLElement | null = htmlElement;
+      while (current) {
+        if (current.dataset.pileId) {
+          pileElement = current;
+          break;
+        }
+        current = current.parentElement;
+      }
+      
+      if (pileElement) break;
     }
     
     // If we found a pile and it's droppable, play the card
@@ -101,6 +121,18 @@ export function PlayerHand({
       if (pileElement.dataset.isDroppable === 'true') {
         onPlayCard(touchStartRef.current.cardIndex, pileId);
       }
+    }
+    
+    // Reset card visual state
+    if (draggedCardElementRef.current) {
+      draggedCardElementRef.current.style.position = '';
+      draggedCardElementRef.current.style.left = '';
+      draggedCardElementRef.current.style.top = '';
+      draggedCardElementRef.current.style.width = '';
+      draggedCardElementRef.current.style.zIndex = '';
+      draggedCardElementRef.current.style.opacity = '';
+      draggedCardElementRef.current.style.transform = '';
+      draggedCardElementRef.current.style.pointerEvents = '';
     }
     
     // Cleanup
