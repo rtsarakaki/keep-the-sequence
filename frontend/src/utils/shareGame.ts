@@ -39,17 +39,29 @@ export function getTelegramShareLink(gameId: string): string {
 }
 
 /**
- * Opens WhatsApp share dialog
+ * Opens WhatsApp share dialog in a new window/tab
  */
 export function shareViaWhatsApp(gameId: string): void {
   const link = getWhatsAppShareLink(gameId);
-  window.open(link, '_blank', 'noopener,noreferrer');
+  // Open in new window/tab - this keeps the game page open
+  const newWindow = window.open(link, '_blank', 'noopener,noreferrer');
+  // If popup was blocked, try to open in same window as fallback
+  if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+    // Fallback: open in same window (shouldn't happen with user interaction)
+    window.location.href = link;
+  }
 }
 
 /**
- * Opens Telegram share dialog
+ * Opens Telegram share dialog in a new window/tab
  */
 export function shareViaTelegram(gameId: string): void {
   const link = getTelegramShareLink(gameId);
-  window.open(link, '_blank', 'noopener,noreferrer');
+  // Open in new window/tab - this keeps the game page open
+  const newWindow = window.open(link, '_blank', 'noopener,noreferrer');
+  // If popup was blocked, try to open in same window as fallback
+  if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+    // Fallback: open in same window (shouldn't happen with user interaction)
+    window.location.href = link;
+  }
 }
