@@ -10,3 +10,113 @@ spec:
   lifecycle: production
   owner: developers
   system: games
+  dependsOn:
+    - resource:default/keep-the-sequence-dynamodb-games
+    - resource:default/keep-the-sequence-dynamodb-connections
+    - resource:default/keep-the-sequence-dynamodb-game-events
+    - resource:default/keep-the-sequence-sqs
+    - resource:default/keep-the-sequence-api-gateway
+    - resource:default/keep-the-sequence-lambda
+
+---
+# DynamoDB Games Table Resource
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: keep-the-sequence-dynamodb-games
+  namespace: default
+  description: DynamoDB table para persistência de estado dos jogos
+  annotations:
+    aws.amazon.com/dynamodb-table-name: the-game-backend-games-${stage}
+    aws.amazon.com/region: us-east-1
+    backstage.io/view-url: https://console.aws.amazon.com/dynamodbv2/home?region=us-east-1#tables
+spec:
+  type: database
+  owner: developers
+  system: games
+
+---
+# DynamoDB Connections Table Resource
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: keep-the-sequence-dynamodb-connections
+  namespace: default
+  description: DynamoDB table para gerenciamento de conexões WebSocket
+  annotations:
+    aws.amazon.com/dynamodb-table-name: the-game-backend-connections-${stage}
+    aws.amazon.com/region: us-east-1
+    backstage.io/view-url: https://console.aws.amazon.com/dynamodbv2/home?region=us-east-1#tables
+spec:
+  type: database
+  owner: developers
+  system: games
+
+---
+# DynamoDB Game Events Table Resource
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: keep-the-sequence-dynamodb-game-events
+  namespace: default
+  description: DynamoDB table para histórico e analytics de eventos do jogo
+  annotations:
+    aws.amazon.com/dynamodb-table-name: the-game-backend-game-events-${stage}
+    aws.amazon.com/region: us-east-1
+    backstage.io/view-url: https://console.aws.amazon.com/dynamodbv2/home?region=us-east-1#tables
+spec:
+  type: database
+  owner: developers
+  system: games
+
+---
+# SQS Queue Resource
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: keep-the-sequence-sqs
+  namespace: default
+  description: SQS queue para processamento assíncrono de eventos do jogo
+  annotations:
+    aws.amazon.com/sqs-queue-name: the-game-backend-game-events-${stage}
+    aws.amazon.com/region: us-east-1
+    backstage.io/view-url: https://console.aws.amazon.com/sqs/v2/home?region=us-east-1#/queues
+spec:
+  type: queue
+  owner: developers
+  system: games
+
+---
+# API Gateway WebSocket Resource
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: keep-the-sequence-api-gateway
+  namespace: default
+  description: API Gateway WebSocket para comunicação em tempo real entre jogadores
+  annotations:
+    aws.amazon.com/api-gateway-type: websocket
+    aws.amazon.com/api-gateway-name: the-game-websocket-api
+    aws.amazon.com/region: us-east-1
+    backstage.io/view-url: https://console.aws.amazon.com/apigateway/main/apis?region=us-east-1
+spec:
+  type: api-gateway
+  owner: developers
+  system: games
+
+---
+# Lambda Functions Resource
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: keep-the-sequence-lambda
+  namespace: default
+  description: Lambda functions serverless para processamento de eventos HTTP e WebSocket
+  annotations:
+    aws.amazon.com/lambda-function-name: the-game-backend-${stage}-gameHandler
+    aws.amazon.com/region: us-east-1
+    backstage.io/view-url: https://console.aws.amazon.com/lambda/home?region=us-east-1#/functions
+spec:
+  type: function
+  owner: developers
+  system: games
