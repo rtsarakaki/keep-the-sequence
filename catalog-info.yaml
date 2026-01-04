@@ -20,6 +20,7 @@ spec:
 
 ---
 # DynamoDB Games Table Resource
+# Created by Serverless Framework via deploy-backend.yml workflow (stage: prod)
 apiVersion: backstage.io/v1alpha1
 kind: Resource
 metadata:
@@ -27,7 +28,7 @@ metadata:
   namespace: default
   description: DynamoDB table para persistência de estado dos jogos
   annotations:
-    aws.amazon.com/dynamodb-table-name: the-game-backend-games-${stage}
+    aws.amazon.com/dynamodb-table-name: the-game-backend-games-prod
     aws.amazon.com/region: us-east-1
     backstage.io/view-url: https://console.aws.amazon.com/dynamodbv2/home?region=us-east-1#tables
 spec:
@@ -37,6 +38,7 @@ spec:
 
 ---
 # DynamoDB Connections Table Resource
+# Created by Serverless Framework via deploy-backend.yml workflow (stage: prod)
 apiVersion: backstage.io/v1alpha1
 kind: Resource
 metadata:
@@ -44,7 +46,7 @@ metadata:
   namespace: default
   description: DynamoDB table para gerenciamento de conexões WebSocket
   annotations:
-    aws.amazon.com/dynamodb-table-name: the-game-backend-connections-${stage}
+    aws.amazon.com/dynamodb-table-name: the-game-backend-connections-prod
     aws.amazon.com/region: us-east-1
     backstage.io/view-url: https://console.aws.amazon.com/dynamodbv2/home?region=us-east-1#tables
 spec:
@@ -54,6 +56,7 @@ spec:
 
 ---
 # DynamoDB Game Events Table Resource
+# Created by Serverless Framework via deploy-backend.yml workflow (stage: prod)
 apiVersion: backstage.io/v1alpha1
 kind: Resource
 metadata:
@@ -61,7 +64,7 @@ metadata:
   namespace: default
   description: DynamoDB table para histórico e analytics de eventos do jogo
   annotations:
-    aws.amazon.com/dynamodb-table-name: the-game-backend-game-events-${stage}
+    aws.amazon.com/dynamodb-table-name: the-game-backend-game-events-prod
     aws.amazon.com/region: us-east-1
     backstage.io/view-url: https://console.aws.amazon.com/dynamodbv2/home?region=us-east-1#tables
 spec:
@@ -71,6 +74,7 @@ spec:
 
 ---
 # SQS Queue Resource
+# Created by Serverless Framework via deploy-backend.yml workflow (stage: prod)
 apiVersion: backstage.io/v1alpha1
 kind: Resource
 metadata:
@@ -78,7 +82,7 @@ metadata:
   namespace: default
   description: SQS queue para processamento assíncrono de eventos do jogo
   annotations:
-    aws.amazon.com/sqs-queue-name: the-game-backend-game-events-${stage}
+    aws.amazon.com/sqs-queue-name: the-game-backend-game-events-prod
     aws.amazon.com/region: us-east-1
     backstage.io/view-url: https://console.aws.amazon.com/sqs/v2/home?region=us-east-1#/queues
 spec:
@@ -88,6 +92,8 @@ spec:
 
 ---
 # API Gateway WebSocket Resource
+# Created by Serverless Framework via deploy-backend.yml workflow
+# Serverless Framework creates WebSocket API Gateway automatically for WebSocket routes
 apiVersion: backstage.io/v1alpha1
 kind: Resource
 metadata:
@@ -96,7 +102,7 @@ metadata:
   description: API Gateway WebSocket para comunicação em tempo real entre jogadores
   annotations:
     aws.amazon.com/api-gateway-type: websocket
-    aws.amazon.com/api-gateway-name: the-game-websocket-api
+    aws.amazon.com/api-gateway-name: the-game-backend-prod-websocket
     aws.amazon.com/region: us-east-1
     backstage.io/view-url: https://console.aws.amazon.com/apigateway/main/apis?region=us-east-1
 spec:
@@ -106,6 +112,8 @@ spec:
 
 ---
 # Lambda Functions Resource
+# Created by Serverless Framework via deploy-backend.yml workflow (stage: prod)
+# Multiple Lambda functions: healthCheck, getWebSocketUrl, createGame, joinGame, onConnect, onDisconnect, gameHandler, sqsConsumer
 apiVersion: backstage.io/v1alpha1
 kind: Resource
 metadata:
@@ -113,7 +121,7 @@ metadata:
   namespace: default
   description: Lambda functions serverless para processamento de eventos HTTP e WebSocket
   annotations:
-    aws.amazon.com/lambda-function-name: the-game-backend-${stage}-gameHandler
+    aws.amazon.com/lambda-function-name: the-game-backend-prod-gameHandler
     aws.amazon.com/region: us-east-1
     backstage.io/view-url: https://console.aws.amazon.com/lambda/home?region=us-east-1#/functions
 spec:
