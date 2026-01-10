@@ -196,6 +196,21 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
     }
   };
 
+  const handleRestartGame = () => {
+    if (wsStatus !== 'connected' || !playerId) {
+      return;
+    }
+
+    if (!gameState) {
+      return;
+    }
+
+    // Send restart game action
+    sendMessage({
+      action: 'restartGame',
+    });
+  };
+
   const handleLeaveGame = () => {
     if (confirm('Tem certeza que deseja sair do jogo?')) {
       disconnect();
@@ -286,6 +301,15 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
               <p className={styles.gameFinishedHint}>
                 O jogo permanece visível para análise. Você pode revisar as cartas jogadas e entender o que aconteceu.
               </p>
+              <button
+                onClick={handleRestartGame}
+                className={styles.restartButton}
+                disabled={wsStatus !== 'connected'}
+                title="Jogar Novamente"
+              >
+                <span className={styles.restartButtonIcon}>🔄</span>
+                Jogar Novamente
+              </button>
             </div>
           )}
           

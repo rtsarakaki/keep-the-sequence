@@ -519,6 +519,54 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event) => {
         });
       }
 
+      case 'restartGame': {
+        const restartGameUseCase = container.getRestartGameUseCase();
+
+        const result = await restartGameUseCase.execute({
+          gameId,
+          playerId,
+        });
+
+        if (!result.isSuccess) {
+          await webSocketService.sendToConnection(connectionId, {
+            type: 'error',
+            error: result.error || 'Falha ao reiniciar o jogo',
+          });
+          return Promise.resolve({
+            statusCode: 400,
+            body: JSON.stringify({ error: result.error }),
+          });
+        }
+
+        // Broadcast updated game state to all players
+        const allConnections = await connectionRepository.findByGameId(gameId);
+        const connectionIds = allConnections.map(c => c.connectionId);
+
+        await webSocketService.sendToConnections(connectionIds, {
+          type: 'gameUpdated',
+          game: formatGameForMessage(result.value),
+        }).catch(() => {
+          // Silently handle notification errors
+        });
+
+        // Send event to SQS asynchronously (fire-and-forget)
+        const sqsEventService = container.getSQSEventService();
+        sqsEventService.sendEvent({
+          gameId,
+          eventType: 'gameRestarted',
+          eventData: {
+            playerId,
+          },
+          timestamp: Date.now(),
+        }).catch(() => {
+          // Silently handle SQS send errors
+        });
+
+        return Promise.resolve({
+          statusCode: 200,
+        });
+      }
+
       default:
         return Promise.resolve({
           statusCode: 400,
