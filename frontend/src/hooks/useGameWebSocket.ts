@@ -260,18 +260,33 @@ export function useGameWebSocket({
           await gameWs.connect(gameId, playerName, { useName: true });
         }
       } catch (err) {
+        // If playerId failed and we have playerName, try using playerName instead
+        const errorWithStatus = err as Error & { status?: number };
+        if (playerId && playerName && err instanceof Error && (
+          err.message.includes('not found') || 
+          err.message.includes('Error validating') ||
+          err.message.includes('Player not found') ||
+          errorWithStatus.status === 403 || 
+          errorWithStatus.status === 500
+        )) {
+          console.log('playerId validation failed, trying playerName instead...');
+          try {
+            await gameWs.connect(gameId, playerName, { useName: true });
+            return; // Success, exit early
+          } catch (nameErr) {
+            // If playerName also fails, show error
+            handleError(
+              `Erro ao conectar: ${nameErr instanceof Error ? nameErr.message : 'Erro desconhecido'}\n\nVerifique:\n1. Se o jogo existe\n2. Se você faz parte do jogo\n3. Se o nome está correto`
+            );
+            return;
+          }
+        }
+        
+        // Handle other errors
         if (err instanceof Error && err.message.includes('obter URL do WebSocket')) {
           handleError(
             `Erro ao obter URL do WebSocket: ${err.message}\n\nPossíveis causas:\n1. O jogo não existe\n2. Você não faz parte deste jogo\n3. O playerId/nome está incorreto\n4. Problema de conexão com a API`
           );
-        } else if (playerId && playerName && err instanceof Error && err.message.includes('not found')) {
-          try {
-            await gameWs.connect(gameId, playerName, { useName: true });
-          } catch (nameErr) {
-            handleError(
-              `Erro ao conectar: ${nameErr instanceof Error ? nameErr.message : 'Erro desconhecido'}\n\nVerifique:\n1. Se o jogo existe\n2. Se você faz parte do jogo\n3. Se o nome está correto`
-            );
-          }
         } else {
           handleError(
             `Erro ao conectar: ${err instanceof Error ? err.message : 'Erro desconhecido'}\n\nVerifique:\n1. Se o jogo existe\n2. Se você faz parte do jogo\n3. Se o playerId/nome está correto`

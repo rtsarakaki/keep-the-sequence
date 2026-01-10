@@ -183,6 +183,20 @@ export const handler = async (
     }
   } catch (error) {
     console.error('Error validating game and player:', error);
+    
+    // Provide more detailed error information
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorDetails = error instanceof Error && error.stack ? error.stack : String(error);
+    
+    // Log full error details for debugging
+    console.error('Error details:', {
+      gameId,
+      playerId,
+      playerName,
+      errorMessage,
+      errorDetails,
+    });
+    
     return Promise.resolve({
       statusCode: 500,
       headers: {
@@ -191,6 +205,7 @@ export const handler = async (
       },
       body: JSON.stringify({
         error: 'Error validating game and player',
+        details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
       }),
     });
   }

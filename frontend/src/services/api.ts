@@ -55,15 +55,29 @@ export async function getWebSocketUrl(
     if (!response.ok) {
       const errorText = await response.text();
       let errorMessage = `Erro ao obter URL do WebSocket: ${response.status}`;
+      let errorDetails: string | undefined;
       
       try {
         const errorData = JSON.parse(errorText);
         errorMessage = errorData.error || errorMessage;
+        errorDetails = errorData.details;
       } catch {
         errorMessage = errorText || errorMessage;
       }
 
-      throw new Error(errorMessage);
+      // Provide more context for common errors
+      if (response.status === 403 && errorMessage.includes('Player not found')) {
+        errorMessage = `Jogador não encontrado no jogo. Verifique se o playerId/nome está correto.`;
+      } else if (response.status === 404 && errorMessage.includes('Game not found')) {
+        errorMessage = `Jogo não encontrado. Verifique se o ID do jogo está correto.`;
+      } else if (response.status === 500 && errorMessage.includes('Error validating')) {
+        errorMessage = `Erro ao validar jogo e jogador. ${errorDetails ? `Detalhes: ${errorDetails}` : 'Verifique se o jogo existe e se você faz parte dele.'}`;
+      }
+
+      const fullError = new Error(errorMessage) as Error & { status?: number; details?: string };
+      fullError.status = response.status;
+      fullError.details = errorDetails;
+      throw fullError;
     }
 
     const data = await response.json();
