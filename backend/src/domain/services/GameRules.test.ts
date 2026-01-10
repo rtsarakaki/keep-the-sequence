@@ -1,5 +1,5 @@
 import { Card } from '../valueObjects/Card';
-import { canPlayCard, calculateScore, shouldGameEndInDefeat, hasAnyCardsBeenPlayed, canPlayerPlayOnNonMarkedPiles } from './GameRules';
+import { canPlayCard, calculateScore, shouldGameEndInDefeat, hasAnyCardsBeenPlayed, canPlayerPlayOnNonMarkedPiles, findNextPlayerWithCards } from './GameRules';
 import { Player } from '../entities/Player';
 
 describe('GameRules', () => {
@@ -471,6 +471,76 @@ describe('GameRules', () => {
       );
 
       expect(result).toBe(true);
+    });
+  });
+
+  describe('findNextPlayerWithCards', () => {
+    it('deve encontrar o próximo jogador com cartas', () => {
+      const players = [
+        { id: 'player-1', hand: [] },
+        { id: 'player-2', hand: [new Card(10, 'hearts')] },
+        { id: 'player-3', hand: [] },
+        { id: 'player-4', hand: [new Card(20, 'spades')] },
+      ];
+
+      const result = findNextPlayerWithCards(players, 0); // Start from player-1
+
+      expect(result).not.toBeNull();
+      expect(result?.id).toBe('player-2');
+    });
+
+    it('deve pular múltiplos jogadores sem cartas', () => {
+      const players = [
+        { id: 'player-1', hand: [] },
+        { id: 'player-2', hand: [] },
+        { id: 'player-3', hand: [] },
+        { id: 'player-4', hand: [new Card(20, 'spades')] },
+      ];
+
+      const result = findNextPlayerWithCards(players, 0); // Start from player-1
+
+      expect(result).not.toBeNull();
+      expect(result?.id).toBe('player-4');
+    });
+
+    it('deve fazer busca circular quando necessário', () => {
+      const players = [
+        { id: 'player-1', hand: [] },
+        { id: 'player-2', hand: [] },
+        { id: 'player-3', hand: [new Card(20, 'spades')] },
+        { id: 'player-4', hand: [] },
+      ];
+
+      const result = findNextPlayerWithCards(players, 3); // Start from player-4 (last)
+
+      expect(result).not.toBeNull();
+      expect(result?.id).toBe('player-3');
+    });
+
+    it('deve retornar null quando nenhum jogador tem cartas', () => {
+      const players = [
+        { id: 'player-1', hand: [] },
+        { id: 'player-2', hand: [] },
+        { id: 'player-3', hand: [] },
+        { id: 'player-4', hand: [] },
+      ];
+
+      const result = findNextPlayerWithCards(players, 0);
+
+      expect(result).toBeNull();
+    });
+
+    it('deve retornar o próximo jogador mesmo se o atual tiver cartas', () => {
+      const players = [
+        { id: 'player-1', hand: [new Card(10, 'hearts')] },
+        { id: 'player-2', hand: [new Card(20, 'spades')] },
+        { id: 'player-3', hand: [] },
+      ];
+
+      const result = findNextPlayerWithCards(players, 0); // Start from player-1
+
+      expect(result).not.toBeNull();
+      expect(result?.id).toBe('player-2'); // Next player, not current
     });
   });
 });

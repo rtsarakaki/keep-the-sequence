@@ -6,6 +6,7 @@ import {
   canPlayerPlayAnyCard,
   areAllHandsEmpty,
   shouldGameEndInDefeat,
+  findNextPlayerWithCards,
 } from '../../domain/services/GameRules';
 
 export interface EndTurnDTO {
@@ -82,10 +83,17 @@ export class EndTurnUseCase {
         return success(victoriousGame);
       }
 
-      // Pass vez to next player
+      // Pass vez to next player with cards (skip players with empty hands)
       const currentPlayerIndex = game.players.findIndex(p => p.id === dto.playerId);
-      const nextPlayerIndex = (currentPlayerIndex + 1) % game.players.length;
-      const nextPlayer = game.players[nextPlayerIndex];
+      const nextPlayer = findNextPlayerWithCards(game.players, currentPlayerIndex);
+
+      // If no player has cards, game should have been detected as victory above
+      // But handle this case defensively
+      if (!nextPlayer) {
+        const victoriousGame = game.updateStatus('finished');
+        await this.gameRepository.save(victoriousGame);
+        return success(victoriousGame);
+      }
 
       const gameWithNextTurn = game.updateTurn(nextPlayer.id);
 

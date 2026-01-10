@@ -135,6 +135,33 @@ export const areAllHandsEmpty = (players: ReadonlyArray<{ hand: readonly Card[] 
 };
 
 /**
+ * Find the next player with cards in their hand, starting from the given player index.
+ * Skips players with empty hands. If no player has cards, returns null.
+ * 
+ * @param players - Array of players
+ * @param startIndex - Index to start searching from (exclusive, searches from next player)
+ * @returns The next player with cards, or null if no player has cards
+ */
+export const findNextPlayerWithCards = (
+  players: ReadonlyArray<{ id: string; hand: readonly Card[] }>,
+  startIndex: number
+): { id: string; hand: readonly Card[] } | null => {
+  // Start from the next player (circular)
+  for (let i = 0; i < players.length; i++) {
+    const nextIndex = (startIndex + 1 + i) % players.length;
+    const nextPlayer = players[nextIndex];
+    
+    // If this player has cards, return them
+    if (nextPlayer.hand.length > 0) {
+      return nextPlayer;
+    }
+  }
+  
+  // No player has cards
+  return null;
+};
+
+/**
  * Check if any cards have been played in the game piles (beyond the initial starting cards).
  * Used to determine if new players can still join (only before first card is played)
  * 

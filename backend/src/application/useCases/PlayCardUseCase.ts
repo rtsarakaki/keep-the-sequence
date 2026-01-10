@@ -1,7 +1,7 @@
 import { IGameRepository } from '../../domain/repositories/IGameRepository';
 import { PlayCardDTO } from '../dto/PlayCardDTO';
 import { Game } from '../../domain/entities/Game';
-import { canPlayCard, shouldGameEndInDefeat, areAllHandsEmpty } from '../../domain/services/GameRules';
+import { canPlayCard, shouldGameEndInDefeat, areAllHandsEmpty, findNextPlayerWithCards } from '../../domain/services/GameRules';
 import { Result, success, failure } from './Result';
 
 /**
@@ -99,6 +99,42 @@ export class PlayCardUseCase {
         const victoriousGame = gameAfterDraw.updateStatus('finished');
         await this.gameRepository.save(victoriousGame);
         return success(victoriousGame);
+      }
+
+      // If current player has no cards left, automatically pass turn to next player with cards
+      const currentPlayerAfterDraw = gameAfterDraw.players.find(p => p.id === dto.playerId);
+      if (currentPlayerAfterDraw && currentPlayerAfterDraw.hand.length === 0) {
+        const currentPlayerIndex = gameAfterDraw.players.findIndex(p => p.id === dto.playerId);
+        const nextPlayer = findNextPlayerWithCards(gameAfterDraw.players, currentPlayerIndex);
+        
+        // If no player has cards, game should have been detected as victory above
+        // But handle this case defensively
+        if (!nextPlayer) {
+          const victoriousGame = gameAfterDraw.updateStatus('finished');
+          await this.gameRepository.save(victoriousGame);
+          return success(victoriousGame);
+        }
+        
+        // Pass turn to next player with cards
+        const gameWithAutoPass = gameAfterDraw.updateTurn(nextPlayer.id);
+        
+        // Check if next player can play (automatic defeat detection)
+        if (shouldGameEndInDefeat({
+          currentTurn: gameWithAutoPass.currentTurn,
+          cardsPlayedThisTurn: gameWithAutoPass.cardsPlayedThisTurn,
+          deck: gameWithAutoPass.deck,
+          players: gameWithAutoPass.players,
+          piles: gameWithAutoPass.piles,
+          pilePreferences: gameWithAutoPass.pilePreferences,
+        })) {
+          const defeatedGame = gameWithAutoPass.updateStatus('finished');
+          await this.gameRepository.save(defeatedGame);
+          return success(defeatedGame);
+        }
+        
+        // Save updated game with auto-passed turn
+        await this.gameRepository.save(gameWithAutoPass);
+        return success(gameWithAutoPass);
       }
 
       // Save updated game
