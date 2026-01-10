@@ -16,6 +16,7 @@
     "clear-tables": "ts-node -r ./scripts/load-env.ts scripts/clear-dynamodb-tables.ts",
     "check-game": "ts-node -r ./scripts/load-env.ts scripts/check-game.ts",
     "fix-stuck-game": "ts-node -r ./scripts/load-env.ts scripts/fix-stuck-game.ts",
+    "fix-game-timestamps": "ts-node -r ./scripts/load-env.ts scripts/fix-game-timestamps.ts",
     "local:dev": "ts-node-dev --respawn --transpile-only -r ./scripts/load-env.ts src/index.ts"
   },
   "keywords": [

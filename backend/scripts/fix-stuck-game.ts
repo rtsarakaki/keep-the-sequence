@@ -113,7 +113,7 @@ async function fixStuckGame(gameId: string) {
         },
         ExpressionAttributeValues: {
           ':status': 'finished',
-          ':updatedAt': new Date().toISOString(),
+          ':updatedAt': Date.now(), // Unix timestamp in milliseconds (number)
         },
       });
 
@@ -140,7 +140,7 @@ async function fixStuckGame(gameId: string) {
       ExpressionAttributeValues: {
         ':nextPlayerId': nextPlayer.id,
         ':zero': 0,
-        ':updatedAt': new Date().toISOString(),
+        ':updatedAt': Date.now(), // Unix timestamp in milliseconds (number)
       },
     });
 
