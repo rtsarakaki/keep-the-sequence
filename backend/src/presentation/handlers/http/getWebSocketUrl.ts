@@ -150,11 +150,16 @@ export const handler = async (
 
   // Validate gameId and playerId exist in the game
   try {
+    console.log('Validating game and player:', { gameId, playerId, playerName });
+    
     const { container } = await import('../../../infrastructure/di/container');
     const gameRepository = container.getGameRepository();
+    
+    console.log('Game repository obtained, fetching game...');
     const game = await gameRepository.findById(gameId);
     
     if (!game) {
+      console.log('Game not found:', gameId);
       return Promise.resolve({
         statusCode: 404,
         headers: {
@@ -167,19 +172,52 @@ export const handler = async (
       });
     }
 
+    console.log('Game found, players:', game.players.map(p => ({ id: p.id, name: p.name })));
+
     // Validate playerId exists in the game
     const player = game.players.find(p => p.id === playerId);
     if (!player) {
-      return Promise.resolve({
-        statusCode: 403,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': origin || '*',
-        },
-        body: JSON.stringify({
-          error: 'Player not found in this game',
-        }),
-      });
+      console.log('Player not found in game:', { playerId, availablePlayers: game.players.map(p => p.id) });
+      
+      // If playerName was provided, try to find by name
+      if (playerName) {
+        const normalizedPlayerName = playerName.trim().toLowerCase();
+        const playerByName = game.players.find(p => p.name.toLowerCase() === normalizedPlayerName);
+        
+        if (playerByName) {
+          console.log('Player found by name, using their ID:', playerByName.id);
+          playerId = playerByName.id;
+        } else {
+          return Promise.resolve({
+            statusCode: 403,
+            headers: {
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': origin || '*',
+            },
+            body: JSON.stringify({
+              error: `Player "${playerName}" not found in this game. Available players: ${game.players.map(p => p.name).join(', ')}`,
+            }),
+          });
+        }
+      } else {
+        return Promise.resolve({
+          statusCode: 403,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': origin || '*',
+          },
+          body: JSON.stringify({
+            error: `Player ID "${playerId}" not found in this game. Available player IDs: ${game.players.map(p => p.id).join(', ')}`,
+          }),
+        });
+      }
+    }
+    
+    console.log('Validation successful, player found:', { playerId, playerName: player?.name });
+    
+    // Ensure playerId is set (may have been updated if found by name)
+    if (!playerId) {
+      throw new Error('playerId is required but was not found or set');
     }
   } catch (error) {
     console.error('Error validating game and player:', error);
@@ -197,6 +235,7 @@ export const handler = async (
       errorDetails,
     });
     
+    // Always return error details in production for debugging
     return Promise.resolve({
       statusCode: 500,
       headers: {
@@ -205,7 +244,10 @@ export const handler = async (
       },
       body: JSON.stringify({
         error: 'Error validating game and player',
-        details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
+        message: errorMessage,
+        gameId,
+        playerId,
+        playerName,
       }),
     });
   }
