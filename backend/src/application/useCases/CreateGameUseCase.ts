@@ -31,8 +31,8 @@ export class CreateGameUseCase {
         isConnected: false,
       });
 
-      // Initialize game
-      const game = GameInitializer.createGame(gameId, firstPlayer);
+      // Initialize game with difficulty (defaults to 'easy')
+      const game = GameInitializer.createGame(gameId, firstPlayer, dto.difficulty || 'easy');
 
       // Save game to repository
       await this.gameRepository.save(game);

@@ -42,7 +42,7 @@ export const handler = async (
       });
     }
 
-    const body = JSON.parse(event.body) as { playerName?: string; playerId?: string };
+    const body = JSON.parse(event.body) as { playerName?: string; playerId?: string; difficulty?: 'easy' | 'hard' };
     
     if (!body.playerName || typeof body.playerName !== 'string' || !body.playerName.trim()) {
       return Promise.resolve({
@@ -67,6 +67,18 @@ export const handler = async (
       });
     }
 
+    // Validate difficulty if provided
+    if (body.difficulty && body.difficulty !== 'easy' && body.difficulty !== 'hard') {
+      return Promise.resolve({
+        statusCode: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': origin || '*',
+        },
+        body: JSON.stringify({ error: 'difficulty must be "easy" or "hard"' }),
+      });
+    }
+
     // Create game
     const createGameUseCase = container.getCreateGameUseCase();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
@@ -75,6 +87,7 @@ export const handler = async (
       playerName: trimmedPlayerName,
       playerId: body.playerId,
       clientIp,
+      difficulty: body.difficulty || 'easy',
     };
 
     const result = await createGameUseCase.execute(dto);

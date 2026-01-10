@@ -3,6 +3,7 @@ import { Player } from './Player';
 import { GamePiles } from '../services/GameRules';
 
 export type GameStatus = 'waiting' | 'playing' | 'finished' | 'abandoned';
+export type GameDifficulty = 'easy' | 'hard';
 
 export class Game {
   readonly id: string;
@@ -14,6 +15,7 @@ export class Game {
   readonly cardsPlayedThisTurn: number; // Number of cards played by current player in this turn
   readonly createdBy: string; // Player ID of the player who created the game
   readonly status: GameStatus;
+  readonly difficulty: GameDifficulty; // Game difficulty mode: 'easy' (draw immediately) or 'hard' (draw at end of turn)
   readonly pilePreferences: Readonly<Record<string, keyof GamePiles | null>>; // Maps playerId -> pileId (null if no preference)
   readonly createdAt: Date;
   readonly updatedAt: Date;
@@ -29,6 +31,7 @@ export class Game {
     cardsPlayedThisTurn?: number; // Optional, defaults to 0
     createdBy: string; // Player ID of the player who created the game
     status: GameStatus;
+    difficulty?: GameDifficulty; // Optional, defaults to 'easy'
     pilePreferences?: Readonly<Record<string, keyof GamePiles | null>>; // Optional, defaults to empty object
     createdAt: Date;
     updatedAt: Date;
@@ -48,6 +51,7 @@ export class Game {
     this.cardsPlayedThisTurn = data.cardsPlayedThisTurn ?? 0;
     this.createdBy = data.createdBy;
     this.status = data.status;
+    this.difficulty = data.difficulty ?? 'easy';
     this.pilePreferences = Object.freeze({ ...(data.pilePreferences || {}) });
     this.createdAt = data.createdAt;
     this.updatedAt = data.updatedAt;

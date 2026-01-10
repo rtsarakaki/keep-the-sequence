@@ -77,8 +77,11 @@ export class PlayCardUseCase {
       // Add card to pile
       const gameWithCardPlayed = gameWithUpdatedPlayer.addCardToPile(dto.pileId, dto.card);
 
-      // Draw a new card from deck if available
-      const gameAfterDraw = gameWithCardPlayed.drawCardForPlayer(dto.playerId);
+      // Draw a new card from deck if available (only in easy mode)
+      // In hard mode, cards are drawn at the end of the turn
+      const gameAfterDraw = game.difficulty === 'easy' 
+        ? gameWithCardPlayed.drawCardForPlayer(dto.playerId)
+        : gameWithCardPlayed;
 
       // Check for automatic defeat condition: player cannot continue
       if (shouldGameEndInDefeat({

@@ -104,7 +104,7 @@ export async function getWebSocketUrl(
 /**
  * Create a new game
  */
-export async function createGame(playerName: string, playerId?: string): Promise<{ gameId: string; playerId: string; game: unknown }> {
+export async function createGame(playerName: string, playerId?: string, difficulty: 'easy' | 'hard' = 'easy'): Promise<{ gameId: string; playerId: string; game: unknown }> {
   try {
     const apiUrl = getApiUrl();
     const response = await fetch(`${apiUrl}/api/games`, {
@@ -115,6 +115,7 @@ export async function createGame(playerName: string, playerId?: string): Promise
       body: JSON.stringify({
         playerName,
         playerId,
+        difficulty,
       }),
     });
 

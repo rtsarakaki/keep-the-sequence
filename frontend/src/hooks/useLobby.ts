@@ -23,7 +23,7 @@ export function useLobby() {
     });
   }, []);
 
-  const handleCreateGame = async () => {
+  const handleCreateGame = async (difficulty: 'easy' | 'hard' = 'easy') => {
     const trimmedName = playerName.trim();
     if (!trimmedName) {
       setError('Por favor, informe seu nome');
@@ -39,7 +39,7 @@ export function useLobby() {
 
     try {
       // Create game via HTTP endpoint
-      const result = await createGame(trimmedName);
+      const result = await createGame(trimmedName, undefined, difficulty);
 
       // Store player info in sessionStorage for the game page
       sessionStorage.setItem('playerId', result.playerId);

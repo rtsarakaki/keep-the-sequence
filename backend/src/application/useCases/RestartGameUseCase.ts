@@ -111,6 +111,7 @@ export class RestartGameUseCase {
         cardsPlayedThisTurn: 0,
         createdBy: game.createdBy, // Keep original creator
         status: newStatus,
+        difficulty: game.difficulty, // Keep original difficulty
         createdAt: game.createdAt, // Keep original creation date
         updatedAt: now,
         pilePreferences: {}, // Reset pile preferences

@@ -9,7 +9,7 @@ interface LobbyActionsProps {
   isCreating: boolean;
   onPlayerNameChange: (name: string) => void;
   onGameIdChange: (id: string) => void;
-  onCreateGame: () => void;
+  onCreateGame: (difficulty?: 'easy' | 'hard') => void;
   onJoinGame: () => void;
 }
 
@@ -25,6 +25,7 @@ export default function LobbyActions({
   onJoinGame,
 }: LobbyActionsProps) {
   const [mode, setMode] = useState<ActionMode>('create');
+  const [difficulty, setDifficulty] = useState<'easy' | 'hard'>('easy');
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -70,9 +71,33 @@ export default function LobbyActions({
                 className={styles.input}
                 onKeyPress={handleKeyPress}
               />
+              <div className={styles.difficultySelector}>
+                <label className={styles.difficultyLabel}>Dificuldade:</label>
+                <div className={styles.difficultyOptions}>
+                  <button
+                    type="button"
+                    className={`${styles.difficultyButton} ${difficulty === 'easy' ? styles.difficultyActive : ''}`}
+                    onClick={() => setDifficulty('easy')}
+                  >
+                    Fácil
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.difficultyButton} ${difficulty === 'hard' ? styles.difficultyActive : ''}`}
+                    onClick={() => setDifficulty('hard')}
+                  >
+                    Difícil
+                  </button>
+                </div>
+                <p className={styles.difficultyHint}>
+                  {difficulty === 'easy' 
+                    ? 'Cartas são repostas imediatamente após jogar'
+                    : 'Cartas são repostas apenas ao passar a vez'}
+                </p>
+              </div>
               <button
                 className={styles.button}
-                onClick={onCreateGame}
+                onClick={() => onCreateGame(difficulty)}
                 disabled={isCreating || !playerName.trim() || playerName.trim().length < 3}
               >
                 {isCreating ? 'Criando...' : 'Criar Partida'}

@@ -76,16 +76,37 @@ export class EndTurnUseCase {
           );
       }
 
+      // In hard mode, draw cards to replenish hand before passing turn
+      // Calculate how many cards the player should have based on number of players
+      let gameAfterDraw = game;
+      if (game.difficulty === 'hard') {
+        const numPlayers = game.players.length;
+        const cardsPerPlayer: Record<number, number> = {
+          2: 6,
+          3: 6,
+          4: 6,
+          5: 5,
+        };
+        const targetHandSize = cardsPerPlayer[numPlayers] || 6;
+        const currentHandSize = currentPlayer.hand.length;
+        const cardsToDraw = Math.max(0, targetHandSize - currentHandSize);
+
+        // Draw cards until hand is full or deck is empty
+        for (let i = 0; i < cardsToDraw && gameAfterDraw.deck.length > 0; i++) {
+          gameAfterDraw = gameAfterDraw.drawCardForPlayer(dto.playerId);
+        }
+      }
+
       // Check victory condition: all players have empty hands
-      if (areAllHandsEmpty(game.players)) {
-        const victoriousGame = game.updateStatus('finished');
+      if (areAllHandsEmpty(gameAfterDraw.players)) {
+        const victoriousGame = gameAfterDraw.updateStatus('finished');
         await this.gameRepository.save(victoriousGame);
         return success(victoriousGame);
       }
 
       // Pass vez to next player with cards (skip players with empty hands)
-      const currentPlayerIndex = game.players.findIndex(p => p.id === dto.playerId);
-      const nextPlayer = findNextPlayerWithCards(game.players, currentPlayerIndex);
+      const currentPlayerIndex = gameAfterDraw.players.findIndex(p => p.id === dto.playerId);
+      const nextPlayer = findNextPlayerWithCards(gameAfterDraw.players, currentPlayerIndex);
 
       // If no player has cards, game should have been detected as victory above
       // But handle this case defensively
@@ -95,7 +116,7 @@ export class EndTurnUseCase {
         return success(victoriousGame);
       }
 
-      const gameWithNextTurn = game.updateTurn(nextPlayer.id);
+      const gameWithNextTurn = gameAfterDraw.updateTurn(nextPlayer.id);
 
       // Check if next player can play (automatic defeat detection)
       // This ensures the game ends immediately if the next player cannot make the minimum required plays

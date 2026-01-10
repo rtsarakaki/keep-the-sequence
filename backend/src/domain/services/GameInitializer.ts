@@ -101,10 +101,12 @@ export class GameInitializer {
    * Creates a new game with the first player
    * @param gameId - Unique game identifier
    * @param firstPlayer - The first player (who creates the game)
+   * @param difficulty - Game difficulty: 'easy' (draw immediately) or 'hard' (draw at end of turn)
    */
   static createGame(
     gameId: string,
-    firstPlayer: Player
+    firstPlayer: Player,
+    difficulty: 'easy' | 'hard' = 'easy'
   ): Game {
     const now = new Date();
     
@@ -137,6 +139,7 @@ export class GameInitializer {
       cardsPlayedThisTurn: 0,
       createdBy: playerWithCards.id, // First player is the creator
       status: 'waiting' as GameStatus,
+      difficulty,
       createdAt: now,
       updatedAt: now,
       // TTL: 7 days after creation (in seconds since epoch)

@@ -131,6 +131,13 @@ export class DynamoGameRepository implements IGameRepository {
       throw new Error(`Invalid status: ${status}`);
     }
 
+    // Map difficulty (optional, defaults to 'easy' for backward compatibility)
+    const difficulty = item.difficulty;
+    const validDifficulties: ('easy' | 'hard')[] = ['easy', 'hard'];
+    const mappedDifficulty = (difficulty && typeof difficulty === 'string' && validDifficulties.includes(difficulty as 'easy' | 'hard'))
+      ? (difficulty as 'easy' | 'hard')
+      : 'easy';
+
     const createdAt = item.createdAt;
     const updatedAt = item.updatedAt;
     if (typeof createdAt !== 'number' || typeof updatedAt !== 'number') {
@@ -168,6 +175,7 @@ export class DynamoGameRepository implements IGameRepository {
       cardsPlayedThisTurn: typeof item.cardsPlayedThisTurn === 'number' ? item.cardsPlayedThisTurn : 0,
       createdBy: getCreatedBy(),
       status: status as GameStatus,
+      difficulty: mappedDifficulty,
       pilePreferences: mappedPreferences,
       createdAt: new Date(createdAt),
       updatedAt: new Date(updatedAt),
@@ -217,6 +225,7 @@ export class DynamoGameRepository implements IGameRepository {
       cardsPlayedThisTurn: game.cardsPlayedThisTurn,
       createdBy: game.createdBy,
       status: game.status,
+      difficulty: game.difficulty,
       pilePreferences: game.pilePreferences,
       createdAt: game.createdAt.getTime(),
       updatedAt: game.updatedAt.getTime(),
